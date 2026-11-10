@@ -10,12 +10,31 @@ re-parsed offline, and contract tests can run against recordings.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 import httpx
 from pydantic import BaseModel, ConfigDict
+
+
+class Subject(Protocol):
+    """What a provider is asked about. Its SHA-256 keys the cache and the recordings."""
+
+    @property
+    def sha256(self) -> str: ...
+
+
+@dataclass(frozen=True)
+class UrlSubject:
+    """A lookup keyed by a URL (archive lookups), rather than by image bytes."""
+
+    url: str
+
+    @property
+    def sha256(self) -> str:
+        return hashlib.sha256(self.url.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -60,8 +79,11 @@ class ProviderError(Exception):
         self.retryable = retryable
 
 
+S_contra = TypeVar("S_contra", bound=Subject, contravariant=True)
+
+
 @runtime_checkable
-class ProviderAdapter(Protocol):
+class ProviderAdapter(Protocol[S_contra]):
     #: Stable identifier, used in cache keys, fixtures and the database.
     name: str
     #: Quota bucket. Adapters that share a vendor plan share a key (Lens and Yandex: "serpapi").
@@ -77,7 +99,7 @@ class ProviderAdapter(Protocol):
         """Request parameters that change the result. Never includes secrets."""
         ...
 
-    async def fetch(self, asset: AssetRef, client: httpx.AsyncClient) -> RawResponse:
+    async def fetch(self, subject: S_contra, client: httpx.AsyncClient) -> RawResponse:
         """Call the provider. Raise ProviderError on failure."""
         ...
 

@@ -33,7 +33,7 @@ class ScriptedAdapter:
     def params(self) -> dict[str, Any]:
         return {"type": "exact"}
 
-    async def fetch(self, asset: AssetRef, client: httpx.AsyncClient) -> RawResponse:
+    async def fetch(self, subject: AssetRef, client: httpx.AsyncClient) -> RawResponse:
         self.calls += 1
         step = self._script.pop(0)
         if isinstance(step, ProviderError):
