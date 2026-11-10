@@ -118,3 +118,25 @@ def test_unrelated_photo_is_rejected(query: Side, embedder: SSCDEmbedder) -> Non
 def test_geometry_rejects_noise(photo: Image.Image) -> None:
     noise = Image.effect_noise((640, 480), 80).convert("RGB")
     assert confirm(photo, noise, T.derivative) is None
+
+
+def test_v2_accepts_a_heavy_crop_with_caption_that_v1_missed(
+    query: Side, photo: Image.Image, embedder: SSCDEmbedder
+) -> None:
+    w, h = photo.size
+    edited = photo.crop((int(w * 0.1), int(h * 0.05), int(w * 0.9), int(h * 0.85)))
+    ImageDraw.Draw(edited).rectangle(
+        (0, int(edited.height * 0.8), edited.width, edited.height), fill=(0, 0, 0)
+    )
+    candidate = _side(_jpeg(edited), embedder)
+    v1 = classify(query, candidate, load_thresholds("v1"))
+    v2 = classify(query, candidate, load_thresholds("v2"))
+    assert v1.match_class is None  # SSCD alone is below 0.75
+    assert v2.match_class is MatchClass.DERIVATIVE
+    assert "inliers" in v2.reason and v2.thresholds_version == "match.v2"
+    assert {"crop", "overlay"} <= set(v2.edits)
+
+
+def test_v2_still_rejects_unrelated_photos(query: Side, embedder: SSCDEmbedder) -> None:
+    other = _side((FIXTURES / "signed-test-cert.jpg").read_bytes(), embedder)
+    assert classify(query, other, load_thresholds("v2")).match_class is None
