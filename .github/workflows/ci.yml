@@ -52,6 +52,8 @@ jobs:
             -v "$PWD/infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro" \
             chrislusf/seaweedfs:4.51 server -dir=/data -ip.bind=0.0.0.0 \
             -master.volumeSizeLimitMB=64 -s3 -s3.config=/etc/seaweedfs/s3.json
+      - name: Install exiftool
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libimage-exiftool-perl
       - uses: astral-sh/setup-uv@v10
         with:
           version: ${{ env.UV_VERSION }}
