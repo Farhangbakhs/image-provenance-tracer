@@ -31,7 +31,7 @@ Context for Claude Code sessions on ORIGIN, an image provenance tracer. Read `PL
 
 ## Stack
 
-- Python 3.12 (uv workspace): FastAPI, Pydantic v2, SQLAlchemy 2 async, Alembic, arq on Redis, Postgres 16 + pgvector, MinIO (dev) / R2. httpx with a Playwright fallback.
+- Python 3.12 (uv workspace): FastAPI, Pydantic v2, SQLAlchemy 2 async, Alembic, arq on Redis, Postgres 16 + pgvector, SeaweedFS S3 (dev) / R2. httpx with a Playwright fallback.
 - Image: imagehash, pdqhash (built from source on Linux), SSCD TorchScript on CPU (downloaded at runtime into `models/`, gitignored), OpenCV ORB + RANSAC, exiftool, c2pa-python.
 - Text: trafilatura, htmldate, LLM translation.
 - LLM: `LLMProvider` with Gemini (free tier), Ollama, Anthropic (optional) and a recorded provider. Prompts are versioned in `origin_core/llm/prompts/`, and provider, model and prompt version are stored on each row produced.
@@ -48,7 +48,7 @@ apps/api  apps/worker  apps/web  packages/shared (origin_core)  infra  evals  fi
 
 | Command | Does |
 | --- | --- |
-| `make dev` | Start the compose stack (db, redis, minio, api, worker, web) |
+| `make dev` | Start the compose stack (db, redis, s3, api, worker, web) |
 | `make demo` | Start in demo mode: fixture providers, recorded LLM, seeded cases, no keys |
 | `make test` | pytest and Vitest |
 | `make lint` | ruff check and format check, pyright, eslint, tsc |
@@ -59,5 +59,5 @@ apps/api  apps/worker  apps/web  packages/shared (origin_core)  infra  evals  fi
 
 ## Environment notes
 
-- Windows host. Use Docker for Postgres, Redis and MinIO. exiftool must be installed locally for non-Docker runs.
+- Windows host. Use Docker for Postgres, Redis and SeaweedFS. exiftool must be installed locally for non-Docker runs.
 - The machine has Python 3.14 globally; the project pins 3.12 through uv (`.python-version`).

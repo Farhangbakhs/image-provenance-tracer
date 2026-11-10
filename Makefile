@@ -1,15 +1,28 @@
 .DEFAULT_GOAL := help
 WEB := apps/web
 NPM := npm --prefix $(WEB)
+COMPOSE := docker compose -f infra/compose.yaml
 
-.PHONY: help install lint fmt test test-py test-web
+.PHONY: help install dev down logs lint fmt test test-py test-web
 
 help:
+	$(info dev       Build and start the stack: db, redis, s3, api, web)
+	$(info down      Stop the stack (data volumes are kept))
+	$(info logs      Follow stack logs)
 	$(info install   Install Python and web dependencies)
 	$(info lint      ruff, pyright (strict), eslint, tsc)
 	$(info fmt       Format Python sources)
 	$(info test      pytest and Vitest)
 	@:
+
+dev:
+	$(COMPOSE) up -d --build --wait
+
+down:
+	$(COMPOSE) down
+
+logs:
+	$(COMPOSE) logs -f
 
 install:
 	uv sync

@@ -1,0 +1,12 @@
+.git
+.venv
+**/__pycache__
+**/.pytest_cache
+.ruff_cache
+apps/web
+var
+models
+fixtures
+evals
+.env
+.env.*
