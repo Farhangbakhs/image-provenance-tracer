@@ -46,11 +46,11 @@ This file refines the original build brief. Section 1 records what was checked a
 - Telegram API terms and UK data-protection duties for collection (Phase 5 checks these before writing code).
 - **Aside** is not among this session's tools, so the normal web tools were used.
 
-### 1.4 LLM options (pick one as the default)
+### 1.4 LLM options (decided: A is the default)
 
 | Option | Cost | Trade-off |
 | --- | --- | --- |
-| **A. Gemini 2.5 Flash, free tier** (recommended default) | Free | Strong structured JSON output, multilingual (needed for translation). Free-tier data is used by Google to improve products; rate limits are modest. |
+| **A. Gemini 2.5 Flash, free tier** (chosen default, 2026-11-10) | Free | Strong structured JSON output, multilingual (needed for translation). Free-tier data is used by Google to improve products; rate limits are modest. |
 | B. Ollama with a local model (e.g. Qwen 3 8B or Llama 3.x 8B) | Free | Fully private and offline. Slower on CPU, weaker extraction quality; you need about 8 GB of RAM free. |
 | C. Anthropic Claude | Paid key | Best quality; used only if `ANTHROPIC_API_KEY` is set. |
 
@@ -65,9 +65,23 @@ All three sit behind one `LLMProvider` interface. Demo mode and tests use record
 | Hosted LLM (if option A) | Google AI Studio | Gemini API key | Phase 3 |
 | Public object store for Yandex (optional) | Cloudflare | R2 bucket and S3 token (free tier) | Phase 2 or later |
 | Telegram | my.telegram.org | `api_id` and `api_hash` on a **dedicated** account, not your personal one | Phase 5 |
-| CI | GitHub | Already have the repo; Actions free tier | Phase 0 |
+| CI | GitHub | Already have the repo; Actions free tier | Phase 0 (done) |
 
 Local tools to install: **exiftool** (not on this machine). Python 3.12 is installed by `uv` automatically. Docker, Node and `uv` are already present.
+
+### 1.6 Decisions made while building Phase 0
+
+| Decision | Why |
+| --- | --- |
+| **SeaweedFS** replaces MinIO for local object storage | MinIO's community images are gone (1.1). The app speaks plain S3, so nothing else changes. |
+| **Provider response cache is durable**: stored raw responses (`provider_calls` + artefacts), not Redis | A cache hit then survives restarts and is itself evidence; Redis keeps only jobs and run events. |
+| **Run events use Redis Streams**, not pub/sub | Late or reconnecting browsers resume from `Last-Event-ID` without missing a stage. |
+| **Migrations ship inside `origin_core`** (`python -m origin_core.db.migrate`) | The container image can migrate itself; no `alembic.ini` to keep in sync. |
+| **`propagation_edges` table** alongside `variant_edges` | Forwards and credits link *sightings*; derivations link *variants*. One table would leave half its columns empty. |
+| **Integrity rules enforced in Postgres** | Claims need a sighting (FK); narratives need a claim (deferred constraint trigger); `audit_events` rejects UPDATE, DELETE and TRUNCATE; quota cannot exceed its limit; date intervals are ordered. |
+| **Replay mode fails loudly** on a missing recording | An empty result would read as "no matches found", which is a false finding. |
+| **Quota periods align to UTC calendar boundaries** | Vendors may reset on a billing anniversary instead; the Vision hard stop at 950 absorbs that mismatch. |
+| **Local `make` caveat** | The `make` first on this machine's PATH comes from GAMS and cannot run recipes that need a shell. Use a standard GNU make (e.g. `winget install ezwinports.make`) or run the commands directly. |
 
 ---
 
@@ -89,11 +103,11 @@ Every screen and export that shows an earliest date also shows: **"Earliest foun
 
 ```
 apps/web (Next.js 16, App Router)  ──HTTP/SSE──▶  apps/api (FastAPI)
-                                                       │ enqueue          ▲ progress (Redis pub/sub)
+                                                       │ enqueue (arq)    ▲ progress (Redis Streams)
                                                        ▼                  │
                                                  apps/worker (arq) ───────┘
                                                        │
-              Postgres 16 + pgvector   Redis (jobs, events, cache)   SeaweedFS / R2 (artefacts)
+              Postgres 16 + pgvector   Redis (jobs, run events)      SeaweedFS / R2 (artefacts)
 ```
 
 The repository is a monorepo:
@@ -102,8 +116,8 @@ The repository is a monorepo:
 apps/api        FastAPI app, routes, SSE relay, OpenAPI schema
 apps/worker     arq worker, pipeline stages
 apps/web        Next.js console
-packages/shared Python package `origin_core`: models, db, providers, matching, dating, fetcher, llm
-infra           docker compose, Dockerfiles, migrations (Alembic)
+packages/shared Python package `origin_core`: models, db and migrations, providers, pipeline, storage
+infra           docker compose, Dockerfiles, SeaweedFS identities
 evals           labelled eval set manifest, harness, report
 fixtures        recorded provider/LLM/fetch responses, seeded demo cases
 ```
@@ -175,7 +189,7 @@ An analyst console: dark, dense and quiet.
 
 | Phase | Sections (proposed in full at the start of each phase) | Done when |
 | --- | --- | --- |
-| 0. Foundations | repo skeleton and tooling; compose stack; schema and migrations; provider protocol, wrapper and quota; fixture recorder and replayer; CI | `make dev` starts everything; CI green on an empty pipeline |
+| 0. Foundations **(done)** | repo skeleton and tooling; compose stack; schema and migrations; provider protocol, runner and quota; fixture recorder and replayer; pipeline runner, worker and SSE; CI | `make dev` starts everything; CI green on an empty pipeline |
 | 1. Ingest | upload validation; storage; hashing and embedding; metadata and C2PA; asset panel | an upload shows its asset panel; a C2PA sample reports the right state |
 | 2. Discover, verify, date | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
 | 3. Branching | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
