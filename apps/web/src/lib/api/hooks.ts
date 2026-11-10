@@ -197,3 +197,18 @@ export function useRunProgress(runId: string | undefined, onFinished?: () => voi
 }
 
 const CONNECTING: RunProgress = { status: "connecting", stages: {} };
+
+export function useRunSightings(runId: string | undefined) {
+  return useQuery({
+    queryKey: ["sightings", runId],
+    enabled: Boolean(runId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET("/runs/{run_id}/sightings", {
+        params: { path: { run_id: runId as string } },
+        signal,
+      });
+      if (!data) fail(response.status, error, "Could not load sightings");
+      return data;
+    },
+  });
+}

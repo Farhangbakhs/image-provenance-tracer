@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Fields, Panel } from "@/components/Panel";
+import { SightingsPanel } from "@/components/SightingsPanel";
 import { StageStrip } from "@/components/StageStrip";
 import { API_URL, type AssetOut } from "@/lib/api/client";
 import { useAsset, useRunProgress, useStartRun } from "@/lib/api/hooks";
@@ -88,9 +89,10 @@ function Trace({ asset }: { asset: AssetOut }) {
   const [runId, setRunId] = useState<string | undefined>(
     latest && (latest.status === "queued" || latest.status === "running") ? latest.id : undefined,
   );
-  const progress = useRunProgress(runId, () =>
-    queryClient.invalidateQueries({ queryKey: ["asset", asset.id] }),
-  );
+  const progress = useRunProgress(runId, () => {
+    void queryClient.invalidateQueries({ queryKey: ["asset", asset.id] });
+    void queryClient.invalidateQueries({ queryKey: ["sightings"] });
+  });
 
   return (
     <Panel
@@ -99,8 +101,8 @@ function Trace({ asset }: { asset: AssetOut }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
         <p className="max-w-prose text-[12px] text-muted">
-          A trace runs the pipeline on this image. The SSCD embedding is computed in the ingest stage;
-          later stages appear as they are built.
+          A trace asks the enabled reverse-image providers where this picture appears, fetches every hit,
+          keeps only proven copies and edits, and dates each one from the evidence.
         </p>
         <button
           type="button"
@@ -115,6 +117,17 @@ function Trace({ asset }: { asset: AssetOut }) {
       {runId ? <StageStrip order={STAGE_ORDER} progress={progress} /> : null}
       {progress?.error ? <p className="mono border-t border-line px-3 py-2 text-[11px]">{progress.error}</p> : null}
     </Panel>
+  );
+}
+
+function TraceAndSightings({ asset }: { asset: AssetOut }) {
+  const latest = asset.runs[0];
+  const done = latest && (latest.status === "succeeded" || latest.status === "failed");
+  return (
+    <>
+      <Trace asset={asset} />
+      {done ? <SightingsPanel runId={latest.id} /> : null}
+    </>
   );
 }
 
@@ -166,7 +179,7 @@ export function AssetPanel({ assetId }: { assetId: string }) {
         </Panel>
       </div>
       <div className="flex min-w-0 flex-col gap-4 lg:pt-8">
-        <Trace asset={asset} />
+        <TraceAndSightings asset={asset} />
         <Credentials asset={asset} />
         <Metadata asset={asset} />
       </div>

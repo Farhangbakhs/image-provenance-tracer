@@ -13,3 +13,17 @@ export function formatUtc(value: string | Date, precision: "second" | "minute" |
   const clock = precision === "second" ? iso.slice(11, 19) : iso.slice(11, 16);
   return `${day} ${clock}Z`;
 }
+
+/**
+ * A sighting's date interval in words. The wording carries the evidence's meaning:
+ * a single instant, a range, or only a proven upper bound ("no later than").
+ */
+export function formatInterval(lower: string | null | undefined, upper: string | null | undefined): string {
+  if (!upper && !lower) return "undated";
+  if (lower && upper) {
+    if (new Date(lower).getTime() === new Date(upper).getTime()) return formatUtc(upper);
+    return `between ${formatUtc(lower)} and ${formatUtc(upper)}`;
+  }
+  if (upper) return `no later than ${formatUtc(upper)}`;
+  return `no earlier than ${formatUtc(lower as string)}`;
+}

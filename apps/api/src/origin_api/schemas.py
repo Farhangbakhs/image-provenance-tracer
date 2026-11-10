@@ -184,3 +184,55 @@ class AssetEvidence(BaseModel):
 class UploadRejectedOut(BaseModel):
     reason: str
     message: str
+
+
+# --- Sightings --------------------------------------------------------------------------
+
+
+class EvidenceOut(BaseModel):
+    id: uuid.UUID
+    kind: str
+    value: datetime
+    bound: str
+    confidence: str
+    source_url: str | None
+    detail: dict[str, Any]
+
+
+class SightingOut(BaseModel):
+    id: uuid.UUID
+    provider: str
+    page_url: str | None
+    image_url: str
+    domain: str
+    title: str | None
+    match_class: str
+    match_reason: str | None
+    sscd_cosine: float | None
+    phash_distance: int | None
+    pdq_distance: int | None
+    transform: dict[str, Any] | None
+    threshold_version: str
+    date_lower: datetime | None
+    date_upper: datetime | None
+    date_confidence: str
+    dating_rule_version: str | None
+    deciding: EvidenceOut | None
+    evidence: list[EvidenceOut]
+    image_url_local: str
+
+
+class CandidateCounts(BaseModel):
+    pending: int = 0
+    verified: int = 0
+    unrelated: int = 0
+    fetch_failed: int = 0
+
+
+class RunSightingsOut(BaseModel):
+    run_id: uuid.UUID
+    status: RunStatus
+    earliest_sighting_id: uuid.UUID | None
+    candidates: CandidateCounts
+    notes: dict[str, str]
+    sightings: list[SightingOut]
