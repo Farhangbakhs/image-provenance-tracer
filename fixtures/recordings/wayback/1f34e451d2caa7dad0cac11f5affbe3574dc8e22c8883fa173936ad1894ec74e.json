@@ -1,0 +1,19 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "wayback",
+  "request_hash": "1f34e451d2caa7dad0cac11f5affbe3574dc8e22c8883fa173936ad1894ec74e",
+  "asset_sha256": "73d986e009065f182c10bcb6a45db3d6eda9498f8930654af2653f8a938cd801",
+  "params": {
+    "fl": "timestamp,original,statuscode,mimetype,digest",
+    "filter": "statuscode:200",
+    "limit": 1
+  },
+  "recorded_at": "2026-11-10T23:21:06.073996Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": null,
+  "body_encoding": "utf-8",
+  "body": "[[\"timestamp\",\"original\",\"statuscode\",\"mimetype\",\"digest\"],\n[\"20020120142510\",\"http://example.com:80/\",\"200\",\"text/html\",\"HT2DYGA5UKZCPBSFVCV3JOBXGW2G5UUA\"]]\n",
+  "body_sha256": "813a3ce520099711b0a16d53923c840fd3a5aaa49b0c5348cdab4e2d150bfe07"
+}

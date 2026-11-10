@@ -1,0 +1,19 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "wayback",
+  "request_hash": "1e832855ce7022fc2a4dce9d8bf777a2eab11f36d2cb7606b98139e1417c8103",
+  "asset_sha256": "008af5de23fa1613b6a0330a599006a291b9f396c54d2898e4c7cd1830d38f6d",
+  "params": {
+    "fl": "timestamp,original,statuscode,mimetype,digest",
+    "filter": "statuscode:200",
+    "limit": 1
+  },
+  "recorded_at": "2026-11-10T23:21:06.737535Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": null,
+  "body_encoding": "utf-8",
+  "body": "[]\n",
+  "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+}

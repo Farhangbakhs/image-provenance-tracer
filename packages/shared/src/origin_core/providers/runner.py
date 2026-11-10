@@ -24,6 +24,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 import structlog
@@ -36,11 +37,11 @@ from origin_core.enums import ArtefactKind, ProviderCallStatus
 from origin_core.hashing import request_hash
 from origin_core.providers import quota
 from origin_core.providers.base import (
-    AssetRef,
     CandidateHit,
     ProviderAdapter,
     ProviderError,
     RawResponse,
+    Subject,
 )
 from origin_core.providers.breaker import BreakerRegistry
 from origin_core.providers.fixtures import FixtureStore
@@ -116,8 +117,8 @@ class ProviderRunner:
         self._fixtures = fixtures
         self._redact = redact_secrets
 
-    async def run(
-        self, adapter: ProviderAdapter, asset: AssetRef, *, run_id: uuid.UUID | None = None
+    async def run[S: Subject](
+        self, adapter: ProviderAdapter[S], asset: S, *, run_id: uuid.UUID | None = None
     ) -> ProviderOutcome:
         params = adapter.params()
         rh = request_hash(adapter.name, asset.sha256, params)
@@ -142,7 +143,7 @@ class ProviderRunner:
                 adapter, rh, params, run_id, ProviderCallStatus.SKIPPED_BREAKER, "circuit open"
             )
 
-        if adapter.requires_public_url and asset.public_url is None:
+        if adapter.requires_public_url and getattr(asset, "public_url", None) is None:
             return await self._record_only(
                 adapter,
                 rh,
@@ -205,8 +206,8 @@ class ProviderRunner:
 
     async def _replay(
         self,
-        adapter: ProviderAdapter,
-        asset: AssetRef,
+        adapter: ProviderAdapter[Any],
+        asset: Subject,
         rh: str,
         params: dict[str, object],
         run_id: uuid.UUID | None,
@@ -237,8 +238,8 @@ class ProviderRunner:
 
     def _maybe_record(
         self,
-        adapter: ProviderAdapter,
-        asset: AssetRef,
+        adapter: ProviderAdapter[Any],
+        asset: Subject,
         rh: str,
         params: dict[str, object],
         body: bytes,
@@ -261,7 +262,9 @@ class ProviderRunner:
         )
         log.info("provider.recorded", provider=adapter.name, path=str(path))
 
-    async def _call_with_retries(self, adapter: ProviderAdapter, asset: AssetRef) -> RawResponse:
+    async def _call_with_retries(
+        self, adapter: ProviderAdapter[Any], asset: Subject
+    ) -> RawResponse:
         last: ProviderError | None = None
         for attempt in range(1, self._retry.attempts + 1):
             try:
@@ -316,7 +319,7 @@ class ProviderRunner:
 
     async def _finish(
         self,
-        adapter: ProviderAdapter,
+        adapter: ProviderAdapter[Any],
         rh: str,
         params: dict[str, object],
         run_id: uuid.UUID | None,
@@ -364,7 +367,7 @@ class ProviderRunner:
 
     async def _record_only(
         self,
-        adapter: ProviderAdapter,
+        adapter: ProviderAdapter[Any],
         rh: str,
         params: dict[str, object],
         run_id: uuid.UUID | None,
