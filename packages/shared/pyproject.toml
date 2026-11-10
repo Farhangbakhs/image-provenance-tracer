@@ -20,6 +20,8 @@ dependencies = [
     "numpy>=2",
     "c2pa-python==0.38.0",
     "arq>=0.26",
+    "htmldate>=1.9",
+    "lxml>=5",
 ]
 
 [build-system]
