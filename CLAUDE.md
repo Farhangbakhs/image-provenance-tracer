@@ -22,7 +22,7 @@ Context for Claude Code sessions on ORIGIN, an image provenance tracer. Read `PL
 ## Git rules (strict)
 
 1. Remote `origin` = `https://github.com/Farhangbakhs/image-provenance-tracer.git`, branch `main`.
-2. One commit per completed section; each commit builds and passes lint, types and tests, and holds only that section's changes. Push after each commit.
+2. One commit per completed section; each commit builds and passes lint, types and tests, and holds only that section's changes. Push after each commit. While GitHub Actions is unavailable (account billing lock, 2026-11-10), run `make ci` after committing and before pushing.
 3. Conventional Commits, imperative mood, a short body explaining why when it is not obvious.
 4. Commits are authored solely by the git identity configured on this machine. If it is incomplete, stop and ask; never invent a name or email.
 5. **No** `Co-Authored-By` trailer, "Generated with Claude Code" line, or any mention of Claude, Anthropic or AI assistance in commits, PRs, tags or release notes. `.claude/settings.json` sets `attribution.commit` and `attribution.pr` to `""`. After each commit, check `git log -1 --format=%B` and amend (before pushing) if any such line is present.
@@ -52,6 +52,7 @@ apps/api  apps/worker  apps/web  packages/shared (origin_core)  infra  evals  fi
 | `make demo` | Start in demo mode: fixture providers, recorded LLM, seeded cases, no keys |
 | `make test` | pytest and Vitest |
 | `make lint` | ruff check and format check, pyright, eslint, tsc |
+| `make ci` | Run the CI jobs locally in Linux containers against committed HEAD |
 | `make e2e` | Playwright against demo mode |
 | `make migrate` | Alembic upgrade head |
 | `make client` | Regenerate the TypeScript API client from OpenAPI |
@@ -61,3 +62,5 @@ apps/api  apps/worker  apps/web  packages/shared (origin_core)  infra  evals  fi
 
 - Windows host. Use Docker for Postgres, Redis and SeaweedFS. exiftool must be installed locally for non-Docker runs.
 - The machine has Python 3.14 globally; the project pins 3.12 through uv (`.python-version`).
+- GNU make is ezwinports `make` from WinGet (placed ahead of GAMS's `make` on the user PATH). exiftool 13.62 lives in `%LOCALAPPDATA%\Programs\exiftool`, on the user PATH.
+- About 7 GB of RAM: run heavy container jobs one at a time; `make ci` stops the app containers while it runs.

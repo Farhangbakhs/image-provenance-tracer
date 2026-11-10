@@ -36,6 +36,7 @@ make lint      # ruff, strict pyright, fixture verification, eslint, tsc
 make test      # pytest and Vitest
 make migrate   # apply migrations to DATABASE_URL
 make client    # regenerate the typed web client after changing the API
+make ci        # the CI jobs in clean Linux containers, against committed HEAD
 ```
 
 Database, Redis and S3 tests run against the compose services (`make dev` first) and are skipped when those are unreachable; CI requires them. Copy `.env.example` to `.env` to override any setting; every variable is documented there.
