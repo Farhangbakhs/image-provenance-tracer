@@ -54,4 +54,4 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 testpaths = ["packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
-markers = ["db: needs Postgres (DATABASE_URL)", "redis: needs Redis (REDIS_URL)"]
+markers = ["db: needs Postgres (TEST_DATABASE_URL)", "redis: needs Redis (TEST_REDIS_URL)", "s3: needs an S3 endpoint (TEST_S3_ENDPOINT)"]
