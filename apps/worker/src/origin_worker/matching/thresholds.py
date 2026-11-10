@@ -25,6 +25,10 @@ class Derivative:
     lowe_ratio: float
     ransac_reproj_px: float
     max_edge: int
+    #: v2: below this SSCD a candidate is not examined (None: use sscd_min).
+    sscd_screen: float | None = None
+    #: v2: inliers that confirm a derivative whose SSCD is between screen and min (None: off).
+    strong_inliers: int | None = None
 
 
 @dataclass(frozen=True)
@@ -42,8 +46,11 @@ class Thresholds:
     transform: Transform
 
 
+CURRENT = "v2"
+
+
 @lru_cache(maxsize=4)
-def load_thresholds(version: str = "v1") -> Thresholds:
+def load_thresholds(version: str = CURRENT) -> Thresholds:
     data = tomllib.loads((THRESHOLDS_DIR / f"thresholds.{version}.toml").read_text("utf-8"))
     return Thresholds(
         version=str(data["version"]),

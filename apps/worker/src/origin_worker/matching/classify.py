@@ -113,16 +113,29 @@ def classify(query: Side, candidate: Side, thresholds: Thresholds) -> MatchResul
         return result(MatchClass.NEAR_DUPLICATE, reason, edits=edits)
 
     d = thresholds.derivative
-    if similarity < d.sscd_min:
-        return result(None, f"SSCD {similarity:.3f} < {d.sscd_min}")
+    screen = d.sscd_screen if d.sscd_screen is not None else d.sscd_min
+    if similarity < screen:
+        return result(None, f"SSCD {similarity:.3f} < {screen}")
     geometry = confirm(query.image, candidate.image, d)
     if geometry is None:
         return result(
             None, f"SSCD {similarity:.3f} but no homography with >= {d.min_inliers} inliers"
         )
+    if similarity >= d.sscd_min:
+        reason = f"SSCD {similarity:.3f} >= {d.sscd_min}, {geometry.inliers} inliers"
+    elif d.strong_inliers is not None and geometry.inliers >= d.strong_inliers:
+        reason = (
+            f"SSCD {similarity:.3f} below {d.sscd_min} but {geometry.inliers} inliers "
+            f">= {d.strong_inliers} confirm the same scene"
+        )
+    else:
+        return result(
+            None,
+            f"SSCD {similarity:.3f} < {d.sscd_min} and only {geometry.inliers} inliers",
+        )
     return result(
         MatchClass.DERIVATIVE,
-        f"SSCD {similarity:.3f} >= {d.sscd_min}, {geometry.inliers} inliers",
+        reason,
         edits=geometry.edits(thresholds.transform),
         geometry=geometry,
     )
