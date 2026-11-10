@@ -61,16 +61,27 @@ services:
       timeout: 3s
       retries: 40
 
-  api:
+  # Applies migrations once, then exits; the API and worker wait for it.
+  migrate:
     build:
       context: ..
       dockerfile: infra/docker/python.Dockerfile
+    image: origin-python:dev
+    command: ["python", "-m", "origin_core.db.migrate", "upgrade"]
+    environment: *python-env
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    image: origin-python:dev
+    pull_policy: never  # built by the migrate service
     command: ["uvicorn", "origin_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       <<: *python-env
       ORIGIN_CORS_ORIGINS: '["http://localhost:3000"]'
     ports: ["127.0.0.1:8000:8000"]
     depends_on:
+      migrate: { condition: service_completed_successfully }
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
       s3: { condition: service_healthy }
