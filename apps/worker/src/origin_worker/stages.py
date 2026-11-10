@@ -13,10 +13,15 @@ from dataclasses import dataclass
 from sqlalchemy import select
 
 from origin_core.db.models import Artefact, Asset, Run
+from origin_core.fetch import Fetcher
 from origin_core.ingest.validate import decode_rgb
 from origin_core.pipeline.runner import Stage, StageContext, StageResult
+from origin_core.providers.registry import ProviderSetup
+from origin_core.providers.runner import ProviderRunner
 from origin_core.storage import BlobStore
 from origin_worker.embedding import SSCDEmbedder
+from origin_worker.matching.thresholds import Thresholds
+from origin_worker.trace import DateStage, DiscoverStage, VerifyStage
 
 
 @dataclass
@@ -50,5 +55,32 @@ class IngestStage:
         return StageResult(counts={"embeddings_computed": 1})
 
 
-def build_stages(*, blobs: BlobStore, embedder: SSCDEmbedder) -> list[Stage]:
-    return [IngestStage(blobs=blobs, embedder=embedder)]
+@dataclass(frozen=True)
+class TraceServices:
+    """What the discover, verify and date stages need, built once per worker."""
+
+    providers: ProviderSetup
+    runner: ProviderRunner
+    fetcher: Fetcher
+    thresholds: Thresholds
+    max_pixels: int
+    exiftool: str
+
+
+def build_stages(
+    *, blobs: BlobStore, embedder: SSCDEmbedder, trace: TraceServices | None = None
+) -> list[Stage]:
+    stages: list[Stage] = [IngestStage(blobs=blobs, embedder=embedder)]
+    if trace is not None:
+        stages += [
+            DiscoverStage(providers=trace.providers, runner=trace.runner, blobs=blobs),
+            VerifyStage(
+                fetcher=trace.fetcher,
+                blobs=blobs,
+                embedder=embedder,
+                thresholds=trace.thresholds,
+                max_pixels=trace.max_pixels,
+            ),
+            DateStage(runner=trace.runner, blobs=blobs, exiftool=trace.exiftool),
+        ]
+    return stages

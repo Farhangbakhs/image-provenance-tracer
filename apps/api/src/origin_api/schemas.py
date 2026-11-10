@@ -36,6 +36,7 @@ class StageState(BaseModel):
     finished_at: datetime | None = None
     counts: dict[str, int] = {}
     quota: dict[str, int] = {}
+    notes: dict[str, str] = {}
     error: str | None = None
 
 

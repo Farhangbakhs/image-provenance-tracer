@@ -40,6 +40,8 @@ class StageContext:
 class StageResult:
     counts: dict[str, int] = field(default_factory=dict[str, int])
     quota: dict[str, int] = field(default_factory=dict[str, int])
+    #: Short explanations shown with the stage, e.g. why a provider did not run.
+    notes: dict[str, str] = field(default_factory=dict[str, str])
 
 
 class Stage(Protocol):
@@ -135,6 +137,7 @@ class PipelineRunner:
                     "finished_at": _now(),
                     "counts": result.counts,
                     "quota": result.quota,
+                    "notes": result.notes,
                 },
             )
             await self._events.publish(

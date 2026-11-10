@@ -5,19 +5,26 @@ from __future__ import annotations
 import uuid
 from typing import Any, ClassVar
 
+import httpx
 from arq import func
 from arq.connections import RedisSettings
 from redis.asyncio import Redis
 
 from origin_core.db.session import make_engine, make_sessionmaker
+from origin_core.fetch import Fetcher
 from origin_core.logging import configure_logging
 from origin_core.pipeline.events import RunEventBus
 from origin_core.pipeline.jobs import EXECUTE_RUN
 from origin_core.pipeline.runner import PipelineRunner
+from origin_core.providers.fixtures import FixtureStore
+from origin_core.providers.quota import DEFAULT_POLICIES
+from origin_core.providers.registry import build_providers
+from origin_core.providers.runner import ProviderRunner
 from origin_core.settings import get_settings
 from origin_core.storage import make_blob_store
 from origin_worker.embedding import SSCDEmbedder, ensure_weights
-from origin_worker.stages import build_stages
+from origin_worker.matching.thresholds import load_thresholds
+from origin_worker.stages import TraceServices, build_stages
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -29,16 +36,41 @@ async def startup(ctx: dict[str, Any]) -> None:
     await blobs.ensure_ready()
     # Downloads the SSCD weights on first start (99 MB), then verifies them on every start.
     embedder = SSCDEmbedder(await ensure_weights(settings.models_dir))
+    sessions = make_sessionmaker(engine)
+    providers = build_providers(settings)
+    http = httpx.AsyncClient()
+    fetcher = Fetcher()
+    runner = ProviderRunner(
+        sessions=sessions,
+        blobs=blobs,
+        http=http,
+        policies=DEFAULT_POLICIES,
+        mode=settings.provider_mode,
+        fixtures=FixtureStore((settings.fixtures_dir, settings.synthetic_fixtures_dir)),
+        redact_secrets=providers.secrets,
+    )
+    trace = TraceServices(
+        providers=providers,
+        runner=runner,
+        fetcher=fetcher,
+        thresholds=load_thresholds(),
+        max_pixels=settings.upload_max_pixels,
+        exiftool=settings.exiftool_path,
+    )
     ctx["engine"] = engine
     ctx["redis"] = redis
+    ctx["http"] = http
+    ctx["fetcher"] = fetcher
     ctx["pipeline"] = PipelineRunner(
-        sessions=make_sessionmaker(engine),
+        sessions=sessions,
         events=RunEventBus(redis),
-        stages=build_stages(blobs=blobs, embedder=embedder),
+        stages=build_stages(blobs=blobs, embedder=embedder, trace=trace),
     )
 
 
 async def shutdown(ctx: dict[str, Any]) -> None:
+    await ctx["fetcher"].aclose()
+    await ctx["http"].aclose()
     await ctx["redis"].aclose()
     await ctx["engine"].dispose()
 
