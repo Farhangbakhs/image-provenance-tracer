@@ -15,3 +15,7 @@ export const api = createClient<paths>({
 export type Readyz = components["schemas"]["Readyz"];
 export type DependencyCheck = components["schemas"]["DependencyCheck"];
 export type RunOut = components["schemas"]["RunOut"];
+export type CaseOut = components["schemas"]["CaseOut"];
+export type AssetOut = components["schemas"]["AssetOut"];
+export type CredentialsOut = components["schemas"]["CredentialsOut"];
+export type MetadataOut = components["schemas"]["MetadataOut"];
