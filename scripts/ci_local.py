@@ -29,7 +29,9 @@ PYTHON_JOB = """
 set -e
 mkdir /work && cd /work && tar xf /head.tar
 # pyright's bundled Node needs libatomic, present on GitHub's runners but not slim Debian.
-apt-get update -qq && apt-get install -y -qq --no-install-recommends libatomic1 >/dev/null
+# exiftool is needed by the metadata tests.
+apt-get update -qq
+apt-get install -y -qq --no-install-recommends libatomic1 libimage-exiftool-perl >/dev/null
 uv sync --frozen -q
 echo '--- ruff';     uv run ruff check . && uv run ruff format --check .
 echo '--- pyright';  uv run pyright

@@ -20,7 +20,11 @@ COPY apps/worker apps/worker
 RUN uv sync --frozen --no-dev --all-packages --no-editable
 
 FROM python:3.12-slim-bookworm AS runtime
-RUN useradd --system --uid 10001 origin
+# exiftool reads EXIF, XMP and IPTC from uploads.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libimage-exiftool-perl \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10001 origin
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
