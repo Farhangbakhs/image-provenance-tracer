@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     s3_access_key: str = Field(default="origin", alias="S3_ACCESS_KEY")
     s3_secret_key: str = Field(default="origin-dev-secret", alias="S3_SECRET_KEY")
 
+    upload_max_bytes: int = Field(default=20_000_000, alias="ORIGIN_UPLOAD_MAX_BYTES", gt=0)
+    upload_max_pixels: int = Field(default=50_000_000, alias="ORIGIN_UPLOAD_MAX_PIXELS", gt=0)
+
     provider_mode: ProviderMode = Field(default=ProviderMode.LIVE, alias="ORIGIN_PROVIDER_MODE")
     fixtures_dir: Path = Field(default=Path("fixtures/recordings"), alias="ORIGIN_FIXTURES_DIR")
     synthetic_fixtures_dir: Path = Field(
