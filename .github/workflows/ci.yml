@@ -43,6 +43,8 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://origin:origin@127.0.0.1:5432/origin_test
       TEST_REDIS_URL: redis://127.0.0.1:6379/15
       TEST_S3_ENDPOINT: http://127.0.0.1:8333
+      ORIGIN_MODELS_DIR: models
+      ORIGIN_REQUIRE_MODEL: "1"
     steps:
       - uses: actions/checkout@v7
       - name: Start S3-compatible store
@@ -71,6 +73,13 @@ jobs:
           done
           docker logs s3
           exit 1
+      - name: Cache SSCD weights
+        uses: actions/cache@v6
+        with:
+          path: models
+          key: sscd-disc-mixup-9f26bd4
+      - name: Fetch SSCD weights (verified by SHA-256)
+        run: uv run python -m origin_worker.embedding download
       - run: uv run pytest -q
 
   web:

@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 import os
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator
 
 import pytest
 from alembic import command
@@ -24,11 +24,13 @@ from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from testkit import SeedRun
 
 from origin_core.db.migrate import alembic_config
 from origin_core.db.models import Artefact, Asset, Case, Run
 from origin_core.db.session import make_engine, make_sessionmaker
 from origin_core.enums import ArtefactKind, C2PAState
+from origin_core.storage import BlobStore
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+asyncpg://origin:origin@127.0.0.1:5432/origin_test"
@@ -106,30 +108,36 @@ async def redis(redis_url: str) -> AsyncIterator[Redis]:
     await client.aclose()
 
 
-SeedRun = Callable[[], Awaitable[uuid.UUID]]
-
-
 @pytest.fixture
 def seed_run(db_engine: AsyncEngine) -> SeedRun:
-    """Insert (and commit) a case, an asset and a queued run; return the run id."""
+    """Insert (and commit) a case, an asset and a queued run; return the run id.
 
-    async def seed() -> uuid.UUID:
-        sha = uuid.uuid4().hex * 2
+    Pass `image` and `blobs` to store real image bytes behind the asset; otherwise the asset
+    points at a placeholder key and only database-level behaviour can be tested.
+    """
+
+    async def seed(*, image: bytes | None = None, blobs: BlobStore | None = None) -> uuid.UUID:
+        if image is not None and blobs is not None:
+            stored = await blobs.put(image, "image/jpeg")
+            sha, key, size, mime = stored.sha256, stored.key, stored.byte_size, "image/jpeg"
+        else:
+            sha = uuid.uuid4().hex * 2
+            key, size, mime = f"sha256/{sha[:2]}/{sha}", 1, "image/png"
         async with make_sessionmaker(db_engine).begin() as session:
             case = Case(title="seeded")
             original = Artefact(
                 kind=ArtefactKind.ORIGINAL,
                 sha256=sha,
-                storage_key=f"sha256/{sha[:2]}/{sha}",
-                content_type="image/png",
-                byte_size=1,
+                storage_key=key,
+                content_type=mime,
+                byte_size=size,
             )
             session.add_all([case, original])
             await session.flush()
             asset = Asset(
                 case_id=case.id,
                 original_artefact_id=original.id,
-                content_type="image/png",
+                content_type=mime,
                 width=1,
                 height=1,
                 sha256=sha,

@@ -1,15 +1,9 @@
-"""The ordered list of pipeline stages the worker executes.
+"""The order of the pipeline's stages.
 
-Stages are added here as each phase implements them (ingest, discover, verify, date, branch,
-report). Until then a run completes with no stages executed.
+The worker builds the stage objects (origin_worker.stages); the API uses this order to show
+progress for stages that have not started yet. Stages are added as each phase implements them.
 """
 
 from __future__ import annotations
 
-from origin_core.pipeline.runner import Stage
-
 STAGE_ORDER: tuple[str, ...] = ("ingest", "discover", "verify", "date", "branch", "report")
-
-
-def default_stages() -> list[Stage]:
-    return []

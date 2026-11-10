@@ -15,6 +15,13 @@ members = ["packages/shared", "apps/api", "apps/worker"]
 origin-core = { workspace = true }
 origin-api = { workspace = true }
 origin-worker = { workspace = true }
+torch = { index = "pytorch-cpu" }
+
+# CPU-only PyTorch: the default Linux wheels bundle CUDA (~2.5 GB) that ORIGIN never uses.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [dependency-groups]
 dev = [
@@ -41,7 +48,7 @@ ignore = ["S101"]
 "**/migrations/**" = ["E501"]
 
 [tool.pyright]
-include = ["conftest.py", "scripts", "packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
+include = ["conftest.py", "testkit.py", "scripts", "packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 venvPath = "."

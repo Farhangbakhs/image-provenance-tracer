@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
 
 import pytest
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
+from testkit import SeedRun
 
 from origin_core.db.models import AuditEvent, Run
 from origin_core.db.session import make_sessionmaker
 from origin_core.enums import RunStatus
 from origin_core.pipeline.events import EventType, RunEventBus
-from origin_core.pipeline.registry import default_stages
 from origin_core.pipeline.runner import PipelineRunner, RunNotFound, StageContext, StageResult
 
 pytestmark = [pytest.mark.db, pytest.mark.redis]
@@ -47,12 +46,11 @@ async def _events(redis: Redis, run_id: uuid.UUID) -> list[tuple[EventType, str 
 
 
 async def test_empty_pipeline_completes(
-    db_engine: AsyncEngine, redis: Redis, seed_run: Callable[[], object]
+    db_engine: AsyncEngine, redis: Redis, seed_run: SeedRun
 ) -> None:
-    run_id = await seed_run()  # type: ignore[misc]
-    assert isinstance(run_id, uuid.UUID)
+    run_id = await seed_run()
     status = await PipelineRunner(
-        sessions=make_sessionmaker(db_engine), events=RunEventBus(redis), stages=default_stages()
+        sessions=make_sessionmaker(db_engine), events=RunEventBus(redis), stages=[]
     ).execute(run_id)
 
     assert status is RunStatus.SUCCEEDED
@@ -66,10 +64,9 @@ async def test_empty_pipeline_completes(
 
 
 async def test_stages_run_in_order_and_are_recorded(
-    db_engine: AsyncEngine, redis: Redis, seed_run: Callable[[], object]
+    db_engine: AsyncEngine, redis: Redis, seed_run: SeedRun
 ) -> None:
-    run_id = await seed_run()  # type: ignore[misc]
-    assert isinstance(run_id, uuid.UUID)
+    run_id = await seed_run()
     log: list[str] = []
     status = await _runner(
         db_engine, redis, [RecordingStage("ingest", log), RecordingStage("discover", log)]
@@ -106,10 +103,9 @@ async def test_stages_run_in_order_and_are_recorded(
 
 
 async def test_failure_stops_the_run_and_retry_resumes(
-    db_engine: AsyncEngine, redis: Redis, seed_run: Callable[[], object]
+    db_engine: AsyncEngine, redis: Redis, seed_run: SeedRun
 ) -> None:
-    run_id = await seed_run()  # type: ignore[misc]
-    assert isinstance(run_id, uuid.UUID)
+    run_id = await seed_run()
     log: list[str] = []
     stages = [
         RecordingStage("ingest", log),
@@ -132,10 +128,9 @@ async def test_failure_stops_the_run_and_retry_resumes(
 
 
 async def test_succeeded_run_is_not_executed_again(
-    db_engine: AsyncEngine, redis: Redis, seed_run: Callable[[], object]
+    db_engine: AsyncEngine, redis: Redis, seed_run: SeedRun
 ) -> None:
-    run_id = await seed_run()  # type: ignore[misc]
-    assert isinstance(run_id, uuid.UUID)
+    run_id = await seed_run()
     log: list[str] = []
     runner = _runner(db_engine, redis, [RecordingStage("ingest", log)])
     await runner.execute(run_id)

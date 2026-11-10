@@ -6,6 +6,9 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "origin-core",
     "arq>=0.26",
+    "torch>=2.15",
+    "numpy>=2",
+    "pillow>=11",
 ]
 
 [tool.uv.sources]
