@@ -75,7 +75,7 @@ def container(
 
 def job_python(tar: Path) -> int:
     return container(
-        "ghcr.io/astral-sh/uv:python3.12-bookworm-slim",
+        "ghcr.io/astral-sh/uv:python3.12-bookworm",  # full image: C++ toolchain for pdqhash
         PYTHON_JOB,
         tar,
         env={
