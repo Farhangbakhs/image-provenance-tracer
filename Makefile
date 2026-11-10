@@ -36,6 +36,7 @@ lint:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run pyright
+	uv run python -m origin_core.providers.fixtures verify
 	$(NPM) run lint
 	$(NPM) run typecheck
 
