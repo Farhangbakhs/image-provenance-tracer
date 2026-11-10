@@ -41,7 +41,7 @@ ignore = ["S101"]
 "**/migrations/**" = ["E501"]
 
 [tool.pyright]
-include = ["packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
+include = ["conftest.py", "packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 venvPath = "."

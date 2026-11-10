@@ -1,3 +1,4 @@
+import { SystemStatus } from "@/components/SystemStatus";
 import { EARLIEST_DISCLAIMER } from "@/lib/copy";
 
 export default function Home() {
@@ -10,6 +11,9 @@ export default function Home() {
         diverges. Every statement cites stored evidence.
       </p>
       <p className="mt-6 border-l border-accent pl-3 text-[12px] text-muted">{EARLIEST_DISCLAIMER}</p>
+      <div className="mt-8 max-w-md">
+        <SystemStatus />
+      </div>
     </section>
   );
 }

@@ -45,13 +45,13 @@ class Settings(BaseSettings):
     log_json: bool = Field(default=False, alias="ORIGIN_LOG_JSON")
 
     database_url: str = Field(
-        default="postgresql+asyncpg://origin:origin@localhost:5432/origin", alias="DATABASE_URL"
+        default="postgresql+asyncpg://origin:origin@127.0.0.1:5432/origin", alias="DATABASE_URL"
     )
-    redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
+    redis_url: str = Field(default="redis://127.0.0.1:6379/0", alias="REDIS_URL")
 
     blob_backend: BlobBackend = Field(default=BlobBackend.S3, alias="BLOB_BACKEND")
     blob_dir: Path = Field(default=Path("var/blobs"), alias="BLOB_DIR")
-    s3_endpoint: str | None = Field(default="http://localhost:8333", alias="S3_ENDPOINT")
+    s3_endpoint: str | None = Field(default="http://127.0.0.1:8333", alias="S3_ENDPOINT")
     s3_region: str = Field(default="us-east-1", alias="S3_REGION")
     s3_bucket: str = Field(default="origin", alias="S3_BUCKET")
     s3_access_key: str = Field(default="origin", alias="S3_ACCESS_KEY")

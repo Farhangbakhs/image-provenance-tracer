@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const jetbrainsMono = JetBrains_Mono({ variable: "--font-jetbrains-mono", subsets: ["latin"] });
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <span className="text-[12px] font-semibold tracking-[0.14em]">ORIGIN</span>
           <span className="text-[11px] text-muted">All times UTC</span>
         </header>
-        <main className="flex flex-1 flex-col">{children}</main>
+        <main className="flex flex-1 flex-col">
+          <Providers>{children}</Providers>
+        </main>
       </body>
     </html>
   );
