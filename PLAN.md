@@ -36,7 +36,7 @@ This file refines the original build brief. Section 1 records what was checked a
 
 ### 1.3 Assumptions I could not confirm
 
-- The SSCD **weight licence**. The README covers only the code. It needs a direct answer (repo issues or Meta) before a public deployment. Fallback if it is restrictive: DINOv2 ViT-S/14 (Apache-2.0) embeddings with a recalibrated threshold.
+- ~~The SSCD weight licence~~ **Resolved (Phase 1):** the maintainers state that the whole project, weights included, is MIT ([issue #12](https://github.com/facebookresearch/sscd-copy-detection/issues/12)).
 - The official Cloud Vision pricing page did not render; the 1,000 free units are confirmed only via Google-hosted localised pages in search snippets and a third-party summary.
 - Whether a SerpApi Image API **upload counts as a search**. The meter assumes it does (2 units per Lens trace) until measured.
 - Whether Yandex via SerpApi accepts `image_id`.
@@ -82,6 +82,21 @@ Local tools to install: **exiftool** (not on this machine). Python 3.12 is insta
 | **Replay mode fails loudly** on a missing recording | An empty result would read as "no matches found", which is a false finding. |
 | **Quota periods align to UTC calendar boundaries** | Vendors may reset on a billing anniversary instead; the Vision hard stop at 950 absorbs that mismatch. |
 | **Local `make` caveat** | The `make` first on this machine's PATH comes from GAMS and cannot run recipes that need a shell. Use a standard GNU make (e.g. `winget install ezwinports.make`) or run the commands directly. |
+
+### 1.7 Decisions made while building Phase 1
+
+| Decision | Why |
+| --- | --- |
+| **Ingest is split between API and worker** | Validation, storage, hashes, exiftool and C2PA run at upload so a bad file is refused at the door; the SSCD embedding runs in the worker's ingest stage, so only the worker loads PyTorch. |
+| **c2pa-python pinned to 0.38.0** | 0.38.1 and 0.38.2 were published with macOS wheels only. |
+| **Official C2PA trust list vendored and hash-checked** | From `c2pa-org/conformance-public` at commit `64b3f9c` (CC-BY-4.0). Every C2PA result records the list it was judged against. |
+| **Invalid manifests stay distinguishable** | The schema has three states, but the raw validation state and failure codes are stored and shown, so "Invalid" never reads as merely "untrusted". |
+| **Metadata never invents certainty** | A capture time without a zone offset is shown as stated, never as UTC; GPS without a hemisphere is left unknown. exiftool failing is "unavailable", not "no metadata". |
+| **CPU-only PyTorch from the PyTorch index** | The default Linux wheels bundle ~2.5 GB of CUDA. The Python image is still 2.1 GB; a slim API-only image is a later optimisation. |
+| **Model weights downloaded, verified, never committed** | `python -m origin_worker.embedding download`; SHA-256 pinned; tests never download (CI fetches in a setup step and requires the model). |
+| **Worker health check reads arq's heartbeat key** | `arq --check` imports PyTorch and outlasts the check timeout; the heartbeat refreshes every 30 s. |
+| **Local CI (`make ci`)** | GitHub Actions is unavailable on this account (billing lock). `make ci` runs the same jobs in Linux containers against committed HEAD. |
+| **Dating vocabulary extended (Phase 2)** | `no_earlier_than` (capture or signing time floors a sighting) and `observed` (ORIGIN's own fetch caps it) were needed by the dating rule. |
 
 ---
 
@@ -190,7 +205,7 @@ An analyst console: dark, dense and quiet.
 | Phase | Sections (proposed in full at the start of each phase) | Done when |
 | --- | --- | --- |
 | 0. Foundations **(done)** | repo skeleton and tooling; compose stack; schema and migrations; provider protocol, runner and quota; fixture recorder and replayer; pipeline runner, worker and SSE; CI | `make dev` starts everything; CI green on an empty pipeline |
-| 1. Ingest | upload validation; storage; hashing and embedding; metadata and C2PA; asset panel | an upload shows its asset panel; a C2PA sample reports the right state |
+| 1. Ingest **(done)** | upload validation; storage; hashing and embedding; metadata and C2PA; asset panel | an upload shows its asset panel; a C2PA sample reports the right state |
 | 2. Discover, verify, date | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
 | 3. Branching | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
 | 4. Console | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
