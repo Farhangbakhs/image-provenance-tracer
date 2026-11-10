@@ -3,13 +3,14 @@ WEB := apps/web
 NPM := npm --prefix $(WEB)
 COMPOSE := docker compose -f infra/compose.yaml
 
-.PHONY: help install dev down logs migrate lint fmt test test-py test-web
+.PHONY: help install dev down logs migrate client lint fmt test test-py test-web
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
 	$(info down      Stop the stack (data volumes are kept))
 	$(info logs      Follow stack logs)
 	$(info migrate   Apply database migrations to DATABASE_URL (default: compose db))
+	$(info client    Regenerate the typed web API client from the OpenAPI schema)
 	$(info install   Install Python and web dependencies)
 	$(info lint      ruff, pyright (strict), eslint, tsc)
 	$(info fmt       Format Python sources)
@@ -27,6 +28,10 @@ logs:
 
 migrate:
 	uv run python -m origin_core.db.migrate upgrade
+
+client:
+	uv run python -m origin_api.openapi apps/web/openapi.json
+	$(NPM) run gen:api
 
 install:
 	uv sync

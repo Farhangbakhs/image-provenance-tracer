@@ -32,7 +32,7 @@ async def test_filesystem_store_detects_tampering(tmp_path: Path) -> None:
 async def test_s3_store_round_trip() -> None:
     store = S3BlobStore(
         bucket=f"origin-test-{uuid.uuid4().hex[:8]}",
-        endpoint_url=os.environ.get("TEST_S3_ENDPOINT", "http://localhost:8333"),
+        endpoint_url=os.environ.get("TEST_S3_ENDPOINT", "http://127.0.0.1:8333"),
         region="us-east-1",
         access_key="origin",
         secret_key="origin-dev-secret",
@@ -40,7 +40,7 @@ async def test_s3_store_round_trip() -> None:
     try:
         await store.ensure_ready()
     except (BotoCoreError, ClientError) as exc:
-        if os.environ.get("ORIGIN_REQUIRE_S3") == "1":
+        if os.environ.get("ORIGIN_REQUIRE_SERVICES") == "1":
             raise
         pytest.skip(f"S3 endpoint not reachable ({exc})")
     blob = await store.put(b"\x89PNG bytes", "image/png")
