@@ -9,6 +9,10 @@ For each (adapter, image) it:
 5. calls the adapter with a timeout and retries retryable failures with jittered backoff;
 6. stores the raw response as an artefact and records a `provider_calls` row, whatever
    the outcome, so every query is auditable and replayable.
+
+In record mode it also writes each response (secrets redacted) to the fixture tree. In replay
+mode it never touches the network, the cache or the quota: it serves recordings only, and a
+query without a recording fails loudly instead of silently returning nothing.
 """
 
 from __future__ import annotations
@@ -39,6 +43,8 @@ from origin_core.providers.base import (
     RawResponse,
 )
 from origin_core.providers.breaker import BreakerRegistry
+from origin_core.providers.fixtures import FixtureStore
+from origin_core.settings import ProviderMode
 from origin_core.storage import BlobStore
 
 log = structlog.get_logger(__name__)
@@ -92,7 +98,12 @@ class ProviderRunner:
         retry: RetryPolicy | None = None,
         clock: Callable[[], datetime] = _utcnow,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        mode: ProviderMode = ProviderMode.LIVE,
+        fixtures: FixtureStore | None = None,
+        redact_secrets: tuple[str, ...] = (),
     ) -> None:
+        if mode is not ProviderMode.LIVE and fixtures is None:
+            raise ValueError(f"provider mode '{mode.value}' needs a FixtureStore")
         self._sessions = sessions
         self._blobs = blobs
         self._http = http
@@ -101,6 +112,9 @@ class ProviderRunner:
         self._retry = retry or RetryPolicy()
         self._clock = clock
         self._sleep = sleep
+        self._mode = mode
+        self._fixtures = fixtures
+        self._redact = redact_secrets
 
     async def run(
         self, adapter: ProviderAdapter, asset: AssetRef, *, run_id: uuid.UUID | None = None
@@ -109,10 +123,14 @@ class ProviderRunner:
         rh = request_hash(adapter.name, asset.sha256, params)
         bound = log.bind(provider=adapter.name, request_hash=rh[:12], run_id=str(run_id))
 
+        if self._mode is ProviderMode.REPLAY:
+            return await self._replay(adapter, asset, rh, params, run_id)
+
         cached = await self._cached_body(adapter.name, rh)
         if cached is not None:
             artefact_id, body = cached
             bound.info("provider.cache_hit")
+            self._maybe_record(adapter, asset, rh, params, body, "application/json", None)
             return await self._finish(
                 adapter, rh, params, run_id, ProviderCallStatus.CACHED, body, artefact_id, 0, None
             )
@@ -168,6 +186,7 @@ class ProviderRunner:
             )
 
         breaker.record_success()
+        self._maybe_record(adapter, asset, rh, params, raw.body, raw.content_type, raw.units)
         spent = await self._reconcile(policy, reserved, raw.units)
         latency_ms = int((time.monotonic() - started) * 1000)
         bound.info("provider.ok", units=spent, latency_ms=latency_ms)
@@ -183,6 +202,64 @@ class ProviderRunner:
             latency_ms,
             content_type=raw.content_type,
         )
+
+    async def _replay(
+        self,
+        adapter: ProviderAdapter,
+        asset: AssetRef,
+        rh: str,
+        params: dict[str, object],
+        run_id: uuid.UUID | None,
+    ) -> ProviderOutcome:
+        assert self._fixtures is not None
+        recording = self._fixtures.find(adapter.name, rh)
+        if recording is None:
+            message = (
+                f"replay mode: no recording for provider '{adapter.name}' and image "
+                f"{asset.sha256[:12]} (request {rh})"
+            )
+            log.error("provider.replay_missing", provider=adapter.name, request_hash=rh)
+            return await self._record_only(
+                adapter, rh, params, run_id, ProviderCallStatus.ERROR, message
+            )
+        return await self._finish(
+            adapter,
+            rh,
+            params,
+            run_id,
+            ProviderCallStatus.REPLAYED,
+            recording.body_bytes(),
+            None,
+            0,
+            None,
+            content_type=recording.content_type,
+        )
+
+    def _maybe_record(
+        self,
+        adapter: ProviderAdapter,
+        asset: AssetRef,
+        rh: str,
+        params: dict[str, object],
+        body: bytes,
+        content_type: str,
+        units: int | None,
+    ) -> None:
+        if self._mode is not ProviderMode.RECORD:
+            return
+        assert self._fixtures is not None
+        path = self._fixtures.write(
+            provider=adapter.name,
+            rh=rh,
+            asset_sha256=asset.sha256,
+            params=dict(params),
+            body=body,
+            content_type=content_type,
+            units=units,
+            recorded_at=self._clock(),
+            secrets=self._redact,
+        )
+        log.info("provider.recorded", provider=adapter.name, path=str(path))
 
     async def _call_with_retries(self, adapter: ProviderAdapter, asset: AssetRef) -> RawResponse:
         last: ProviderError | None = None

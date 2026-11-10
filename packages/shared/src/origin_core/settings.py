@@ -59,6 +59,9 @@ class Settings(BaseSettings):
 
     provider_mode: ProviderMode = Field(default=ProviderMode.LIVE, alias="ORIGIN_PROVIDER_MODE")
     fixtures_dir: Path = Field(default=Path("fixtures/recordings"), alias="ORIGIN_FIXTURES_DIR")
+    synthetic_fixtures_dir: Path = Field(
+        default=Path("fixtures/synthetic"), alias="ORIGIN_SYNTHETIC_FIXTURES_DIR"
+    )
     enable_unofficial_providers: bool = Field(
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )

@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import json
-import uuid
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
@@ -16,58 +12,16 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from origin_core.db.models import Artefact, ProviderCall
 from origin_core.db.session import make_sessionmaker
-from origin_core.enums import ProviderCallStatus, QuotaPeriod
+from origin_core.enums import ProviderCallStatus
 from origin_core.providers import quota
-from origin_core.providers.base import AssetRef, CandidateHit, ProviderError, RawResponse
+from origin_core.providers.base import ProviderError, RawResponse
 from origin_core.providers.breaker import BreakerRegistry, CircuitBreaker
 from origin_core.providers.runner import ProviderRunner, RetryPolicy
 from origin_core.storage import FilesystemBlobStore
 
+from .support import ASSET, NOW, ScriptedAdapter, json_body, make_policy, no_sleep, used_units
+
 pytestmark = pytest.mark.db
-
-NOW = datetime(2026, 11, 10, 12, tzinfo=UTC)
-
-
-class ScriptedAdapter:
-    """Test double: returns or raises the scripted results in order, and counts calls."""
-
-    unit_cost: int = 1
-    requires_public_url: bool = False
-    recipients: tuple[str, ...] = ("nobody (test)",)
-
-    def __init__(self, script: list[RawResponse | ProviderError], *, quota_key: str) -> None:
-        self.name: str = f"scripted-{uuid.uuid4().hex[:8]}"
-        self.quota_key: str = quota_key
-        self._script = list(script)
-        self.calls = 0
-
-    def params(self) -> dict[str, Any]:
-        return {"type": "exact"}
-
-    async def fetch(self, asset: AssetRef, client: httpx.AsyncClient) -> RawResponse:
-        self.calls += 1
-        step = self._script.pop(0)
-        if isinstance(step, ProviderError):
-            raise step
-        return step
-
-    def parse(self, body: bytes) -> list[CandidateHit]:
-        data = json.loads(body)
-        return [CandidateHit(page_url=item["page"], image_url=item["image"]) for item in data]
-
-
-def _body(*pages: str) -> RawResponse:
-    items = [{"page": p, "image": f"{p}/img.jpg"} for p in pages]
-    return RawResponse(json.dumps(items).encode())
-
-
-ASSET = AssetRef(
-    id="asset", sha256="d" * 64, content_type="image/jpeg", data=b"jpeg", width=1, height=1
-)
-
-
-async def _no_sleep(_: float) -> None:
-    return None
 
 
 @pytest.fixture
@@ -90,31 +44,20 @@ def _runner(
         breakers=breakers,
         retry=RetryPolicy(attempts=3, timeout_s=5),
         clock=lambda: NOW,
-        sleep=_no_sleep,
+        sleep=no_sleep,
     )
-
-
-def _policy(limit: int, *, charges_failed: bool = False) -> quota.QuotaPolicy:
-    return quota.QuotaPolicy(
-        f"q-{uuid.uuid4().hex[:8]}", {QuotaPeriod.MONTH: limit}, charges_failed
-    )
-
-
-async def _used(sessions: async_sessionmaker[AsyncSession], policy: quota.QuotaPolicy) -> int:
-    async with sessions() as session:
-        return (await quota.remaining(session, policy, NOW))[0].used
 
 
 async def test_success_records_call_artefact_and_quota(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(5)
-    adapter = ScriptedAdapter([_body("https://a.example")], quota_key=policy.key)
+    policy = make_policy(5)
+    adapter = ScriptedAdapter([json_body("https://a.example")], quota_key=policy.key)
     outcome = await _runner(sessions, tmp_path, {policy.key: policy}).run(adapter, ASSET)
 
     assert outcome.status is ProviderCallStatus.OK
     assert [h.page_url for h in outcome.hits] == ["https://a.example"]
-    assert await _used(sessions, policy) == 1
+    assert await used_units(sessions, policy) == 1
     async with sessions() as session:
         call = await session.get_one(ProviderCall, outcome.call_id)
         artefact = await session.get_one(Artefact, call.raw_artefact_id)
@@ -126,8 +69,8 @@ async def test_success_records_call_artefact_and_quota(
 async def test_repeat_query_is_served_from_cache_without_quota(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(5)
-    adapter = ScriptedAdapter([_body("https://a.example")], quota_key=policy.key)
+    policy = make_policy(5)
+    adapter = ScriptedAdapter([json_body("https://a.example")], quota_key=policy.key)
     runner = _runner(sessions, tmp_path, {policy.key: policy})
     first = await runner.run(adapter, ASSET)
     second = await runner.run(adapter, ASSET)
@@ -135,14 +78,14 @@ async def test_repeat_query_is_served_from_cache_without_quota(
     assert second.status is ProviderCallStatus.CACHED
     assert second.hits == first.hits
     assert adapter.calls == 1
-    assert await _used(sessions, policy) == 1
+    assert await used_units(sessions, policy) == 1
 
 
 async def test_exhausted_quota_skips_without_calling(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(0)
-    adapter = ScriptedAdapter([_body("https://a.example")], quota_key=policy.key)
+    policy = make_policy(0)
+    adapter = ScriptedAdapter([json_body("https://a.example")], quota_key=policy.key)
     outcome = await _runner(sessions, tmp_path, {policy.key: policy}).run(adapter, ASSET)
 
     assert outcome.status is ProviderCallStatus.SKIPPED_QUOTA
@@ -153,28 +96,28 @@ async def test_exhausted_quota_skips_without_calling(
 async def test_retryable_errors_are_retried(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(5)
+    policy = make_policy(5)
     adapter = ScriptedAdapter(
-        [ProviderError("503", retryable=True), _body("https://a.example")], quota_key=policy.key
+        [ProviderError("503", retryable=True), json_body("https://a.example")], quota_key=policy.key
     )
     outcome = await _runner(sessions, tmp_path, {policy.key: policy}).run(adapter, ASSET)
 
     assert outcome.status is ProviderCallStatus.OK
     assert adapter.calls == 2
-    assert await _used(sessions, policy) == 1
+    assert await used_units(sessions, policy) == 1
 
 
 async def test_failure_is_recorded_and_unbilled_units_refunded(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(5, charges_failed=False)
+    policy = make_policy(5, charges_failed=False)
     adapter = ScriptedAdapter([ProviderError("bad key", retryable=False)], quota_key=policy.key)
     outcome = await _runner(sessions, tmp_path, {policy.key: policy}).run(adapter, ASSET)
 
     assert outcome.status is ProviderCallStatus.ERROR
     assert outcome.error == "bad key"
     assert adapter.calls == 1
-    assert await _used(sessions, policy) == 0
+    assert await used_units(sessions, policy) == 0
     async with sessions() as session:
         call = await session.get_one(ProviderCall, outcome.call_id)
     assert call.error == "bad key"
@@ -183,16 +126,16 @@ async def test_failure_is_recorded_and_unbilled_units_refunded(
 async def test_billed_failures_keep_their_units(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(5, charges_failed=True)
+    policy = make_policy(5, charges_failed=True)
     adapter = ScriptedAdapter([ProviderError("400", retryable=False)], quota_key=policy.key)
     await _runner(sessions, tmp_path, {policy.key: policy}).run(adapter, ASSET)
-    assert await _used(sessions, policy) == 1
+    assert await used_units(sessions, policy) == 1
 
 
 async def test_open_breaker_skips_provider(
     sessions: async_sessionmaker[AsyncSession], tmp_path: Path
 ) -> None:
-    policy = _policy(10)
+    policy = make_policy(10)
     breakers = BreakerRegistry(lambda: CircuitBreaker(threshold=1, cooldown_s=3600))
     adapter = ScriptedAdapter([ProviderError("down", retryable=False)], quota_key=policy.key)
     runner = _runner(sessions, tmp_path, {policy.key: policy}, breakers=breakers)
