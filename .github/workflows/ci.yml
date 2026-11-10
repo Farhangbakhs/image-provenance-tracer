@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.7"
+
+jobs:
+  python:
+    name: Python (lint, types, tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: origin
+          POSTGRES_PASSWORD: origin
+          POSTGRES_DB: origin
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U origin -d origin"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+      redis:
+        image: redis:7.4.6-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      # A missing service fails the run instead of skipping its tests.
+      ORIGIN_REQUIRE_SERVICES: "1"
+      TEST_DATABASE_URL: postgresql+asyncpg://origin:origin@127.0.0.1:5432/origin_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
+      TEST_S3_ENDPOINT: http://127.0.0.1:8333
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start S3-compatible store
+        # Service containers cannot take a command, and SeaweedFS needs one.
+        run: |
+          docker run -d --name s3 -p 8333:8333 \
+            -v "$PWD/infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro" \
+            chrislusf/seaweedfs:4.51 server -dir=/data -ip.bind=0.0.0.0 \
+            -master.volumeSizeLimitMB=64 -s3 -s3.config=/etc/seaweedfs/s3.json
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pyright
+      - run: uv run python -m origin_core.providers.fixtures verify
+      - name: Wait for S3
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8333/healthz >/dev/null && exit 0
+            sleep 1
+          done
+          docker logs s3
+          exit 1
+      - run: uv run pytest -q
+
+  web:
+    name: Web (lint, types, tests, build, client drift)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Generated API client matches the API
+        working-directory: .
+        run: |
+          uv sync --frozen
+          uv run python -m origin_api.openapi apps/web/openapi.json
+          npm --prefix apps/web run gen:api
+          git diff --exit-code -- apps/web/openapi.json apps/web/src/lib/api/schema.d.ts
+
+  images:
+    name: Container images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose -f infra/compose.yaml config --quiet
+      - run: docker build -f infra/docker/python.Dockerfile -t origin-python:ci .
+      - run: docker build -f infra/docker/web.Dockerfile -t origin-web:ci apps/web
