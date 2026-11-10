@@ -51,7 +51,7 @@ class Settings(BaseSettings):
 
     blob_backend: BlobBackend = Field(default=BlobBackend.S3, alias="BLOB_BACKEND")
     blob_dir: Path = Field(default=Path("var/blobs"), alias="BLOB_DIR")
-    s3_endpoint: str | None = Field(default="http://localhost:9000", alias="S3_ENDPOINT")
+    s3_endpoint: str | None = Field(default="http://localhost:8333", alias="S3_ENDPOINT")
     s3_region: str = Field(default="us-east-1", alias="S3_REGION")
     s3_bucket: str = Field(default="origin", alias="S3_BUCKET")
     s3_access_key: str = Field(default="origin", alias="S3_ACCESS_KEY")

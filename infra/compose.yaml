@@ -1,0 +1,96 @@
+# ORIGIN local stack. Run from the repository root with `make dev`.
+name: origin
+
+x-python-env: &python-env
+  ORIGIN_ENV: ${ORIGIN_ENV:-development}
+  ORIGIN_LOG_JSON: "true"
+  ORIGIN_PROVIDER_MODE: ${ORIGIN_PROVIDER_MODE:-live}
+  DATABASE_URL: postgresql+asyncpg://origin:origin@db:5432/origin
+  REDIS_URL: redis://redis:6379/0
+  BLOB_BACKEND: s3
+  S3_ENDPOINT: http://s3:8333
+  S3_REGION: us-east-1
+  S3_BUCKET: origin
+  S3_ACCESS_KEY: origin
+  S3_SECRET_KEY: origin-dev-secret
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: origin
+      POSTGRES_PASSWORD: origin
+      POSTGRES_DB: origin
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U origin -d origin"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7.4.6-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # S3-compatible object storage. MinIO stopped publishing community images in 2025,
+  # so local development uses SeaweedFS; deployments use any S3 API (e.g. Cloudflare R2).
+  s3:
+    image: chrislusf/seaweedfs:4.51
+    command:
+      - server
+      - -dir=/data
+      - -ip.bind=0.0.0.0
+      - -master.volumeSizeLimitMB=256
+      - -s3
+      - -s3.config=/etc/seaweedfs/s3.json
+    ports: ["127.0.0.1:8333:8333"]
+    volumes:
+      - s3-data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8333/healthz || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/docker/python.Dockerfile
+    command: ["uvicorn", "origin_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      <<: *python-env
+      ORIGIN_CORS_ORIGINS: '["http://localhost:3000"]'
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      s3: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/livez', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: ../../infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  db-data:
+  redis-data:
+  s3-data:

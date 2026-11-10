@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "origin-dev",
+      "credentials": [{ "accessKey": "origin", "secretKey": "origin-dev-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
