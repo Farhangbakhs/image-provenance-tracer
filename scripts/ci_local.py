@@ -25,15 +25,21 @@ NETWORK = "origin_default"
 APP_SERVICES = ["api", "worker", "web"]
 DATA_SERVICES = ["db", "redis", "s3"]
 
+# One command per line: `set -e` does not stop on a failure on the left of `&&`, so chaining
+# checks with `&&` would let a failing check pass the job.
 PYTHON_JOB = """
 set -e
-mkdir /work && cd /work && tar xf /head.tar
+mkdir /work
+cd /work
+tar xf /head.tar
 # pyright's bundled Node needs libatomic, present on GitHub's runners but not slim Debian.
 # exiftool is needed by the metadata tests.
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends libatomic1 libimage-exiftool-perl >/dev/null
 uv sync --frozen -q
-echo '--- ruff';     uv run ruff check . && uv run ruff format --check .
+echo '--- ruff'
+uv run ruff check .
+uv run ruff format --check .
 echo '--- pyright';  uv run pyright
 echo '--- fixtures'; uv run python -m origin_core.providers.fixtures verify
 echo '--- pytest';   uv run pytest -q
@@ -41,7 +47,10 @@ echo '--- pytest';   uv run pytest -q
 
 WEB_JOB = """
 set -e
-mkdir /work && cd /work && tar xf /head.tar && cd apps/web
+mkdir /work
+cd /work
+tar xf /head.tar
+cd apps/web
 npm ci --no-audit --no-fund --loglevel=error
 echo '--- eslint'; npm run lint
 echo '--- tsc';    npm run typecheck
