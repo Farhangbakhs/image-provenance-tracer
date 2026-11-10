@@ -1,0 +1,17 @@
+[project]
+name = "origin-api"
+version = "0.1.0"
+description = "ORIGIN HTTP API"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "origin-core",
+    "fastapi>=0.120",
+    "uvicorn[standard]>=0.35",
+]
+
+[tool.uv.sources]
+origin-core = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
