@@ -217,6 +217,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}/sightings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Sightings */
+        get: operations["run_sightings_runs__run_id__sightings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sightings/{sighting_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sighting Image
+         * @description The copy ORIGIN fetched, served only as the image type its bytes prove it to be.
+         */
+        get: operations["sighting_image_sightings__sighting_id__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -304,6 +341,29 @@ export interface components {
          * @enum {string}
          */
         C2PAState: "none" | "present_untrusted" | "valid_trusted";
+        /** CandidateCounts */
+        CandidateCounts: {
+            /**
+             * Fetch Failed
+             * @default 0
+             */
+            fetch_failed: number;
+            /**
+             * Pending
+             * @default 0
+             */
+            pending: number;
+            /**
+             * Unrelated
+             * @default 0
+             */
+            unrelated: number;
+            /**
+             * Verified
+             * @default 0
+             */
+            verified: number;
+        };
         /** CaptureTime */
         CaptureTime: {
             /** Stated */
@@ -390,6 +450,31 @@ export interface components {
              * @enum {string}
              */
             status: "computed" | "pending";
+        };
+        /** EvidenceOut */
+        EvidenceOut: {
+            /** Bound */
+            bound: string;
+            /** Confidence */
+            confidence: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Source Url */
+            source_url: string | null;
+            /**
+             * Value
+             * Format: date-time
+             */
+            value: string;
         };
         /** Fingerprints */
         Fingerprints: {
@@ -531,11 +616,76 @@ export interface components {
             started_at: string | null;
             status: components["schemas"]["RunStatus"];
         };
+        /** RunSightingsOut */
+        RunSightingsOut: {
+            candidates: components["schemas"]["CandidateCounts"];
+            /** Earliest Sighting Id */
+            earliest_sighting_id: string | null;
+            /** Notes */
+            notes: {
+                [key: string]: string;
+            };
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Sightings */
+            sightings: components["schemas"]["SightingOut"][];
+            status: components["schemas"]["RunStatus"];
+        };
         /**
          * RunStatus
          * @enum {string}
          */
         RunStatus: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+        /** SightingOut */
+        SightingOut: {
+            /** Date Confidence */
+            date_confidence: string;
+            /** Date Lower */
+            date_lower: string | null;
+            /** Date Upper */
+            date_upper: string | null;
+            /** Dating Rule Version */
+            dating_rule_version: string | null;
+            deciding: components["schemas"]["EvidenceOut"] | null;
+            /** Domain */
+            domain: string;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Image Url */
+            image_url: string;
+            /** Image Url Local */
+            image_url_local: string;
+            /** Match Class */
+            match_class: string;
+            /** Match Reason */
+            match_reason: string | null;
+            /** Page Url */
+            page_url: string | null;
+            /** Pdq Distance */
+            pdq_distance: number | null;
+            /** Phash Distance */
+            phash_distance: number | null;
+            /** Provider */
+            provider: string;
+            /** Sscd Cosine */
+            sscd_cosine: number | null;
+            /** Threshold Version */
+            threshold_version: string;
+            /** Title */
+            title: string | null;
+            /** Transform */
+            transform: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** StageState */
         StageState: {
             /**
@@ -549,6 +699,13 @@ export interface components {
             error?: string | null;
             /** Finished At */
             finished_at?: string | null;
+            /**
+             * Notes
+             * @default {}
+             */
+            notes: {
+                [key: string]: string;
+            };
             /**
              * Quota
              * @default {}
@@ -968,6 +1125,71 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_sightings_runs__run_id__sightings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunSightingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sighting_image_sightings__sighting_id__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sighting_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/gif": unknown;
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                    "image/webp": unknown;
                 };
             };
             /** @description Validation Error */

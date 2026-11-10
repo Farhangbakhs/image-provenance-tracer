@@ -19,3 +19,5 @@ export type CaseOut = components["schemas"]["CaseOut"];
 export type AssetOut = components["schemas"]["AssetOut"];
 export type CredentialsOut = components["schemas"]["CredentialsOut"];
 export type MetadataOut = components["schemas"]["MetadataOut"];
+export type RunSightingsOut = components["schemas"]["RunSightingsOut"];
+export type SightingOut = components["schemas"]["SightingOut"];

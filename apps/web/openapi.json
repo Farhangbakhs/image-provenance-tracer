@@ -192,6 +192,32 @@
         "title": "C2PAState",
         "type": "string"
       },
+      "CandidateCounts": {
+        "properties": {
+          "fetch_failed": {
+            "default": 0,
+            "title": "Fetch Failed",
+            "type": "integer"
+          },
+          "pending": {
+            "default": 0,
+            "title": "Pending",
+            "type": "integer"
+          },
+          "unrelated": {
+            "default": 0,
+            "title": "Unrelated",
+            "type": "integer"
+          },
+          "verified": {
+            "default": 0,
+            "title": "Verified",
+            "type": "integer"
+          }
+        },
+        "title": "CandidateCounts",
+        "type": "object"
+      },
       "CaptureTime": {
         "properties": {
           "stated": {
@@ -462,6 +488,59 @@
           "model"
         ],
         "title": "EmbeddingOut",
+        "type": "object"
+      },
+      "EvidenceOut": {
+        "properties": {
+          "bound": {
+            "title": "Bound",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "value": {
+            "format": "date-time",
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "value",
+          "bound",
+          "confidence",
+          "source_url",
+          "detail"
+        ],
+        "title": "EvidenceOut",
         "type": "object"
       },
       "Fingerprints": {
@@ -848,6 +927,57 @@
         "title": "RunOut",
         "type": "object"
       },
+      "RunSightingsOut": {
+        "properties": {
+          "candidates": {
+            "$ref": "#/components/schemas/CandidateCounts"
+          },
+          "earliest_sighting_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Sighting Id"
+          },
+          "notes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "object"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sightings": {
+            "items": {
+              "$ref": "#/components/schemas/SightingOut"
+            },
+            "title": "Sightings",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "run_id",
+          "status",
+          "earliest_sighting_id",
+          "candidates",
+          "notes",
+          "sightings"
+        ],
+        "title": "RunSightingsOut",
+        "type": "object"
+      },
       "RunStatus": {
         "enum": [
           "queued",
@@ -858,6 +988,197 @@
         ],
         "title": "RunStatus",
         "type": "string"
+      },
+      "SightingOut": {
+        "properties": {
+          "date_confidence": {
+            "title": "Date Confidence",
+            "type": "string"
+          },
+          "date_lower": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Lower"
+          },
+          "date_upper": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Upper"
+          },
+          "dating_rule_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dating Rule Version"
+          },
+          "deciding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceOut"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "image_url": {
+            "title": "Image Url",
+            "type": "string"
+          },
+          "image_url_local": {
+            "title": "Image Url Local",
+            "type": "string"
+          },
+          "match_class": {
+            "title": "Match Class",
+            "type": "string"
+          },
+          "match_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Reason"
+          },
+          "page_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Url"
+          },
+          "pdq_distance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdq Distance"
+          },
+          "phash_distance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phash Distance"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "sscd_cosine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sscd Cosine"
+          },
+          "threshold_version": {
+            "title": "Threshold Version",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "transform": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transform"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "page_url",
+          "image_url",
+          "domain",
+          "title",
+          "match_class",
+          "match_reason",
+          "sscd_cosine",
+          "phash_distance",
+          "pdq_distance",
+          "transform",
+          "threshold_version",
+          "date_lower",
+          "date_upper",
+          "date_confidence",
+          "dating_rule_version",
+          "deciding",
+          "evidence",
+          "image_url_local"
+        ],
+        "title": "SightingOut",
+        "type": "object"
       },
       "StageState": {
         "additionalProperties": true,
@@ -892,6 +1213,14 @@
               }
             ],
             "title": "Finished At"
+          },
+          "notes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Notes",
+            "type": "object"
           },
           "quota": {
             "additionalProperties": {
@@ -1539,6 +1868,92 @@
         "summary": "Run Events",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/runs/{run_id}/sightings": {
+      "get": {
+        "operationId": "run_sightings_runs__run_id__sightings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSightingsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Sightings",
+        "tags": [
+          "sightings"
+        ]
+      }
+    },
+    "/sightings/{sighting_id}/image": {
+      "get": {
+        "description": "The copy ORIGIN fetched, served only as the image type its bytes prove it to be.",
+        "operationId": "sighting_image_sightings__sighting_id__image_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sighting_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Sighting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/gif": {},
+              "image/jpeg": {},
+              "image/png": {},
+              "image/webp": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sighting Image",
+        "tags": [
+          "sightings"
         ]
       }
     }
