@@ -1,6 +1,411 @@
 {
   "components": {
     "schemas": {
+      "AssetBrief": {
+        "properties": {
+          "c2pa_state": {
+            "$ref": "#/components/schemas/C2PAState"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "original_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Filename"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "original_filename",
+          "width",
+          "height",
+          "c2pa_state",
+          "created_at"
+        ],
+        "title": "AssetBrief",
+        "type": "object"
+      },
+      "AssetEvidence": {
+        "description": "The full stored records behind the asset panel's summaries.",
+        "properties": {
+          "c2pa_manifest_store": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Manifest Store"
+          },
+          "metadata_raw": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Raw"
+          }
+        },
+        "required": [
+          "metadata_raw",
+          "c2pa_manifest_store"
+        ],
+        "title": "AssetEvidence",
+        "type": "object"
+      },
+      "AssetOut": {
+        "properties": {
+          "byte_size": {
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "credentials": {
+            "$ref": "#/components/schemas/CredentialsOut"
+          },
+          "display_url": {
+            "title": "Display Url",
+            "type": "string"
+          },
+          "embedding": {
+            "$ref": "#/components/schemas/EmbeddingOut"
+          },
+          "fingerprints": {
+            "$ref": "#/components/schemas/Fingerprints"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MetadataOut"
+          },
+          "original_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Filename"
+          },
+          "runs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RunBrief"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "case_id",
+          "original_filename",
+          "content_type",
+          "width",
+          "height",
+          "byte_size",
+          "created_at",
+          "fingerprints",
+          "metadata",
+          "credentials",
+          "embedding",
+          "display_url"
+        ],
+        "title": "AssetOut",
+        "type": "object"
+      },
+      "Body_upload_asset_cases__case_id__assets_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_asset_cases__case_id__assets_post",
+        "type": "object"
+      },
+      "C2PAState": {
+        "enum": [
+          "none",
+          "present_untrusted",
+          "valid_trusted"
+        ],
+        "title": "C2PAState",
+        "type": "string"
+      },
+      "CaptureTime": {
+        "properties": {
+          "stated": {
+            "title": "Stated",
+            "type": "string"
+          },
+          "tag": {
+            "title": "Tag",
+            "type": "string"
+          },
+          "utc": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utc"
+          }
+        },
+        "required": [
+          "stated",
+          "tag",
+          "utc"
+        ],
+        "title": "CaptureTime",
+        "type": "object"
+      },
+      "CaseIn": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "CaseIn",
+        "type": "object"
+      },
+      "CaseOut": {
+        "properties": {
+          "assets": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AssetBrief"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "notes",
+          "created_at"
+        ],
+        "title": "CaseOut",
+        "type": "object"
+      },
+      "CredentialsOut": {
+        "properties": {
+          "actions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "claim_generator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claim Generator"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "failures": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Failures",
+            "type": "array"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "signer_common_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Common Name"
+          },
+          "signer_issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Issuer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/C2PAState"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "trust_list": {
+            "title": "Trust List",
+            "type": "string"
+          },
+          "validation_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation State"
+          }
+        },
+        "required": [
+          "state",
+          "trust_list"
+        ],
+        "title": "CredentialsOut",
+        "type": "object"
+      },
       "DependencyCheck": {
         "properties": {
           "error": {
@@ -28,6 +433,68 @@
           "latency_ms"
         ],
         "title": "DependencyCheck",
+        "type": "object"
+      },
+      "EmbeddingOut": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "status": {
+            "enum": [
+              "computed",
+              "pending"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "model"
+        ],
+        "title": "EmbeddingOut",
+        "type": "object"
+      },
+      "Fingerprints": {
+        "properties": {
+          "dhash": {
+            "title": "Dhash",
+            "type": "string"
+          },
+          "pdq": {
+            "title": "Pdq",
+            "type": "string"
+          },
+          "pdq_quality": {
+            "title": "Pdq Quality",
+            "type": "integer"
+          },
+          "phash": {
+            "title": "Phash",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "phash",
+          "dhash",
+          "pdq",
+          "pdq_quality"
+        ],
+        "title": "Fingerprints",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -62,6 +529,173 @@
         "title": "Livez",
         "type": "object"
       },
+      "MetadataOut": {
+        "description": "`unavailable` means exiftool could not run: not the same as \"no metadata\".",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetadataSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tag_count": {
+            "default": 0,
+            "title": "Tag Count",
+            "type": "integer"
+          },
+          "tool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool"
+          },
+          "tool_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Version"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "MetadataOut",
+        "type": "object"
+      },
+      "MetadataSummary": {
+        "properties": {
+          "camera_make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Make"
+          },
+          "camera_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Model"
+          },
+          "capture_time": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaptureTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "copyright": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copyright"
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit"
+          },
+          "gps_latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gps Latitude"
+          },
+          "gps_longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gps Longitude"
+          },
+          "groups": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "software": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Software"
+          }
+        },
+        "title": "MetadataSummary",
+        "type": "object"
+      },
       "Readyz": {
         "properties": {
           "checks": {
@@ -90,6 +724,30 @@
           "checks"
         ],
         "title": "Readyz",
+        "type": "object"
+      },
+      "RunBrief": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at"
+        ],
+        "title": "RunBrief",
         "type": "object"
       },
       "RunOut": {
@@ -271,6 +929,24 @@
         "title": "StageState",
         "type": "object"
       },
+      "UploadRejectedOut": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "message"
+        ],
+        "title": "UploadRejectedOut",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -319,6 +995,381 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/assets/{asset_id}": {
+      "get": {
+        "operationId": "get_asset_assets__asset_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Asset",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/{asset_id}/display": {
+      "get": {
+        "description": "The re-encoded display copy (oriented, metadata stripped). Never the original.",
+        "operationId": "get_display_assets__asset_id__display_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Display",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/{asset_id}/evidence": {
+      "get": {
+        "description": "Full exiftool output and C2PA manifest store, as stored.",
+        "operationId": "get_asset_evidence_assets__asset_id__evidence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetEvidence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Asset Evidence",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/assets/{asset_id}/runs": {
+      "post": {
+        "description": "Start a trace of this asset. The run executes on the worker; follow it over SSE.",
+        "operationId": "start_run_assets__asset_id__runs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Run",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/cases": {
+      "get": {
+        "operationId": "list_cases_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CaseOut"
+                  },
+                  "title": "Response List Cases Cases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cases",
+        "tags": [
+          "cases"
+        ]
+      },
+      "post": {
+        "operationId": "create_case_cases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/cases/{case_id}": {
+      "get": {
+        "operationId": "get_case_cases__case_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/cases/{case_id}/assets": {
+      "post": {
+        "description": "Add an image to a case: validated by content, stored, fingerprinted, and checked for\nmetadata and Content Credentials. The image is not sent to any third party here.",
+        "operationId": "upload_asset_cases__case_id__assets_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_asset_cases__case_id__assets_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetOut"
+                }
+              }
+            },
+            "description": "Identical image already in this case"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadRejectedOut"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadRejectedOut"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Upload Asset",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
     "/livez": {
       "get": {
         "description": "Process liveness: answers as long as the event loop runs.",

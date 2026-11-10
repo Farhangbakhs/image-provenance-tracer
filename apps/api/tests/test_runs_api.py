@@ -4,42 +4,15 @@ from __future__ import annotations
 
 import json
 import uuid
-from collections.abc import AsyncIterator
-from pathlib import Path
 
 import httpx
 import pytest
-from fastapi import FastAPI
 from redis.asyncio import Redis
 from testkit import SeedRun
 
-from origin_api.app import create_app
 from origin_core.pipeline.events import EventType, RunEvent, RunEventBus
-from origin_core.settings import BlobBackend, Settings
 
 pytestmark = [pytest.mark.db, pytest.mark.redis]
-
-
-@pytest.fixture
-async def app(database_url: str, redis_url: str, tmp_path: Path) -> AsyncIterator[FastAPI]:
-    settings = Settings(
-        _env_file=None,  # pyright: ignore[reportCallIssue]
-        ORIGIN_ENV="test",
-        DATABASE_URL=database_url,
-        REDIS_URL=redis_url,
-        BLOB_BACKEND=BlobBackend.FILESYSTEM,
-        BLOB_DIR=tmp_path / "blobs",
-    )
-    application = create_app(settings)
-    async with application.router.lifespan_context(application):
-        yield application
-
-
-@pytest.fixture
-async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
-        yield http
 
 
 def _sse(text: str) -> list[dict[str, str]]:

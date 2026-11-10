@@ -7,6 +7,8 @@ from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass
 from typing import Annotated, cast
 
+from arq import create_pool
+from arq.connections import ArqRedis, RedisSettings
 from fastapi import Depends, FastAPI, Request
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
@@ -25,6 +27,7 @@ class AppState:
     redis: Redis
     blobs: BlobStore
     events: RunEventBus
+    jobs: ArqRedis
 
 
 def lifespan_for(settings: Settings) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
@@ -32,6 +35,7 @@ def lifespan_for(settings: Settings) -> Callable[[FastAPI], AbstractAsyncContext
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         engine = make_engine(settings.database_url)
         redis = Redis.from_url(settings.redis_url)
+        jobs = await create_pool(RedisSettings.from_dsn(settings.redis_url))
         app.state.origin = AppState(
             settings=settings,
             engine=engine,
@@ -39,10 +43,12 @@ def lifespan_for(settings: Settings) -> Callable[[FastAPI], AbstractAsyncContext
             redis=redis,
             blobs=make_blob_store(settings),
             events=RunEventBus(redis),
+            jobs=jobs,
         )
         try:
             yield
         finally:
+            await jobs.aclose()
             await redis.aclose()
             await engine.dispose()
 
