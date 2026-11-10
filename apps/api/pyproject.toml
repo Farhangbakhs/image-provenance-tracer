@@ -7,6 +7,8 @@ dependencies = [
     "origin-core",
     "fastapi>=0.120",
     "uvicorn[standard]>=0.35",
+    "python-multipart>=0.0.20",
+    "arq>=0.26",
 ]
 
 [tool.uv.sources]

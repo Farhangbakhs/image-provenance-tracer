@@ -4,6 +4,139 @@
  */
 
 export interface paths {
+    "/assets/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Asset */
+        get: operations["get_asset_assets__asset_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/{asset_id}/display": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Display
+         * @description The re-encoded display copy (oriented, metadata stripped). Never the original.
+         */
+        get: operations["get_display_assets__asset_id__display_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/{asset_id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Asset Evidence
+         * @description Full exiftool output and C2PA manifest store, as stored.
+         */
+        get: operations["get_asset_evidence_assets__asset_id__evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assets/{asset_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Run
+         * @description Start a trace of this asset. The run executes on the worker; follow it over SSE.
+         */
+        post: operations["start_run_assets__asset_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cases */
+        get: operations["list_cases_cases_get"];
+        put?: never;
+        /** Create Case */
+        post: operations["create_case_cases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Case */
+        get: operations["get_case_cases__case_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cases/{case_id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Asset
+         * @description Add an image to a case: validated by content, stored, fingerprinted, and checked for
+         *     metadata and Content Credentials. The image is not sent to any third party here.
+         */
+        post: operations["upload_asset_cases__case_id__assets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/livez": {
         parameters: {
             query?: never;
@@ -88,6 +221,157 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AssetBrief */
+        AssetBrief: {
+            c2pa_state: components["schemas"]["C2PAState"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Height */
+            height: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Width */
+            width: number;
+        };
+        /**
+         * AssetEvidence
+         * @description The full stored records behind the asset panel's summaries.
+         */
+        AssetEvidence: {
+            /** C2Pa Manifest Store */
+            c2pa_manifest_store: {
+                [key: string]: unknown;
+            } | null;
+            /** Metadata Raw */
+            metadata_raw: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** AssetOut */
+        AssetOut: {
+            /** Byte Size */
+            byte_size: number;
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Content Type */
+            content_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            credentials: components["schemas"]["CredentialsOut"];
+            /** Display Url */
+            display_url: string;
+            embedding: components["schemas"]["EmbeddingOut"];
+            fingerprints: components["schemas"]["Fingerprints"];
+            /** Height */
+            height: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            metadata: components["schemas"]["MetadataOut"];
+            /** Original Filename */
+            original_filename: string | null;
+            /**
+             * Runs
+             * @default []
+             */
+            runs: components["schemas"]["RunBrief"][];
+            /** Width */
+            width: number;
+        };
+        /** Body_upload_asset_cases__case_id__assets_post */
+        Body_upload_asset_cases__case_id__assets_post: {
+            /** File */
+            file: string;
+        };
+        /**
+         * C2PAState
+         * @enum {string}
+         */
+        C2PAState: "none" | "present_untrusted" | "valid_trusted";
+        /** CaptureTime */
+        CaptureTime: {
+            /** Stated */
+            stated: string;
+            /** Tag */
+            tag: string;
+            /** Utc */
+            utc: string | null;
+        };
+        /** CaseIn */
+        CaseIn: {
+            /** Notes */
+            notes?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** CaseOut */
+        CaseOut: {
+            /**
+             * Assets
+             * @default []
+             */
+            assets: components["schemas"]["AssetBrief"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Notes */
+            notes: string | null;
+            /** Title */
+            title: string;
+        };
+        /** CredentialsOut */
+        CredentialsOut: {
+            /**
+             * Actions
+             * @default []
+             */
+            actions: string[];
+            /** Claim Generator */
+            claim_generator?: string | null;
+            /** Error */
+            error?: string | null;
+            /**
+             * Failures
+             * @default []
+             */
+            failures: string[];
+            /** Signed At */
+            signed_at?: string | null;
+            /** Signer Common Name */
+            signer_common_name?: string | null;
+            /** Signer Issuer */
+            signer_issuer?: string | null;
+            state: components["schemas"]["C2PAState"];
+            /** Title */
+            title?: string | null;
+            /** Trust List */
+            trust_list: string;
+            /** Validation State */
+            validation_state?: string | null;
+        };
         /** DependencyCheck */
         DependencyCheck: {
             /** Error */
@@ -96,6 +380,29 @@ export interface components {
             latency_ms: number;
             /** Ok */
             ok: boolean;
+        };
+        /** EmbeddingOut */
+        EmbeddingOut: {
+            /** Model */
+            model: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "computed" | "pending";
+        };
+        /** Fingerprints */
+        Fingerprints: {
+            /** Dhash */
+            dhash: string;
+            /** Pdq */
+            pdq: string;
+            /** Pdq Quality */
+            pdq_quality: number;
+            /** Phash */
+            phash: string;
+            /** Sha256 */
+            sha256: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -112,6 +419,52 @@ export interface components {
             /** Version */
             version: string;
         };
+        /**
+         * MetadataOut
+         * @description `unavailable` means exiftool could not run: not the same as "no metadata".
+         */
+        MetadataOut: {
+            /** Error */
+            error?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "unavailable";
+            summary?: components["schemas"]["MetadataSummary"] | null;
+            /**
+             * Tag Count
+             * @default 0
+             */
+            tag_count: number;
+            /** Tool */
+            tool?: string | null;
+            /** Tool Version */
+            tool_version?: string | null;
+        };
+        /** MetadataSummary */
+        MetadataSummary: {
+            /** Camera Make */
+            camera_make?: string | null;
+            /** Camera Model */
+            camera_model?: string | null;
+            capture_time?: components["schemas"]["CaptureTime"] | null;
+            /** Copyright */
+            copyright?: string | null;
+            /** Credit */
+            credit?: string | null;
+            /** Gps Latitude */
+            gps_latitude?: number | null;
+            /** Gps Longitude */
+            gps_longitude?: number | null;
+            /**
+             * Groups
+             * @default []
+             */
+            groups: string[];
+            /** Software */
+            software?: string | null;
+        };
         /** Readyz */
         Readyz: {
             /** Checks */
@@ -125,6 +478,20 @@ export interface components {
             status: "ok" | "degraded";
             /** Version */
             version: string;
+        };
+        /** RunBrief */
+        RunBrief: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            status: components["schemas"]["RunStatus"];
         };
         /** RunOut */
         RunOut: {
@@ -199,6 +566,13 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** UploadRejectedOut */
+        UploadRejectedOut: {
+            /** Message */
+            message: string;
+            /** Reason */
+            reason: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -221,6 +595,279 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_asset_assets__asset_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_display_assets__asset_id__display_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_asset_evidence_assets__asset_id__evidence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetEvidence"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_run_assets__asset_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cases_cases_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_case_cases_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_case_cases__case_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_asset_cases__case_id__assets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_asset_cases__case_id__assets_post"];
+            };
+        };
+        responses: {
+            /** @description Identical image already in this case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadRejectedOut"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadRejectedOut"];
+                };
+            };
+        };
+    };
     livez_livez_get: {
         parameters: {
             query?: never;
