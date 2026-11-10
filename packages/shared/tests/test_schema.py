@@ -19,8 +19,9 @@ from origin_core.db.models import (
     NarrativeClaim,
     ProviderQuota,
     Sighting,
+    TimestampEvidence,
 )
-from origin_core.enums import Actor, QuotaPeriod
+from origin_core.enums import Actor, BoundType, Confidence, EvidenceKind, QuotaPeriod
 
 from .factories import make_graph
 
@@ -140,3 +141,21 @@ async def test_sighting_date_interval_must_be_ordered(db: AsyncSession) -> None:
     with pytest.raises(IntegrityError):
         async with db.begin_nested():
             await db.flush()
+
+
+async def test_dating_vocabulary_includes_floors_and_observations(db: AsyncSession) -> None:
+    graph = await make_graph(db)
+    for kind, bound in (
+        (EvidenceKind.OBSERVED, BoundType.NO_LATER_THAN),
+        (EvidenceKind.EXIF, BoundType.NO_EARLIER_THAN),
+    ):
+        db.add(
+            TimestampEvidence(
+                sighting_id=graph.sighting.id,
+                kind=kind,
+                value=datetime(2024, 3, 1, tzinfo=UTC),
+                bound=bound,
+                confidence=Confidence.HIGH,
+            )
+        )
+    await db.flush()

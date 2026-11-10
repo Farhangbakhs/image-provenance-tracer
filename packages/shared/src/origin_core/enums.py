@@ -60,6 +60,8 @@ class DateConfidence(StrEnum):
 
 
 class EvidenceKind(StrEnum):
+    #: ORIGIN itself fetched the page or image at this time: proof it existed by then.
+    OBSERVED = "observed"
     PLATFORM = "platform"
     C2PA = "c2pa"
     WAYBACK_PAGE = "wayback_page"
@@ -71,8 +73,13 @@ class EvidenceKind(StrEnum):
 
 
 class BoundType(StrEnum):
+    #: The sighting appeared at this time (a platform's own post timestamp).
     EXACT = "exact"
+    #: The sighting existed by this time (an archive capture, a crawl, our own fetch).
     NO_LATER_THAN = "no_later_than"
+    #: The sighting cannot predate this time (the picture was taken or signed then).
+    NO_EARLIER_THAN = "no_earlier_than"
+    #: Someone states this time (a page's published date): plausible, not proven.
     CLAIMED = "claimed"
 
 
