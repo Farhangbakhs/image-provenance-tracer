@@ -37,6 +37,8 @@ tar xf /head.tar
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends libatomic1 libimage-exiftool-perl >/dev/null
 uv sync --frozen -q
+echo '--- model weights'
+uv run python -m origin_worker.embedding download
 echo '--- ruff'
 uv run ruff check .
 uv run ruff format --check .
@@ -95,6 +97,8 @@ def job_python(tar: Path) -> int:
             "TEST_REDIS_URL": "redis://redis:6379/15",
             "TEST_S3_ENDPOINT": "http://s3:8333",
             "UV_CACHE_DIR": "/cache/uv",
+            "ORIGIN_MODELS_DIR": "/cache/models",
+            "ORIGIN_REQUIRE_MODEL": "1",
             "UV_LINK_MODE": "copy",
         },
         volumes=["origin-ci-cache:/cache"],

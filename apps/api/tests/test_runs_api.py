@@ -9,9 +9,9 @@ from pathlib import Path
 
 import httpx
 import pytest
-from conftest import SeedRun
 from fastapi import FastAPI
 from redis.asyncio import Redis
+from testkit import SeedRun
 
 from origin_api.app import create_app
 from origin_core.pipeline.events import EventType, RunEvent, RunEventBus

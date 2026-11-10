@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     upload_max_bytes: int = Field(default=20_000_000, alias="ORIGIN_UPLOAD_MAX_BYTES", gt=0)
     upload_max_pixels: int = Field(default=50_000_000, alias="ORIGIN_UPLOAD_MAX_PIXELS", gt=0)
 
+    models_dir: Path = Field(default=Path("models"), alias="ORIGIN_MODELS_DIR")
     exiftool_path: str = Field(default="exiftool", alias="EXIFTOOL_PATH")
 
     provider_mode: ProviderMode = Field(default=ProviderMode.LIVE, alias="ORIGIN_PROVIDER_MODE")

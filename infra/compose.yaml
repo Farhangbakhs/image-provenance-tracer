@@ -95,17 +95,24 @@ services:
     image: origin-python:dev
     pull_policy: never  # built by the migrate service
     command: ["arq", "origin_worker.main.WorkerSettings"]
-    environment: *python-env
+    environment:
+      <<: *python-env
+      ORIGIN_MODELS_DIR: /app/models
+    volumes:
+      # SSCD weights: downloaded on first start, verified on every start.
+      - models:/app/models
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
       s3: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "arq", "--check", "origin_worker.main.WorkerSettings"]
+      # Reads arq's heartbeat key directly: `arq --check` imports the worker, and with it
+      # PyTorch, which alone takes longer than the check timeout.
+      test: ["CMD", "python", "-c", "import os, sys, redis; sys.exit(0 if redis.Redis.from_url(os.environ['REDIS_URL']).exists('arq:queue:health-check') else 1)"]
       interval: 10s
       timeout: 5s
       retries: 12
-      start_period: 5s
+      start_period: 180s  # first start downloads the 99 MB model
 
   web:
     build:
@@ -118,6 +125,7 @@ services:
       api: { condition: service_healthy }
 
 volumes:
+  models:
   db-data:
   redis-data:
   s3-data:
