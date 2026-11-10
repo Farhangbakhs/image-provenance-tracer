@@ -1,0 +1,32 @@
+# Match thresholds, version 1. Starting values from the literature and probing; to be
+# recalibrated on the eval set (Phase 6). Never edit in place: copy to a new version, so every
+# stored sighting can be traced to the thresholds that classified it.
+version = "match.v1"
+
+[near_duplicate]
+# 64-bit pHash: up to 8 differing bits survives resizing and recompression.
+phash_max = 8
+# 256-bit PDQ: Meta's recommended match threshold.
+pdq_max = 31
+# PDQ is unreliable on flat, low-detail images; below this quality it is not trusted alone.
+pdq_min_quality = 50
+
+[derivative]
+# SSCD cosine similarity for edited copies (crops, overlays, recolouring).
+sscd_min = 0.75
+# A derivative must also be confirmed geometrically: matched keypoints consistent with one
+# homography. Fewer inliers than this is not confirmation.
+min_inliers = 15
+orb_features = 2000
+lowe_ratio = 0.75
+ransac_reproj_px = 5.0
+# Work at this long edge for keypoint matching.
+max_edge = 1024
+
+[transform]
+# The candidate covers less than this share of the query frame: reported as a crop.
+crop_area_max = 0.92
+# Scale differences within this ratio are not reported as a resize.
+resize_tolerance = 0.08
+# Share of the overlapping region that differs strongly: reported as a likely overlay.
+overlay_min = 0.06
