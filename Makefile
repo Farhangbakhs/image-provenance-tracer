@@ -3,7 +3,7 @@ WEB := apps/web
 NPM := npm --prefix $(WEB)
 COMPOSE := docker compose -f infra/compose.yaml
 
-.PHONY: help install dev down logs migrate client lint fmt test test-py test-web
+.PHONY: help install dev down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
@@ -15,6 +15,7 @@ help:
 	$(info lint      ruff, pyright (strict), eslint, tsc)
 	$(info fmt       Format Python sources)
 	$(info test      pytest and Vitest)
+	$(info ci        Run the CI jobs locally in Linux containers against committed HEAD)
 	@:
 
 dev:
@@ -56,3 +57,6 @@ test-py:
 
 test-web:
 	$(NPM) test
+
+ci:
+	uv run python scripts/ci_local.py
