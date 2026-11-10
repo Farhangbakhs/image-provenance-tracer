@@ -6,7 +6,7 @@ from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,6 +68,12 @@ class Settings(BaseSettings):
     synthetic_fixtures_dir: Path = Field(
         default=Path("fixtures/synthetic"), alias="ORIGIN_SYNTHETIC_FIXTURES_DIR"
     )
+    #: Reverse-image providers a trace uses, in order: vision, lens, yandex.
+    providers: list[str] = Field(
+        default_factory=lambda: ["vision", "lens"], alias="ORIGIN_PROVIDERS"
+    )
+    google_vision_api_key: SecretStr | None = Field(default=None, alias="GOOGLE_VISION_API_KEY")
+    serpapi_api_key: SecretStr | None = Field(default=None, alias="SERPAPI_API_KEY")
     enable_unofficial_providers: bool = Field(
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )
