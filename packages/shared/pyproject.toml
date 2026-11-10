@@ -1,0 +1,21 @@
+[project]
+name = "origin-core"
+version = "0.1.0"
+description = "ORIGIN shared core: settings, models, database, providers, pipeline"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic>=2.11",
+    "pydantic-settings>=2.10",
+    "sqlalchemy[asyncio]>=2.0.40",
+    "asyncpg>=0.30",
+    "alembic>=1.16",
+    "pgvector>=0.4",
+    "redis>=5.2,<6",
+    "structlog>=25.4",
+    "httpx>=0.28",
+    "boto3>=1.40",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"

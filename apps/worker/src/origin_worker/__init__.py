@@ -1,0 +1,1 @@
+"""ORIGIN pipeline worker."""

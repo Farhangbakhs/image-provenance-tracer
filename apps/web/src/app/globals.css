@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/*
+ * ORIGIN design tokens. The console is dark-only by design: it is an instrument, and
+ * analysts compare thumbnails against a fixed neutral ground.
+ *
+ * Amber (--accent) means "earliest known" and nothing else.
+ * The three confidence colours are used only to express confidence.
+ */
+:root {
+  --bg: #0e0f11;
+  --surface-1: #15171a;
+  --surface-2: #1c1f23;
+  --line: #2a2e34;
+  --text: #e6e8eb;
+  --muted: #9aa1ab;
+  --accent: #f2a93b;
+  --conf-high: #4fb477;
+  --conf-medium: #c9b458;
+  --conf-low: #c96a5a;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-conf-high: var(--conf-high);
+  --color-conf-medium: var(--conf-medium);
+  --color-conf-low: var(--conf-low);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --radius-sm: 2px;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

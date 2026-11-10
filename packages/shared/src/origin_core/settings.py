@@ -1,0 +1,84 @@
+"""Process configuration, read from the environment (and `.env` in development)."""
+
+from __future__ import annotations
+
+from enum import StrEnum
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Environment(StrEnum):
+    DEVELOPMENT = "development"
+    TEST = "test"
+    DEMO = "demo"
+    PRODUCTION = "production"
+
+
+class ProviderMode(StrEnum):
+    """How provider adapters reach the outside world.
+
+    live:   call the provider; responses are cached.
+    record: call the provider and also write each raw response to the fixtures directory.
+    replay: never call out; serve recorded responses and fail if one is missing.
+    """
+
+    LIVE = "live"
+    RECORD = "record"
+    REPLAY = "replay"
+
+
+class BlobBackend(StrEnum):
+    S3 = "s3"
+    FILESYSTEM = "filesystem"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", populate_by_name=True
+    )
+
+    env: Environment = Field(default=Environment.DEVELOPMENT, alias="ORIGIN_ENV")
+    log_level: str = Field(default="INFO", alias="ORIGIN_LOG_LEVEL")
+    log_json: bool = Field(default=False, alias="ORIGIN_LOG_JSON")
+
+    database_url: str = Field(
+        default="postgresql+asyncpg://origin:origin@localhost:5432/origin", alias="DATABASE_URL"
+    )
+    redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
+
+    blob_backend: BlobBackend = Field(default=BlobBackend.S3, alias="BLOB_BACKEND")
+    blob_dir: Path = Field(default=Path("var/blobs"), alias="BLOB_DIR")
+    s3_endpoint: str | None = Field(default="http://localhost:9000", alias="S3_ENDPOINT")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
+    s3_bucket: str = Field(default="origin", alias="S3_BUCKET")
+    s3_access_key: str = Field(default="origin", alias="S3_ACCESS_KEY")
+    s3_secret_key: str = Field(default="origin-dev-secret", alias="S3_SECRET_KEY")
+
+    provider_mode: ProviderMode = Field(default=ProviderMode.LIVE, alias="ORIGIN_PROVIDER_MODE")
+    fixtures_dir: Path = Field(default=Path("fixtures/recordings"), alias="ORIGIN_FIXTURES_DIR")
+    enable_unofficial_providers: bool = Field(
+        default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
+    )
+
+    cors_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3000"], alias="ORIGIN_CORS_ORIGINS"
+    )
+
+    @model_validator(mode="after")
+    def _guard_modes(self) -> Settings:
+        if self.env is Environment.PRODUCTION and self.enable_unofficial_providers:
+            raise ValueError(
+                "ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS must be false when ORIGIN_ENV=production: "
+                "unofficial providers query engine front ends and may breach their terms."
+            )
+        if self.env is Environment.DEMO and self.provider_mode is not ProviderMode.REPLAY:
+            raise ValueError("ORIGIN_ENV=demo requires ORIGIN_PROVIDER_MODE=replay.")
+        return self
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()

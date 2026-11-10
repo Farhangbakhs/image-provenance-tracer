@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+**/service-account*.json
+*api*.txt
+
+# Telegram sessions (Telethon)
+*.session
+*.session-journal
+
+# Model weights and caches
+models/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+
+# Local runtime data
+var/
+*.log
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code personal settings (the shared .claude/settings.json is committed)
+.claude/settings.local.json
