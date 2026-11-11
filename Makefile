@@ -11,12 +11,13 @@ endif
 # Keys and provider settings for live traces come from .env when it exists (see .env.example).
 COMPOSE := $(DOCKER) compose -f infra/compose.yaml $(if $(wildcard .env),--env-file .env)
 
-.PHONY: help install dev demo snapshot e2e eval down logs migrate client lint fmt test test-py test-web ci
+.PHONY: help install dev demo snapshot deploy e2e eval down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
 	$(info demo      Start in demo mode (replayed providers, no keys) and seed the demo cases)
 	$(info snapshot  Build a static, read-only copy of the demo cases in apps/web/out (make demo first))
+	$(info deploy    Publish the snapshot to Cloudflare (npx wrangler login once, then make snapshot first))
 	$(info e2e       Playwright end-to-end tests against the running demo (make demo first))
 	$(info eval      Run the eval harness and write evals/report.md)
 	$(info down      Stop the stack (data volumes are kept))
@@ -88,6 +89,10 @@ snapshot:
 	uv run python scripts/snapshot.py
 	$(NPM) run build
 	node $(WEB)/scripts/flatten-export.mjs $(WEB)/out
+
+# Publish apps/web/out with wrangler.jsonc (Cloudflare Workers static assets, free tier).
+deploy:
+	npx --yes wrangler@4 deploy
 
 e2e:
 	$(NPM) run e2e

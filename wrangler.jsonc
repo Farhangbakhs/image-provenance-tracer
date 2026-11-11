@@ -1,0 +1,12 @@
+// The public, read-only demo: a static snapshot of the DEMO cases on Cloudflare Workers
+// static assets (free; no server code). Build it with `make snapshot`, then `make deploy`.
+{
+  "name": "origin-demo",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "apps/web/out",
+    // /runs/<id>/ is served from /runs/<id>/index.html.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

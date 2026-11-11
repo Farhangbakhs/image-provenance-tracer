@@ -44,7 +44,7 @@ make snapshot    # writes apps/web/out
 
 Only cases whose title starts with `DEMO:` are exported, so nothing you traced yourself leaves the machine. Publish `apps/web/out` on any static host:
 
-* **Cloudflare Pages** (free, unlimited bandwidth): `npx wrangler login`, then `npx wrangler pages deploy apps/web/out --project-name origin-demo`.
+* **Cloudflare** (free; this is how the public demo is hosted, on Workers static assets): `npx wrangler login` once, then `make deploy`. `wrangler.jsonc` holds the settings.
 * **Netlify** (free): drag the `apps/web/out` folder onto https://app.netlify.com/drop.
 * **A sub-path host** such as GitHub Pages: build with `NEXT_PUBLIC_BASE_PATH=/<repo> make snapshot`.
 
