@@ -1463,6 +1463,17 @@
             "title": "Evidence",
             "type": "array"
           },
+          "extracted_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted Text"
+          },
           "grade_rationale": {
             "anyOf": [
               {

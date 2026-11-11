@@ -226,6 +226,8 @@ class SightingOut(BaseModel):
     grade_rationale: str | None = None
     analyst_status: AnalystStatus = AnalystStatus.ACCEPTED
     analyst_note: str | None = None
+    #: The page text shown to the claim model; claim quote offsets index into it.
+    extracted_text: str | None = None
 
 
 class CandidateCounts(BaseModel):

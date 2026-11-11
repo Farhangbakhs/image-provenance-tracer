@@ -212,3 +212,50 @@ export function useRunSightings(runId: string | undefined) {
     },
   });
 }
+
+export function useRunAnalysis(runId: string | undefined) {
+  return useQuery({
+    queryKey: ["analysis", runId],
+    enabled: Boolean(runId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET("/runs/{run_id}/analysis", {
+        params: { path: { run_id: runId as string } },
+        signal,
+      });
+      if (!data) fail(response.status, error, "Could not load the analysis");
+      return data;
+    },
+  });
+}
+
+export function useRun(runId: string) {
+  return useQuery({
+    queryKey: ["run", runId],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET("/runs/{run_id}", {
+        params: { path: { run_id: runId } },
+        signal,
+      });
+      if (!data) fail(response.status, error, "Could not load the run");
+      return data;
+    },
+  });
+}
+
+export function useOverrule(runId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { kind: "claim" | "sighting"; id: string; status: "accepted" | "overruled"; note?: string }) => {
+      const body = { status: input.status, note: input.note ?? null };
+      const result =
+        input.kind === "claim"
+          ? await api.PATCH("/claims/{claim_id}", { params: { path: { claim_id: input.id } }, body })
+          : await api.PATCH("/sightings/{sighting_id}", { params: { path: { sighting_id: input.id } }, body });
+      if (result.error) fail(result.response.status, result.error, "Could not record the decision");
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["sightings", runId] });
+      void queryClient.invalidateQueries({ queryKey: ["analysis", runId] });
+    },
+  });
+}

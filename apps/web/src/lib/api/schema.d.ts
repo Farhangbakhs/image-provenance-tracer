@@ -845,6 +845,8 @@ export interface components {
             domain: string;
             /** Evidence */
             evidence: components["schemas"]["EvidenceOut"][];
+            /** Extracted Text */
+            extracted_text?: string | null;
             /** Grade Rationale */
             grade_rationale?: string | null;
             /**

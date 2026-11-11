@@ -21,3 +21,6 @@ export type CredentialsOut = components["schemas"]["CredentialsOut"];
 export type MetadataOut = components["schemas"]["MetadataOut"];
 export type RunSightingsOut = components["schemas"]["RunSightingsOut"];
 export type SightingOut = components["schemas"]["SightingOut"];
+export type RunAnalysisOut = components["schemas"]["RunAnalysisOut"];
+export type ClaimOut = components["schemas"]["ClaimOut"];
+export type NarrativeOut = components["schemas"]["NarrativeOut"];
