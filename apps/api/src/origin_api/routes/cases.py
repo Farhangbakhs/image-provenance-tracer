@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from origin_api import ratelimit
 from origin_api.routes.assets import asset_out
 from origin_api.schemas import AssetBrief, AssetOut, CaseIn, CaseOut, UploadRejectedOut
 from origin_api.state import Session, State
@@ -115,10 +116,12 @@ async def _read_capped(file: UploadFile, max_bytes: int) -> bytes:
     "/{case_id}/assets",
     status_code=status.HTTP_201_CREATED,
     response_model=AssetOut,
+    dependencies=[Depends(ratelimit.uploads)],
     responses={
         200: {"model": AssetOut, "description": "Identical image already in this case"},
         413: {"model": UploadRejectedOut},
         422: {"model": UploadRejectedOut},
+        429: {"description": "Too many uploads from this client; see Retry-After"},
     },
 )
 async def upload_asset(

@@ -59,6 +59,9 @@ class Settings(BaseSettings):
 
     upload_max_bytes: int = Field(default=20_000_000, alias="ORIGIN_UPLOAD_MAX_BYTES", gt=0)
     upload_max_pixels: int = Field(default=50_000_000, alias="ORIGIN_UPLOAD_MAX_PIXELS", gt=0)
+    # Requests per client per minute; 0 turns the limit off.
+    rate_limit_uploads: int = Field(default=30, alias="ORIGIN_RATE_LIMIT_UPLOADS", ge=0)
+    rate_limit_runs: int = Field(default=10, alias="ORIGIN_RATE_LIMIT_RUNS", ge=0)
 
     models_dir: Path = Field(default=Path("models"), alias="ORIGIN_MODELS_DIR")
     exiftool_path: str = Field(default="exiftool", alias="EXIFTOOL_PATH")
