@@ -8,17 +8,20 @@ here, as the pipeline's ingest stage, and the API never loads the model.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from sqlalchemy import select
 
 from origin_core.db.models import Artefact, Asset, Run
 from origin_core.fetch import Fetcher
 from origin_core.ingest.validate import decode_rgb
+from origin_core.llm.registry import LLMSetup
+from origin_core.llm.runner import LLMRunner
 from origin_core.pipeline.runner import Stage, StageContext, StageResult
 from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner
 from origin_core.storage import BlobStore
+from origin_worker.branch import BranchStage
 from origin_worker.embedding import SSCDEmbedder
 from origin_worker.matching.thresholds import Thresholds
 from origin_worker.trace import DateStage, DiscoverStage, VerifyStage
@@ -65,6 +68,8 @@ class TraceServices:
     thresholds: Thresholds
     max_pixels: int
     exiftool: str
+    llm: LLMSetup = field(default_factory=lambda: LLMSetup(None, "not configured"))
+    llm_runner: LLMRunner | None = None
 
 
 def build_stages(
@@ -82,5 +87,11 @@ def build_stages(
                 max_pixels=trace.max_pixels,
             ),
             DateStage(runner=trace.runner, blobs=blobs, exiftool=trace.exiftool),
+            BranchStage(
+                blobs=blobs,
+                thresholds=trace.thresholds,
+                llm=trace.llm,
+                llm_runner=trace.llm_runner,
+            ),
         ]
     return stages

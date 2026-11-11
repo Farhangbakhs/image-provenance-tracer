@@ -12,6 +12,8 @@ from redis.asyncio import Redis
 
 from origin_core.db.session import make_engine, make_sessionmaker
 from origin_core.fetch import Fetcher
+from origin_core.llm.registry import build_llm
+from origin_core.llm.runner import LLMRunner
 from origin_core.logging import configure_logging
 from origin_core.pipeline.events import RunEventBus
 from origin_core.pipeline.jobs import EXECUTE_RUN
@@ -49,6 +51,15 @@ async def startup(ctx: dict[str, Any]) -> None:
         fixtures=FixtureStore((settings.fixtures_dir, settings.synthetic_fixtures_dir)),
         redact_secrets=providers.secrets,
     )
+    llm = build_llm(settings)
+    llm_runner = LLMRunner(
+        sessions=sessions,
+        blobs=blobs,
+        http=http,
+        mode=settings.provider_mode,
+        fixtures=FixtureStore((settings.fixtures_dir, settings.synthetic_fixtures_dir)),
+        redact_secrets=llm.secrets,
+    )
     trace = TraceServices(
         providers=providers,
         runner=runner,
@@ -56,6 +67,8 @@ async def startup(ctx: dict[str, Any]) -> None:
         thresholds=load_thresholds(),
         max_pixels=settings.upload_max_pixels,
         exiftool=settings.exiftool_path,
+        llm=llm,
+        llm_runner=llm_runner,
     )
     ctx["engine"] = engine
     ctx["redis"] = redis
