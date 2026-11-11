@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     gemini_model: str = Field(default="gemini-3.5-flash-lite", alias="ORIGIN_GEMINI_MODEL")
     ollama_url: str = Field(default="http://127.0.0.1:11434", alias="OLLAMA_URL")
     ollama_model: str = Field(default="qwen3:8b", alias="ORIGIN_OLLAMA_MODEL")
+    anthropic_api_key: SecretStr | None = Field(default=None, alias="ANTHROPIC_API_KEY")
+    anthropic_model: str = Field(default="claude-opus-5-5", alias="ORIGIN_ANTHROPIC_MODEL")
     enable_unofficial_providers: bool = Field(
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )

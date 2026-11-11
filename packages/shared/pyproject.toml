@@ -23,6 +23,7 @@ dependencies = [
     "htmldate>=1.9",
     "lxml>=5",
     "trafilatura>=2.0",
+    "anthropic>=1",
 ]
 
 [build-system]
