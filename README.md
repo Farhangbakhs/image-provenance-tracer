@@ -1,6 +1,6 @@
 # ORIGIN
 
-An image provenance tracer for open-source intelligence work. Give it one image and it returns a dated, evidence-backed history: the earliest sighting found, every verified copy and edit, and the points where the story told about the image changes.
+An image provenance tracer. Give it one image and it returns a dated, evidence-backed history: the earliest sighting found, every verified copy and edit, and the points where the story told about the image changes.
 
 > Earliest found in indexed sources. Earlier copies may exist.
 
@@ -8,7 +8,7 @@ ORIGIN never reports an "origin". Private, deleted and unindexed posts are invis
 
 ## Status
 
-Built phase by phase; see [PLAN.md](PLAN.md) for the specification, the verification log for every external service, and the phase list.
+Built phase by phase
 
 Phases 0 to 5 are built: ingest (hashes, metadata, Content Credentials, SSCD embedding), discovery through free-tier providers, verification of every hit by fetching and matching it, evidence-based dating, variants, claims, narratives and grades, the console with its timeline, variant graph, evidence drawer and exports, and Telegram behind a feature flag (below). Phase 6 has its matching eval, rate limits and end-to-end tests; the agent is not built.
 
