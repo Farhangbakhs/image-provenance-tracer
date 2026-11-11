@@ -11,11 +11,12 @@ endif
 # Keys and provider settings for live traces come from .env when it exists (see .env.example).
 COMPOSE := $(DOCKER) compose -f infra/compose.yaml $(if $(wildcard .env),--env-file .env)
 
-.PHONY: help install dev demo e2e eval down logs migrate client lint fmt test test-py test-web ci
+.PHONY: help install dev demo snapshot e2e eval down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
 	$(info demo      Start in demo mode (replayed providers, no keys) and seed the demo cases)
+	$(info snapshot  Build a static, read-only copy of the demo cases in apps/web/out (make demo first))
 	$(info e2e       Playwright end-to-end tests against the running demo (make demo first))
 	$(info eval      Run the eval harness and write evals/report.md)
 	$(info down      Stop the stack (data volumes are kept))
@@ -78,6 +79,15 @@ test-py:
 
 test-web:
 	$(NPM) test
+
+# A static, read-only copy of the demo investigations for free static hosting: no server, no
+# database. Reads the running API (make demo), then builds the console as plain files.
+# Set NEXT_PUBLIC_BASE_PATH=/<repo> for hosts that serve the site from a sub-path.
+snapshot: export NEXT_PUBLIC_SNAPSHOT := 1
+snapshot:
+	uv run python scripts/snapshot.py
+	$(NPM) run build
+	node $(WEB)/scripts/flatten-export.mjs $(WEB)/out
 
 e2e:
 	$(NPM) run e2e
