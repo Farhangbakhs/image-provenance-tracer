@@ -67,7 +67,7 @@ describe("SightingsList", () => {
     expect(screen.getByText(/Earliest found in indexed sources/)).toBeTruthy();
     expect(screen.getByText("2 verified · 4 rejected of 6 candidates")).toBeTruthy();
     expect(screen.getByText(/between 2024-03-05 09:00Z and 2024-03-06 12:00Z/)).toBeTruthy();
-    expect(screen.getByText(/edited copy · crop, overlay · set by page's stated date/)).toBeTruthy();
+    expect(screen.getByText(/Edited copy: cropped, text or graphics added. First online between .*page's stated date/)).toBeTruthy();
     expect(screen.getByText(/no later than 2024-03-20 00:00Z/)).toBeTruthy();
     expect(screen.getByText(/SERPAPI_API_KEY is not set/)).toBeTruthy();
     const link = screen.getByText("news.example").closest("a") as HTMLAnchorElement;

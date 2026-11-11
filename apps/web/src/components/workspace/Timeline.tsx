@@ -1,30 +1,13 @@
 "use client";
 
-import { scaleUtc } from "d3-scale";
-import { useMemo, useRef, useState, type WheelEvent } from "react";
-
 import { CONFIDENCE_COLOUR, type WorkspaceModel } from "@/lib/workspace";
 import { formatInterval } from "@/lib/time";
+import { useZoomableTime } from "@/lib/timeScale";
 
-const LANE_HEIGHT = 56;
-const LABEL_WIDTH = 168;
-const AXIS_HEIGHT = 28;
-const WIDTH = 960;
-const MIN_SPAN_MS = 60 * 60 * 1000; // zoom stops at one hour across the view
-
-function extent(model: WorkspaceModel): [Date, Date] {
-  const times = model.sightings.flatMap((s) =>
-    [s.date_lower, s.date_upper].filter((v): v is string => Boolean(v)).map((v) => new Date(v).getTime()),
-  );
-  if (times.length === 0) {
-    const now = Date.now();
-    return [new Date(now - 86_400_000), new Date(now)];
-  }
-  const lo = Math.min(...times);
-  const hi = Math.max(...times);
-  const pad = Math.max((hi - lo) * 0.08, 6 * 3_600_000);
-  return [new Date(lo - pad), new Date(hi + pad)];
-}
+const LANE_HEIGHT = 60;
+const LABEL_WIDTH = 210;
+const AXIS_HEIGHT = 30;
+const WIDTH = 1000;
 
 /**
  * One marker per sighting at its proven upper bound ("existed no later than"), with a band back
@@ -40,49 +23,36 @@ export function Timeline({
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
-  const full = useMemo(() => extent(model), [model]);
-  const [domain, setDomain] = useState<[Date, Date]>(full);
-  const svg = useRef<SVGSVGElement>(null);
-  const x = scaleUtc().domain(domain).range([LABEL_WIDTH, WIDTH - 16]);
+  const { x, svg, onWheel, fit, ticks, format } = useZoomableTime(model.sightings, [LABEL_WIDTH + 12, WIDTH - 20], WIDTH);
   const height = AXIS_HEIGHT + model.lanes.length * LANE_HEIGHT;
   const laneIndex = Object.fromEntries(model.lanes.map((lane, i) => [lane.id, i]));
-
-  const onWheel = (event: WheelEvent<SVGSVGElement>) => {
-    const box = svg.current?.getBoundingClientRect();
-    if (!box) return;
-    const px = ((event.clientX - box.left) / box.width) * WIDTH;
-    const pivot = x.invert(Math.max(LABEL_WIDTH, px)).getTime();
-    const factor = event.deltaY > 0 ? 1.25 : 0.8;
-    const [a, b] = domain.map((d) => d.getTime());
-    let lo = pivot - (pivot - a) * factor;
-    let hi = pivot + (b - pivot) * factor;
-    if (hi - lo < MIN_SPAN_MS) [lo, hi] = [pivot - MIN_SPAN_MS / 2, pivot + MIN_SPAN_MS / 2];
-    setDomain([new Date(lo), new Date(hi)]);
-  };
-
-  const ticks = x.ticks(8);
-  const format = x.tickFormat(8);
+  // Only a branch has a point where the story changed; the first story has none.
+  const branchStarts = new Set(model.lanes.filter((l) => l.narrative && !l.root).map((l) => model.divergenceOf[l.id]));
 
   return (
     <div>
-      <div className="flex items-center justify-between px-3 py-1.5 text-[11px] text-muted">
-        <span>Scroll over the chart to zoom. Bars run from the earliest possible to the proven date.</span>
-        <button type="button" onClick={() => setDomain(full)} className="border border-line px-2 py-0.5 hover:border-text">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-[13px] text-muted">
+        <span>
+          Rows are the stories told about the picture. Each dot is a copy at the date it is proven online; the band
+          behind it reaches back to the earliest it could have appeared. Scroll to zoom.
+        </span>
+        <button type="button" onClick={fit} className="border border-line px-2 py-0.5 text-[12px] hover:border-intent hover:text-text">
           Fit all
         </button>
       </div>
+      <div className="overflow-x-auto">
       <svg
         ref={svg}
         viewBox={`0 0 ${WIDTH} ${height}`}
-        className="block w-full select-none"
+        className="block w-full min-w-[1000px] select-none"
         role="img"
         aria-label="Timeline of sightings by narrative"
         onWheel={onWheel}
       >
         {ticks.map((t) => (
           <g key={t.getTime()}>
-            <line x1={x(t)} x2={x(t)} y1={AXIS_HEIGHT - 4} y2={height} stroke="var(--line)" />
-            <text x={x(t)} y={16} textAnchor="middle" className="mono" fontSize={10} fill="var(--muted)">
+            <line x1={x(t)} x2={x(t)} y1={AXIS_HEIGHT - 4} y2={height} stroke="var(--line)" strokeDasharray="2 3" />
+            <text x={x(t)} y={18} textAnchor="middle" className="mono" fontSize={11} fill="var(--muted)">
               {format(t)}
             </text>
           </g>
@@ -90,11 +60,12 @@ export function Timeline({
         {model.lanes.map((lane, i) => (
           <g key={lane.id}>
             <line x1={0} x2={WIDTH} y1={AXIS_HEIGHT + i * LANE_HEIGHT} y2={AXIS_HEIGHT + i * LANE_HEIGHT} stroke="var(--line)" />
-            <text x={8} y={AXIS_HEIGHT + i * LANE_HEIGHT + 20} fontSize={11} fill="var(--text)">
-              {lane.label.length > 26 ? `${lane.label.slice(0, 25)}…` : lane.label}
+            <title>{lane.label}</title>
+            <text x={10} y={AXIS_HEIGHT + i * LANE_HEIGHT + 24} fontSize={13} fontWeight={600} fill="var(--text)">
+              {lane.label.length > 28 ? `${lane.label.slice(0, 27)}…` : lane.label}
             </text>
-            <text x={8} y={AXIS_HEIGHT + i * LANE_HEIGHT + 34} fontSize={10} fill="var(--muted)">
-              {lane.root ? "earliest narrative" : lane.narrative ? "branch" : ""}
+            <text x={10} y={AXIS_HEIGHT + i * LANE_HEIGHT + 42} fontSize={11} fill="var(--faint)">
+              {lane.root ? "first story found" : lane.narrative ? "branch: a contradicting story" : "pages that made no claim"}
             </text>
           </g>
         ))}
@@ -106,7 +77,7 @@ export function Timeline({
           const lower = s.date_lower ? x(new Date(s.date_lower)) : upper;
           const earliest = s.id === model.earliestId;
           const isSelected = s.id === selected;
-          const divergence = Object.values(model.divergenceOf).includes(s.id);
+          const divergence = branchStarts.has(s.id);
           const colour = CONFIDENCE_COLOUR[s.date_confidence] ?? "var(--muted)";
           return (
             <g
@@ -124,16 +95,16 @@ export function Timeline({
                 cy={cy}
                 r={isSelected ? 7 : 5}
                 fill={colour}
-                stroke={earliest ? "var(--accent)" : isSelected ? "var(--text)" : "none"}
+                stroke={earliest ? "var(--accent)" : isSelected ? "var(--intent)" : "var(--bg)"}
                 strokeWidth={earliest ? 3 : 1.5}
               />
               {divergence ? (
-                <text x={upper} y={cy - 10} textAnchor="middle" fontSize={9} fill="var(--muted)">
-                  diverges
+                <text x={upper} y={cy - 12} textAnchor="middle" fontSize={11} fill="var(--text)">
+                  story changes here
                 </text>
               ) : null}
               {earliest ? (
-                <text x={upper} y={cy + 18} textAnchor="middle" fontSize={9} fill="var(--accent)">
+                <text x={upper} y={cy + 21} textAnchor="middle" fontSize={11} fontWeight={600} fill="var(--accent)">
                   earliest found
                 </text>
               ) : null}
@@ -141,6 +112,7 @@ export function Timeline({
           );
         })}
       </svg>
+      </div>
     </div>
   );
 }
