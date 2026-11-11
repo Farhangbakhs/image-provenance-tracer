@@ -26,7 +26,9 @@ from origin_core.settings import get_settings
 from origin_core.storage import make_blob_store
 from origin_worker.embedding import SSCDEmbedder, ensure_weights
 from origin_worker.matching.thresholds import load_thresholds
-from origin_worker.stages import TraceServices, build_stages
+from origin_worker.stages import TelegramServices, TraceServices, build_stages
+from origin_worker.telegram.collector import Collector, SSCDModel
+from origin_worker.telegram.sources import Pacer, PreviewSource
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -69,6 +71,18 @@ async def startup(ctx: dict[str, Any]) -> None:
         exiftool=settings.exiftool_path,
         llm=llm,
         llm_runner=llm_runner,
+        telegram=TelegramServices(
+            collector=Collector(
+                sessions=sessions,
+                blobs=blobs,
+                embedder=SSCDModel(embedder),
+                max_pixels=settings.upload_max_pixels,
+                max_bytes=settings.upload_max_bytes,
+            ),
+            source=PreviewSource(fetcher, Pacer(settings.telegram_interval_s)),
+        )
+        if settings.enable_telegram
+        else None,
     )
     ctx["engine"] = engine
     ctx["redis"] = redis

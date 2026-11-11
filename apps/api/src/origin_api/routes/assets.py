@@ -24,7 +24,7 @@ from origin_api.state import Session, State
 from origin_core.db.models import Artefact, Asset, AuditEvent, Run
 from origin_core.enums import Actor
 from origin_core.pipeline.jobs import enqueue_run
-from origin_core.pipeline.registry import STAGE_ORDER
+from origin_core.pipeline.registry import stage_order
 
 router = APIRouter(prefix="/assets", tags=["assets"])
 
@@ -162,4 +162,4 @@ async def start_run(asset_id: uuid.UUID, session: Session, state: State) -> RunO
     await session.commit()
     await session.refresh(run)
     await enqueue_run(state.jobs, run.id)
-    return RunOut.from_row(run, list(STAGE_ORDER))
+    return RunOut.from_row(run, stage_order(run.stages))

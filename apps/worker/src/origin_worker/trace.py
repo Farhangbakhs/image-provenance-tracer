@@ -213,17 +213,18 @@ class VerifyStage:
         embedding = await self.embedder.embed(side.image)
         return _Image(url, result, Side(side.fingerprints, embedding, side.image))
 
-    async def run(self, ctx: StageContext) -> StageResult:
+    async def _query(self, ctx: StageContext) -> Side:
         asset, data = await _asset_bytes(ctx, self.blobs)
         if asset.embedding is None:
             raise RuntimeError("the query image has no embedding; the ingest stage must run first")
         query_image = await asyncio.to_thread(decode_rgb, data)
-        query = Side(
+        return Side(
             await asyncio.to_thread(fingerprint, data, query_image),
             [float(x) for x in asset.embedding],
             query_image,
         )
 
+    async def run(self, ctx: StageContext) -> StageResult:
         async with ctx.sessions.begin() as session:
             await session.execute(delete(Sighting).where(Sighting.run_id == ctx.run_id))
             await session.execute(
@@ -237,9 +238,19 @@ class VerifyStage:
                 .all()
             )
 
+        counts = await self.verify_candidates(ctx, list(candidates))
+        return StageResult(counts={"candidates": len(candidates), **counts})
+
+    async def verify_candidates(
+        self, ctx: StageContext, candidates: list[Candidate], *, stage: str | None = None
+    ) -> dict[str, int]:
+        """Verify these pending candidates (the whole run, or a later stage's additions)."""
+        counts: dict[str, int] = {"verified": 0, "unrelated": 0, "fetch_failed": 0}
+        if not candidates:
+            return counts
+        query = await self._query(ctx)
         cache = _Cache()
         gate = asyncio.Semaphore(self.concurrency)
-        counts: dict[str, int] = {"verified": 0, "unrelated": 0, "fetch_failed": 0}
         done = 0
 
         async def verify_one(candidate: Candidate) -> None:
@@ -249,10 +260,10 @@ class VerifyStage:
             counts[status.value] = counts.get(status.value, 0) + 1
             done += 1
             if done % 5 == 0:
-                await ctx.progress(self.name, checked=done, verified=counts["verified"])
+                await ctx.progress(stage or self.name, checked=done, verified=counts["verified"])
 
         await asyncio.gather(*(verify_one(c) for c in candidates))
-        return StageResult(counts={"candidates": len(candidates), **counts})
+        return counts
 
     async def _verify(
         self, ctx: StageContext, query: Side, cache: _Cache, candidate: Candidate
@@ -387,20 +398,27 @@ class DateStage:
         return (capture.captured_at, capture.archive_url) if capture else None
 
     async def run(self, ctx: StageContext) -> StageResult:
+        return StageResult(counts=await self.date_sightings(ctx))
+
+    async def date_sightings(
+        self, ctx: StageContext, candidate_ids: list[uuid.UUID] | None = None
+    ) -> dict[str, int]:
+        """Date the run's sightings, or only those verified from `candidate_ids`."""
+        query = (
+            select(Sighting, Candidate)
+            .join(Candidate, Candidate.id == Sighting.candidate_id)
+            .where(Sighting.run_id == ctx.run_id)
+        )
+        if candidate_ids is not None:
+            query = query.where(Candidate.id.in_(candidate_ids))
         async with ctx.sessions() as session:
-            rows = (
-                await session.execute(
-                    select(Sighting, Candidate)
-                    .join(Candidate, Candidate.id == Sighting.candidate_id)
-                    .where(Sighting.run_id == ctx.run_id)
-                )
-            ).all()
+            rows = (await session.execute(query)).all()
         counts: dict[str, int] = {"sightings": len(rows), "signals": 0}
         for sighting, candidate in rows:
             signals = await self._signals(ctx, sighting, candidate)
             counts["signals"] += len(signals)
             await self._store(ctx, sighting.id, signals)
-        return StageResult(counts=counts)
+        return counts
 
     async def _signals(
         self, ctx: StageContext, sighting: Sighting, candidate: Candidate

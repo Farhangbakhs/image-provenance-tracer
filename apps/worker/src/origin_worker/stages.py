@@ -20,10 +20,14 @@ from origin_core.llm.runner import LLMRunner
 from origin_core.pipeline.runner import Stage, StageContext, StageResult
 from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner
+from origin_core.providers.telegram import TelegramIndex
 from origin_core.storage import BlobStore
 from origin_worker.branch import BranchStage
 from origin_worker.embedding import SSCDEmbedder
 from origin_worker.matching.thresholds import Thresholds
+from origin_worker.telegram.collector import Collector
+from origin_worker.telegram.sources import PhotoSource
+from origin_worker.telegram.sweep import SweepStage
 from origin_worker.trace import DateStage, DiscoverStage, VerifyStage
 
 
@@ -59,6 +63,14 @@ class IngestStage:
 
 
 @dataclass(frozen=True)
+class TelegramServices:
+    """The targeted sweep's collector and source (Phase 5, behind ORIGIN_ENABLE_TELEGRAM)."""
+
+    collector: Collector
+    source: PhotoSource
+
+
+@dataclass(frozen=True)
 class TraceServices:
     """What the discover, verify and date stages need, built once per worker."""
 
@@ -70,6 +82,7 @@ class TraceServices:
     exiftool: str
     llm: LLMSetup = field(default_factory=lambda: LLMSetup(None, "not configured"))
     llm_runner: LLMRunner | None = None
+    telegram: TelegramServices | None = None
 
 
 def build_stages(
@@ -77,16 +90,32 @@ def build_stages(
 ) -> list[Stage]:
     stages: list[Stage] = [IngestStage(blobs=blobs, embedder=embedder)]
     if trace is not None:
+        verify = VerifyStage(
+            fetcher=trace.fetcher,
+            blobs=blobs,
+            embedder=embedder,
+            thresholds=trace.thresholds,
+            max_pixels=trace.max_pixels,
+        )
+        date = DateStage(runner=trace.runner, blobs=blobs, exiftool=trace.exiftool)
         stages += [
             DiscoverStage(providers=trace.providers, runner=trace.runner, blobs=blobs),
-            VerifyStage(
-                fetcher=trace.fetcher,
-                blobs=blobs,
-                embedder=embedder,
-                thresholds=trace.thresholds,
-                max_pixels=trace.max_pixels,
-            ),
-            DateStage(runner=trace.runner, blobs=blobs, exiftool=trace.exiftool),
+            verify,
+            date,
+        ]
+        index = next((a for a in trace.providers.adapters if isinstance(a, TelegramIndex)), None)
+        if trace.telegram is not None and index is not None:
+            stages.append(
+                SweepStage(
+                    collector=trace.telegram.collector,
+                    source=trace.telegram.source,
+                    index=index,
+                    runner=trace.runner,
+                    verify=verify,
+                    date=date,
+                )
+            )
+        stages += [
             BranchStage(
                 blobs=blobs,
                 thresholds=trace.thresholds,

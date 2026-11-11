@@ -14,7 +14,7 @@ from origin_api.state import Session, State
 from origin_core.db.models import Run
 from origin_core.enums import RunStatus
 from origin_core.pipeline.events import TERMINAL, EventType, RunEvent
-from origin_core.pipeline.registry import STAGE_ORDER
+from origin_core.pipeline.registry import stage_order
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -33,7 +33,7 @@ RunRow = Annotated[Run, Depends(run_or_404)]
 
 @router.get("/{run_id}")
 async def get_run(run: RunRow) -> RunOut:
-    return RunOut.from_row(run, list(STAGE_ORDER))
+    return RunOut.from_row(run, stage_order(run.stages))
 
 
 @router.get("/{run_id}/events", response_class=EventSourceResponse)
