@@ -48,7 +48,8 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
   await page.keyboard.press("Escape");
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("img", { name: /Lineage/ })).toContainText("mirrored");
+  await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Lineage in words" })).toContainText("mirrored");
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "evidence" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("cell", { name: /viral-wire\.example/ }).first()).toBeVisible();
@@ -70,7 +71,9 @@ test("the Telegram case is earliest on Telegram and shows the forward", async ({
   await page.keyboard.press("Escape");
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("img", { name: /Lineage/ })).toContainText("forwarded");
+  await expect(page.locator("canvas")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Lineage in words" })).toContainText("forwarded");
+  await page.getByRole("button", { name: /^2024-05-11/ }).click();
 });
 
 test("the brief cites the branch and prints to PDF", async ({ page }) => {

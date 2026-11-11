@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RunAnalysisOut, RunSightingsOut, SightingOut } from "./api/client";
 import { NO_CLAIM_LANE, buildWorkspace, step } from "./workspace";
-import { lineageRows } from "@/components/workspace/Lineage";
+import { buildLineageGraph, groupDays, lineageRows, neighbourhood } from "./lineage-graph";
 import { stageOrder } from "@/components/AssetPanel";
 
 import { explainDate, explainGrade, explainMatch } from "./explain";
@@ -83,6 +83,47 @@ describe("lineageRows", () => {
     expect(rows[0].first?.id).toBe("a");
     expect(rows[0].derivedFrom).toBeNull();
     expect(rows[1].derivedFrom).toBe("cropped from V1");
+  });
+});
+
+describe("buildLineageGraph", () => {
+  const analysis = {
+    run_id: "r",
+    variants: [
+      { id: "v1", label: "V1", representative_sighting_id: "a", sighting_ids: ["a", "b"] },
+      { id: "v2", label: "V2", representative_sighting_id: "c", sighting_ids: ["c"] },
+    ],
+    edges: [{ parent_variant_id: "v1", child_variant_id: "v2", kind: "mirror", reason: "r", evidence: {} }],
+    propagation: [{ from_sighting_id: "a", to_sighting_id: "b", kind: "forward", reason: "r", evidence: {} }],
+    claims: [],
+    narratives: [],
+    grades: [],
+    notes: {},
+  };
+
+  it("places copies left to right in time and links them", () => {
+    const graph = buildLineageGraph(buildWorkspace(sightings, undefined), analysis);
+    const x = Object.fromEntries(graph.nodes.map((n) => [n.id, n.timeX]));
+    expect(x.a).toBeLessThan(x.b);
+    expect(x.b).toBeLessThan(x.c);
+    expect(graph.nodes.find((n) => n.id === "a")?.earliest).toBe(true);
+    expect(graph.nodes.find((n) => n.id === "c")?.laneY).toBeGreaterThan(0);
+    expect(graph.links.map((l) => `${l.source}>${l.target}:${l.kind}`)).toEqual(["a>b:same", "a>c:mirror", "a>b:forward"]);
+    expect(graph.links.find((l) => l.kind === "mirror")?.label).toBe("mirrored");
+    expect(graph.days.map((d) => d.day)).toEqual(["2024-10-30", "2024-11-05", "2024-11-20"]);
+  });
+
+  it("groups busy runs' date chips by month, then by year", () => {
+    const days = Array.from({ length: 14 }, (_, i) => ({ day: `2024-${String((i % 7) + 1).padStart(2, "0")}-0${(i % 3) + 1}`, ids: [`s${i}`] }));
+    const months = groupDays(days);
+    expect(months.map((d) => d.day)).toEqual(["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07"]);
+    expect(months[0].ids).toEqual(["s0", "s7"]);
+    expect(groupDays(days.slice(0, 3)).map((d) => d.day)).toEqual(["2024-01-01", "2024-02-02", "2024-03-03"]);
+  });
+
+  it("lights up a node and its neighbours", () => {
+    const graph = buildLineageGraph(buildWorkspace(sightings, undefined), analysis);
+    expect([...neighbourhood(graph.links, "c")].sort()).toEqual(["a", "c"]);
   });
 });
 
