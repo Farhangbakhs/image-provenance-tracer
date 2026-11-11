@@ -468,3 +468,62 @@ Index(
     postgresql_with={"m": 16, "ef_construction": 64},
     postgresql_ops={"embedding": "vector_cosine_ops"},
 )
+
+
+class TelegramChannel(Base):
+    """A public channel on the Telegram watchlist. Only listed channels are ever collected."""
+
+    __tablename__ = "telegram_channels"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    channel: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    note: Mapped[str | None] = mapped_column(Text)
+    added_by: Mapped[str] = mapped_column(Text, nullable=False)
+    #: The newest message id collected so far; the next backfill stops there.
+    newest_collected_id: Mapped[int | None] = mapped_column(BigInteger)
+    last_collected_at: Mapped[datetime | None] = mapped_column(TS)
+    created_at: Mapped[datetime] = created_at()
+
+
+class TelegramPost(Base):
+    """One photo in one public post, fingerprinted for the watchlist index.
+
+    The photo bytes were fetched by ORIGIN and stored as an artefact; `posted_at` is the
+    platform's own message time. A trace treats a match here as a candidate like any other,
+    and the verifier fetches the post again before it becomes a sighting.
+    """
+
+    __tablename__ = "telegram_posts"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    channel: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    message_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    #: Position of the photo within the post (albums carry several).
+    photo_index: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0")
+    posted_at: Mapped[datetime] = mapped_column(TS, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    image_url: Mapped[str] = mapped_column(Text, nullable=False)
+    image_artefact_id: Mapped[uuid.UUID] = _fk("artefacts.id", ondelete="RESTRICT")
+    forwarded_from_channel: Mapped[str | None] = mapped_column(Text)
+    forwarded_from_message_id: Mapped[int | None] = mapped_column(BigInteger)
+    forwarded_from_name: Mapped[str | None] = mapped_column(Text)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    phash: Mapped[str] = mapped_column(String(16), nullable=False)
+    pdq: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(EMBEDDING_DIM), nullable=False)
+    embedding_model: Mapped[str] = mapped_column(Text, nullable=False)
+    #: "preview" (t.me/s, no account) or "api" (Telethon).
+    collected_via: Mapped[str] = mapped_column(String(16), nullable=False)
+    collected_at: Mapped[datetime] = mapped_column(TS, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("channel", "message_id", "photo_index"),
+        CheckConstraint("collected_via IN ('preview','api')", name="collected_via"),
+        Index(
+            "ix_telegram_posts_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )

@@ -6,7 +6,7 @@ from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -89,9 +89,26 @@ class Settings(BaseSettings):
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )
 
+    #: Phase 5, off by default: read Telegram's terms (PLAN.md 1.9) before switching it on.
+    enable_telegram: bool = Field(default=False, alias="ORIGIN_ENABLE_TELEGRAM")
+    #: Seconds between requests to Telegram, preview or API. Telegram throttles hard scrapers.
+    telegram_interval_s: float = Field(default=3.0, alias="ORIGIN_TELEGRAM_INTERVAL_S", ge=1.0)
+    #: Only for the optional Telethon collector: your own app from my.telegram.org.
+    telegram_api_id: int | None = Field(default=None, alias="TELEGRAM_API_ID")
+    telegram_api_hash: SecretStr | None = Field(default=None, alias="TELEGRAM_API_HASH")
+    #: Telethon session file. Holds a login: never commit it (*.session is gitignored).
+    telegram_session: Path = Field(
+        default=Path("var/telegram/origin.session"), alias="TELEGRAM_SESSION"
+    )
+
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000"], alias="ORIGIN_CORS_ORIGINS"
     )
+
+    @field_validator("telegram_api_id", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
 
     @model_validator(mode="after")
     def _guard_modes(self) -> Settings:
@@ -99,6 +116,11 @@ class Settings(BaseSettings):
             raise ValueError(
                 "ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS must be false when ORIGIN_ENV=production: "
                 "unofficial providers query engine front ends and may breach their terms."
+            )
+        if self.env is Environment.PRODUCTION and self.enable_telegram:
+            raise ValueError(
+                "ORIGIN_ENABLE_TELEGRAM must be false when ORIGIN_ENV=production: Telegram's "
+                "API and content terms restrict this use (PLAN.md 1.9)."
             )
         if self.env is Environment.DEMO and self.provider_mode is not ProviderMode.REPLAY:
             raise ValueError("ORIGIN_ENV=demo requires ORIGIN_PROVIDER_MODE=replay.")
