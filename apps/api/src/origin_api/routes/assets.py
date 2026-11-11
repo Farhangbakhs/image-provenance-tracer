@@ -5,9 +5,10 @@ from __future__ import annotations
 import uuid
 from typing import Any, cast
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 
+from origin_api import ratelimit
 from origin_api.schemas import (
     AssetEvidence,
     AssetOut,
@@ -135,7 +136,12 @@ async def get_display(asset_id: uuid.UUID, session: Session, state: State) -> Re
     )
 
 
-@router.post("/{asset_id}/runs", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/{asset_id}/runs",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(ratelimit.runs)],
+    responses={429: {"description": "Too many trace starts from this client; see Retry-After"}},
+)
 async def start_run(asset_id: uuid.UUID, session: Session, state: State) -> RunOut:
     """Start a trace of this asset. The run executes on the worker; follow it over SSE."""
     asset = await _asset_or_404(session, asset_id)

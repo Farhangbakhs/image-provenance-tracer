@@ -108,7 +108,14 @@ async def test_unsupported_and_missing_case_are_refused(client: httpx.AsyncClien
 
 @pytest.mark.parametrize(
     "upload_limits",
-    [{"ORIGIN_UPLOAD_MAX_BYTES": 2_000, "ORIGIN_UPLOAD_MAX_PIXELS": 50_000_000}],
+    [
+        {
+            "ORIGIN_UPLOAD_MAX_BYTES": 2_000,
+            "ORIGIN_UPLOAD_MAX_PIXELS": 50_000_000,
+            "ORIGIN_RATE_LIMIT_UPLOADS": 0,
+            "ORIGIN_RATE_LIMIT_RUNS": 0,
+        }
+    ],
 )
 async def test_oversized_upload_is_413(client: httpx.AsyncClient) -> None:
     case_id = await _case(client)
@@ -130,3 +137,29 @@ async def test_start_run_queues_a_job(client: httpx.AsyncClient, redis: Redis) -
     assert await redis.exists(f"arq:job:{run_job_id(uuid.UUID(run['id']))}")  # pyright: ignore[reportUnknownMemberType]
     panel = (await client.get(f"/assets/{asset['id']}")).json()
     assert [r["id"] for r in panel["runs"]] == [run["id"]]
+
+
+@pytest.mark.parametrize(
+    "upload_limits",
+    [
+        {
+            "ORIGIN_UPLOAD_MAX_BYTES": 20_000_000,
+            "ORIGIN_UPLOAD_MAX_PIXELS": 50_000_000,
+            "ORIGIN_RATE_LIMIT_UPLOADS": 0,
+            "ORIGIN_RATE_LIMIT_RUNS": 2,
+        }
+    ],
+)
+async def test_run_starts_are_rate_limited(client: httpx.AsyncClient, redis: Redis) -> None:
+    async for key in redis.scan_iter("ratelimit:run:*"):  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        await redis.delete(key)  # pyright: ignore[reportUnknownArgumentType]
+    case_id = await _case(client)
+    asset = (await _upload(client, case_id, _jpeg())).json()
+    codes = [(await client.post(f"/assets/{asset['id']}/runs")).status_code for _ in range(3)]
+    # The third may land in a new minute window; at least the first two pass.
+    assert codes[:2] == [202, 202]
+    if codes[2] == 429:
+        refused = await client.post(f"/assets/{asset['id']}/runs")
+        assert refused.status_code == 429
+        assert 1 <= int(refused.headers["retry-after"]) <= 60
+        assert "2 per minute" in refused.json()["detail"]

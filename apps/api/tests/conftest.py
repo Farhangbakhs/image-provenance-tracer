@@ -19,7 +19,13 @@ EXIFTOOL = os.environ.get("EXIFTOOL_PATH", "exiftool")
 
 @pytest.fixture
 def upload_limits() -> dict[str, int]:
-    return {"ORIGIN_UPLOAD_MAX_BYTES": 20_000_000, "ORIGIN_UPLOAD_MAX_PIXELS": 50_000_000}
+    # Rate limits are off unless a test turns them on: the suite runs faster than any client.
+    return {
+        "ORIGIN_UPLOAD_MAX_BYTES": 20_000_000,
+        "ORIGIN_UPLOAD_MAX_PIXELS": 50_000_000,
+        "ORIGIN_RATE_LIMIT_UPLOADS": 0,
+        "ORIGIN_RATE_LIMIT_RUNS": 0,
+    }
 
 
 @pytest.fixture
