@@ -131,6 +131,12 @@ Options for you to choose from:
 2. **Manual import only.** The analyst pastes a public `t.me/<channel>/<id>` link. ORIGIN fetches the public web preview (`t.me/s/…`), the same page any browser sees, as a web sighting. No API account, no index, no bulk collection. This still runs ORIGIN's matching over the image, so read the terms yourself before relying on it.
 3. **Build as specified behind the flag, off by default, for your own legal review.** Not recommended without advice.
 
+**Decision (2026-11-11): option 3.** The owner chose to build Phase 5 as specified for a student project that will not be published or deployed. It stays behind `ORIGIN_ENABLE_TELEGRAM` (default `false`), the settings refuse it in production, and the terms above still apply to anyone who switches it on. How it was built:
+
+- **The default collector is the public preview** (`t.me/s/<channel>`), the page any browser sees, read slowly (one request every few seconds). The Telethon collector is optional: it needs the owner's own `TELEGRAM_API_ID`/`TELEGRAM_API_HASH` and an interactive login, and the session file is never committed.
+- **Public channels only**, named one by one on a watchlist. No groups, member lists or user profiles. Forward names that Telegram hides stay hidden.
+- **The preview markup was checked against live pages on 2026-11-11** (post id, `<time datetime>`, photo URL in a `background-image` style, "Forwarded from" link). A post's own page (`t.me/<channel>/<id>`) carries the photo as `og:image`, so the ordinary verifier fetches and checks every Telegram hit like any web page.
+
 
 ---
 
@@ -243,7 +249,7 @@ An analyst console: dark, dense and quiet.
 | 2. Discover, verify, date **(done)** | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
 | 3. Branching **(done)** | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
 | 4. Console **(done)** | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
-| 5. Telegram (flagged) **(blocked: see 1.9)** | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
+| 5. Telegram (flagged) **(in progress: see 1.9)** | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
 | 6. Agent, evals, hardening | eval set and harness; investigator agent; rate limiting and tracing; deployment config | eval report from one command; public demo |
 
 If time runs short, cut the Phase 6 agent first and keep the evals.
