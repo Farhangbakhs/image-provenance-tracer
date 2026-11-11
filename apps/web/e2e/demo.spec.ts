@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 const API = process.env.ORIGIN_API_URL ?? "http://localhost:8000";
 const DISCLAIMER = "Earliest found in indexed sources. Earlier copies may exist.";
 const FLOOD = "DEMO: Flood photo recaptioned as a hurricane";
+const TELEGRAM = "DEMO: Harbour smoke posted on Telegram before the web";
 
 /** Next keeps the previous route mounted but hidden after a client navigation; match only what is shown. */
 function shown(page: Page, text: string | RegExp) {
@@ -21,7 +22,7 @@ async function openWorkspace(page: Page, title: string) {
 test("home shows the demo cases and every service is ready", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(shown(page, DISCLAIMER)).toBeVisible();
-  for (const title of [FLOOD, "DEMO: Cropped and captioned repost", "DEMO: Signed photo, stripped copies"]) {
+  for (const title of [FLOOD, "DEMO: Cropped and captioned repost", "DEMO: Signed photo, stripped copies", TELEGRAM]) {
     await expect(page.getByRole("link", { name: new RegExp(title) })).toBeVisible();
   }
   const status = page.getByRole("region", { name: "System" });
@@ -50,6 +51,24 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "evidence" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("cell", { name: /viral-wire\.example/ }).first()).toBeVisible();
+});
+
+test("the Telegram case is earliest on Telegram and shows the forward", async ({ page }) => {
+  await openWorkspace(page, TELEGRAM);
+  await expect(page.getByRole("heading", { name: /4 verified sightings · 1 variant/ })).toBeVisible();
+  await expect(shown(page, DISCLAIMER)).toBeVisible();
+
+  // The earliest sighting is the channel post the watchlist post was forwarded from.
+  await page.keyboard.press("j");
+  await page.keyboard.press("e");
+  const drawer = page.getByRole("complementary", { name: "Evidence" });
+  await expect(drawer.getByText(/origin_demo_citydesk\/52/).first()).toBeVisible();
+  await expect(drawer.getByText(/platform/).first()).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("g");
+  await expect(page.getByRole("tab", { name: "graph" })).toHaveAttribute("aria-selected", "true");
+  await expect(shown(page, "1 forward inside")).toBeVisible();
 });
 
 test("the brief cites the branch and prints to PDF", async ({ page }) => {
