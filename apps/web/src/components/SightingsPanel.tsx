@@ -5,6 +5,7 @@ import { API_URL, type RunSightingsOut, type SightingOut } from "@/lib/api/clien
 import { useRunSightings } from "@/lib/api/hooks";
 import { EARLIEST_DISCLAIMER, SIGNAL_LABEL } from "@/lib/copy";
 import { formatInterval, formatUtc } from "@/lib/time";
+import { searchProblem } from "@/lib/search-problem";
 
 const CONFIDENCE_CLASS: Record<string, string> = {
   high: "text-conf-high",
@@ -66,6 +67,7 @@ function SightingRow({ sighting, earliest }: { sighting: SightingOut; earliest: 
 export function SightingsList({ data }: { data: RunSightingsOut }) {
   const rejected = data.candidates.unrelated + data.candidates.fetch_failed;
   const notes = Object.entries(data.notes);
+  const problem = searchProblem(data.notes, data.candidates);
   return (
     <Panel
       title="Sightings"
@@ -73,6 +75,11 @@ export function SightingsList({ data }: { data: RunSightingsOut }) {
     >
       {data.earliest_sighting_id ? (
         <p className="border-b border-line px-3 py-2 text-[12px] text-muted">{EARLIEST_DISCLAIMER}</p>
+      ) : null}
+      {problem ? (
+        <p role="alert" className="border-b border-line px-3 py-2 text-[12px] font-semibold">
+          {problem}
+        </p>
       ) : null}
       {data.sightings.length === 0 ? (
         <p className="px-3 py-2 text-[12px] text-muted">

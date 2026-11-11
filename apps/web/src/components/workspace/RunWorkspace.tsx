@@ -11,6 +11,7 @@ import { API_URL } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
 import { EARLIEST_DISCLAIMER } from "@/lib/copy";
 import { buildWorkspace, step } from "@/lib/workspace";
+import { searchProblem } from "@/lib/search-problem";
 
 const VIEWS = ["timeline", "graph", "evidence"] as const;
 type View = (typeof VIEWS)[number];
@@ -61,6 +62,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
   const current = model.sightings.find((s) => s.id === selected) ?? null;
   const claim = analysis.data?.claims.find((c) => c.sighting_id === selected);
   const notes = { ...sightings.data.notes, ...(analysis.data?.notes ?? {}) };
+  const problem = searchProblem(sightings.data.notes, sightings.data.candidates);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4">
@@ -93,6 +95,11 @@ export function RunWorkspace({ runId }: { runId: string }) {
           <p className="border-l border-accent pl-2 text-[12px] text-muted">{EARLIEST_DISCLAIMER}</p>
         </div>
       </div>
+      {problem ? (
+        <p role="alert" className="border border-line bg-surface-1 px-3 py-2 text-[12px] font-semibold">
+          {problem}
+        </p>
+      ) : null}
 
       <div role="tablist" aria-label="Views" className="flex gap-px border-b border-line">
         {VIEWS.map((v) => (
