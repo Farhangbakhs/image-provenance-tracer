@@ -10,11 +10,32 @@ ORIGIN never reports an "origin". Private, deleted and unindexed posts are invis
 
 Built phase by phase; see [PLAN.md](PLAN.md) for the specification, the verification log for every external service, and the phase list.
 
-**Phase 0 (foundations) is complete.** The stack runs, and the evidence schema, provider runner (cache, quota, retries, circuit breaker, record and replay) and resumable pipeline with live progress are in place and tested. No pipeline stages exist yet; Phase 1 adds ingest. Demo mode, evaluation results and the ethics section arrive with later phases.
+Phases 0 to 4 are built: ingest (hashes, metadata, Content Credentials, SSCD embedding), discovery through free-tier providers, verification of every hit by fetching and matching it, evidence-based dating, variants, claims, narratives and grades, and the console with its timeline, variant graph, evidence drawer and exports. Telegram (Phase 5) and the evaluation harness and agent (Phase 6) are next.
+
+## Try the demo (no keys, about five minutes)
+
+Requirements: Docker and GNU Make.
+
+```sh
+make demo
+```
+
+This builds and starts the stack in replay mode and seeds three investigations. Open http://localhost:3000, pick a case and open its run.
+
+| Case | What to look for |
+| --- | --- |
+| Flood photo recaptioned as a hurricane | Two early Valencia pages and a later mirrored repost that calls it Hurricane Milton in Florida. The timeline shows the root narrative and the branch, with its divergence sighting. |
+| Cropped and captioned repost | A CDN resize and a blog crop with a caption bar, linked as derivatives in the graph; one unrelated hit and one dead link are rejected and counted. |
+| Signed photo, stripped copies | The query carries Content Credentials from a test signer that is not on the trust list; the reposts lost them. |
+
+In the workspace, `j`/`k` move through sightings, `e` opens the evidence drawer and `g` switches between timeline, graph and evidence views. **Brief (PDF)** opens a printable report; **Evidence pack (JSON)** downloads every finding with the SHA-256, fetch time and storage key of each artefact behind it.
+
+What is synthetic in the demo, and labelled so in `fixtures/demo/cases.json`: the web pages, their `.example` domains, the archive dates and the reverse-image index. Everything ORIGIN does with them is real: each image is fetched through the hardened fetcher, fingerprinted, embedded, matched, dated, clustered, read for claims and graded by the same pipeline as a live trace. Claims and narratives were extracted once by a real model (Gemini, free tier) and are replayed from `fixtures/recordings/`.
 
 ## Run it
 
-Requirements: Docker, [uv](https://docs.astral.sh/uv/), Node 22, GNU Make.
+
+For live traces with your own keys (see `.env.example`). Requirements: Docker, [uv](https://docs.astral.sh/uv/), Node 22, GNU Make.
 
 ```sh
 make dev       # db, redis, s3, migrate, api, worker, web; returns when all are healthy
