@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/Panel";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { Timeline } from "@/components/workspace/Timeline";
-import { Lineage } from "@/components/workspace/Lineage";
+import { LineageGraph } from "@/components/workspace/LineageGraph";
 import { Term } from "@/components/ui/Term";
 import { API_URL, SNAPSHOT } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
@@ -205,7 +205,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
           <Panel title={view} hint={view === "evidence" ? VIEW_HINT[view] : undefined}>
             {view === "timeline" ? <Timeline model={model} selected={selected} onSelect={select} /> : null}
             {view === "lineage" && analysis.data ? (
-              <Lineage model={model} analysis={analysis.data} selected={selected} onSelect={select} />
+              <LineageGraph model={model} analysis={analysis.data} selected={selected} onSelect={select} />
             ) : null}
             {view === "lineage" && !analysis.data ? <p className="px-3 py-2 text-muted">No variant analysis for this run.</p> : null}
             {view === "evidence" ? <EvidenceTable model={model} selected={selected} onSelect={select} /> : null}
