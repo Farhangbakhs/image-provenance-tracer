@@ -98,6 +98,23 @@ Local tools to install: **exiftool** (not on this machine). Python 3.12 is insta
 | **Local CI (`make ci`)** | GitHub Actions is unavailable on this account (billing lock). `make ci` runs the same jobs in Linux containers against committed HEAD. |
 | **Dating vocabulary extended (Phase 2)** | `no_earlier_than` (capture or signing time floors a sighting) and `observed` (ORIGIN's own fetch caps it) were needed by the dating rule. |
 
+### 1.8 Decisions made while building Phases 2 to 4
+
+| Decision | Why |
+| --- | --- |
+| **Thresholds v2: a geometric route to "derivative"** | A real crop-and-caption copy scored SSCD 0.69, below v1's derivative cut. v2 also accepts SSCD ≥ 0.5 when ORB + RANSAC finds ≥ 60 inliers. Every sighting stores the threshold version it was judged by. |
+| **The fetcher pins the vetted IP** | DNS is resolved once, every address must be global, and the connection goes to that address with SNI set, so a rebinding answer cannot redirect it. Redirects are re-vetted hop by hop. |
+| **Gemini model `gemini-3.5-flash-lite`** | `gemini-2.5-flash` is closed to new free-tier keys; `3.8-flash` answered too slowly on the free tier for claim extraction. |
+| **Only a contradiction opens a branch** | When the model groups claims apart without marking a contradiction, the groups join the root narrative. The model judges contradiction; the root is decided by the evidence (the earliest-dated claim). |
+| **Demo web is synthetic, the pipeline is not** | Demo pages, `.example` domains, archive dates and the reverse-image index are declared in `fixtures/demo/cases.json` and labelled synthetic. Every stage runs for real over them, and the model's answers were recorded once and replay with no key. |
+| **Brief is a print stylesheet, not WeasyPrint** | The brief page renders the evidence pack and prints to PDF from any browser; Playwright's `page.pdf()` checks it in the e2e suite. No extra Python dependency or system libraries. |
+| **Evidence pack format `origin.evidence-pack.v1`** | One JSON document: findings, provider calls, audit trail, and every artefact with SHA-256, fetch time and storage key. |
+
+Open items from Phases 2 to 4:
+
+- **Live provider check.** The Vision and Lens adapters are written from the documented response shapes and tested against synthetic fixtures (`fixtures/synthetic/`). Phase 2's "known viral image" check needs `GOOGLE_VISION_API_KEY` or `SERPAPI_API_KEY`: run once with `ORIGIN_PROVIDER_MODE=record`, commit the recordings, and the contract tests then run against real responses.
+- **Cold demo time.** With images built, `make demo` is ready in about a minute. The first build downloads CPU PyTorch and the SSCD weights (about 2 GB) and takes longer than five minutes on a slow connection; publishing prebuilt images is a Phase 6 item.
+
 ---
 
 ## 2. Principles
@@ -206,9 +223,9 @@ An analyst console: dark, dense and quiet.
 | --- | --- | --- |
 | 0. Foundations **(done)** | repo skeleton and tooling; compose stack; schema and migrations; provider protocol, runner and quota; fixture recorder and replayer; pipeline runner, worker and SSE; CI | `make dev` starts everything; CI green on an empty pipeline |
 | 1. Ingest **(done)** | upload validation; storage; hashing and embedding; metadata and C2PA; asset panel | an upload shows its asset panel; a C2PA sample reports the right state |
-| 2. Discover, verify, date | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
-| 3. Branching | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
-| 4. Console | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
+| 2. Discover, verify, date **(done)** | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
+| 3. Branching **(done)** | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
+| 4. Console **(done)** | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
 | 5. Telegram (flagged) | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
 | 6. Agent, evals, hardening | eval set and harness; investigator agent; rate limiting and tracing; deployment config | eval report from one command; public demo |
 
