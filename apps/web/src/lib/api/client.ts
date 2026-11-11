@@ -24,3 +24,4 @@ export type SightingOut = components["schemas"]["SightingOut"];
 export type RunAnalysisOut = components["schemas"]["RunAnalysisOut"];
 export type ClaimOut = components["schemas"]["ClaimOut"];
 export type NarrativeOut = components["schemas"]["NarrativeOut"];
+export type EvidencePack = components["schemas"]["EvidencePack"];

@@ -257,6 +257,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}/evidence-pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Evidence Pack
+         * @description With `download=true`, served as an attachment named after the run.
+         */
+        get: operations["evidence_pack_runs__run_id__evidence_pack_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{run_id}/sightings": {
         parameters: {
             query?: never;
@@ -583,6 +603,29 @@ export interface components {
              */
             value: string;
         };
+        /** EvidencePack */
+        EvidencePack: {
+            analysis: components["schemas"]["RunAnalysisOut"];
+            /** Artefacts */
+            artefacts: components["schemas"]["PackArtefact"][];
+            asset: components["schemas"]["PackAsset"];
+            /** Audit */
+            audit: components["schemas"]["PackAuditEvent"][];
+            case: components["schemas"]["PackCase"];
+            /** Disclaimer */
+            disclaimer: string;
+            /** Format */
+            format: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Provider Calls */
+            provider_calls: components["schemas"]["PackProviderCall"][];
+            run: components["schemas"]["RunOut"];
+            sightings: components["schemas"]["RunSightingsOut"];
+        };
         /** Fingerprints */
         Fingerprints: {
             /** Dhash */
@@ -712,6 +755,127 @@ export interface components {
              * @enum {string}
              */
             status: "accepted" | "overruled";
+        };
+        /** PackArtefact */
+        PackArtefact: {
+            /** Byte Size */
+            byte_size: number;
+            /** Content Type */
+            content_type: string;
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Http Status */
+            http_status: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Sha256 */
+            sha256: string;
+            /** Source Url */
+            source_url: string | null;
+            /** Storage Key */
+            storage_key: string;
+        };
+        /** PackAsset */
+        PackAsset: {
+            /** Content Type */
+            content_type: string;
+            /** Dhash */
+            dhash: string;
+            /** Display Artefact Id */
+            display_artefact_id: string | null;
+            /** Embedding Model */
+            embedding_model: string | null;
+            /** Height */
+            height: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Original Artefact Id
+             * Format: uuid
+             */
+            original_artefact_id: string;
+            /** Original Filename */
+            original_filename: string | null;
+            /** Pdq */
+            pdq: string;
+            /** Phash */
+            phash: string;
+            /** Sha256 */
+            sha256: string;
+            /** Width */
+            width: number;
+        };
+        /** PackAuditEvent */
+        PackAuditEvent: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Subject Id */
+            subject_id: string | null;
+            /** Subject Type */
+            subject_type: string | null;
+        };
+        /** PackCase */
+        PackCase: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Notes */
+            notes: string | null;
+            /** Title */
+            title: string;
+        };
+        /** PackProviderCall */
+        PackProviderCall: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Error */
+            error: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Provider */
+            provider: string;
+            /** Raw Artefact Id */
+            raw_artefact_id: string | null;
+            /** Request Hash */
+            request_hash: string;
+            /** Status */
+            status: string;
+            /** Units */
+            units: number;
         };
         /** Readyz */
         Readyz: {
@@ -1425,6 +1589,39 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evidence_pack_runs__run_id__evidence_pack_get: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidencePack"];
                 };
             };
             /** @description Validation Error */

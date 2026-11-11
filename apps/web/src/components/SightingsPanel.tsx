@@ -3,7 +3,7 @@
 import { Panel } from "@/components/Panel";
 import { API_URL, type RunSightingsOut, type SightingOut } from "@/lib/api/client";
 import { useRunSightings } from "@/lib/api/hooks";
-import { EARLIEST_DISCLAIMER } from "@/lib/copy";
+import { EARLIEST_DISCLAIMER, SIGNAL_LABEL } from "@/lib/copy";
 import { formatInterval, formatUtc } from "@/lib/time";
 
 const CONFIDENCE_CLASS: Record<string, string> = {
@@ -19,17 +19,6 @@ const MATCH_LABEL: Record<string, string> = {
   derivative: "edited copy",
 };
 
-const SIGNAL_LABEL: Record<string, string> = {
-  observed: "ORIGIN's fetch",
-  platform: "platform timestamp",
-  c2pa: "Content Credentials",
-  wayback_page: "archive capture of the page",
-  wayback_image: "archive capture of the image",
-  provider_crawl: "date shown by the provider",
-  page_metadata: "page's stated date",
-  http_last_modified: "server Last-Modified",
-  exif: "camera time in the file",
-};
 
 function SightingRow({ sighting, earliest }: { sighting: SightingOut; earliest: boolean }) {
   const edits = (sighting.transform?.edits as string[] | undefined) ?? [];
