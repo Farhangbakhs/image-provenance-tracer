@@ -5,9 +5,9 @@
  * analysts compare thumbnails against a fixed neutral ground. The greys follow Palantir's
  * Blueprint dark scale; data is set in mono, labels in small uppercase.
  *
- * Amber (--accent) means "earliest found" and nothing else.
- * Blue (--intent) marks selection, focus and things you can act on.
- * The three confidence colours are used only to express confidence, and always with a word.
+ * One accent, #22BED2, runs through the console: the earliest found, the current selection,
+ * focus and primary actions. Everything else is greyscale. Confidence is a step of grey and
+ * is always written out, never shown by colour alone.
  */
 :root {
   --bg: #111418;
@@ -18,11 +18,12 @@
   --text: #f6f7f9;
   --muted: #abb3bf;
   --faint: #8f99a8;
-  --accent: #f2a93b;
-  --intent: #4c90f0;
-  --conf-high: #4fb477;
-  --conf-medium: #c9b458;
-  --conf-low: #e07a67;
+  --accent: #22bed2;
+  --accent-soft: rgba(34, 190, 210, 0.14);
+  --intent: var(--accent);
+  --conf-high: #f6f7f9;
+  --conf-medium: #abb3bf;
+  --conf-low: #6b7380;
   color-scheme: dark;
 }
 
@@ -36,6 +37,7 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
   --color-intent: var(--intent);
   --color-conf-high: var(--conf-high);
   --color-conf-medium: var(--conf-medium);
@@ -106,11 +108,12 @@ body {
   --muted: #4f5661;
   --faint: #6b7380;
   --surface-3: #e8eaed;
-  --accent: #a8640a;
-  --intent: #2d72d2;
-  --conf-high: #23794a;
-  --conf-medium: #7d6c12;
-  --conf-low: #a33f2e;
+  --accent: #0b7c8b;
+  --accent-soft: rgba(11, 124, 139, 0.1);
+  --intent: var(--accent);
+  --conf-high: #111316;
+  --conf-medium: #4f5661;
+  --conf-low: #8a919c;
   color-scheme: light;
   background: var(--bg);
   color: var(--text);

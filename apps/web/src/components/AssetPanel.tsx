@@ -5,10 +5,10 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Fields, Panel } from "@/components/Panel";
-import { SightingsPanel } from "@/components/SightingsPanel";
 import { StageStrip } from "@/components/StageStrip";
 import { API_URL, SNAPSHOT, type AssetOut } from "@/lib/api/client";
-import { useAsset, useRunProgress, useStartRun } from "@/lib/api/hooks";
+import { useAsset, useRunProgress, useRunSightings, useStartRun } from "@/lib/api/hooks";
+import { searchProblem } from "@/lib/search-problem";
 import { describeCredentials } from "@/lib/credentials";
 import { formatUtc } from "@/lib/time";
 
@@ -90,7 +90,33 @@ function Metadata({ asset }: { asset: AssetOut }) {
   );
 }
 
-function Trace({ asset }: { asset: AssetOut }) {
+function LatestResult({ runId }: { runId: string }) {
+  const { data } = useRunSightings(runId);
+  if (!data) return <p className="text-muted">Loading the result…</p>;
+  const earliest = data.sightings.find((x) => x.id === data.earliest_sighting_id);
+  const problem = searchProblem(data.notes, data.candidates);
+  if (problem) return <p className="font-semibold">{problem}</p>;
+  return (
+    <div>
+      <p className="label">Earliest found</p>
+      {earliest ? (
+        <p className="mt-1 text-[18px] font-semibold">
+          <span className="mono text-accent">{earliest.date_upper ? formatUtc(earliest.date_upper, "day") : "undated"}</span>
+          <span className="ml-2">{earliest.domain}</span>
+        </p>
+      ) : (
+        <p className="mt-1 text-muted">No verified copy was found.</p>
+      )}
+      <p className="mt-1 text-[13px] text-muted">
+        {data.sightings.length} verified cop{data.sightings.length === 1 ? "y" : "ies"} out of{" "}
+        {data.sightings.length + data.candidates.unrelated + data.candidates.fetch_failed + data.candidates.pending} search
+        results.
+      </p>
+    </div>
+  );
+}
+
+function Investigation({ asset }: { asset: AssetOut }) {
   const queryClient = useQueryClient();
   const start = useStartRun(asset.id);
   const latest = asset.runs[0];
@@ -101,50 +127,44 @@ function Trace({ asset }: { asset: AssetOut }) {
     void queryClient.invalidateQueries({ queryKey: ["asset", asset.id] });
     void queryClient.invalidateQueries({ queryKey: ["sightings"] });
   });
+  const running = progress?.status === "running" || progress?.status === "connecting";
+  const done = latest && (latest.status === "succeeded" || latest.status === "failed") && !running;
+  const primary = "inline-block border border-accent bg-accent px-4 py-2 font-semibold text-bg hover:opacity-90";
+  const secondary = "border border-line px-3 py-2 text-[13px] text-muted hover:border-accent hover:text-text disabled:cursor-not-allowed";
 
   return (
-    <Panel
-      title="Trace"
-      aside={latest ? `last run ${formatUtc(latest.created_at)} · ${latest.status}` : "not run yet"}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
-        <p className="max-w-prose text-[13px] text-muted">
-          A trace asks the enabled reverse-image providers where this picture appears, fetches every hit,
-          keeps only proven copies and edits, and dates each one from the evidence.
-        </p>
-        <button
-          type="button"
-          hidden={SNAPSHOT}
-          onClick={() => start.mutate(undefined, { onSuccess: (run) => setRunId(run.id) })}
-          disabled={start.isPending || progress?.status === "running" || progress?.status === "connecting"}
-          className="border border-line px-3 py-1 text-[12px] hover:border-text disabled:cursor-not-allowed disabled:text-muted"
-        >
-          {progress?.status === "running" || progress?.status === "connecting" ? "Running…" : "Start trace"}
-        </button>
+    <Panel title="Investigation" aside={latest ? `last trace ${formatUtc(latest.created_at)}` : "not traced yet"}>
+      <div className="flex flex-col gap-4 p-4">
+        {done ? <LatestResult runId={latest.id} /> : null}
+        {!latest && !running ? (
+          <p className="text-muted">
+            A trace asks reverse-image search engines where this picture appears, then fetches every result, keeps only
+            proven copies and edits, and dates each one. It takes a few minutes.
+          </p>
+        ) : null}
+        {running ? <p className="text-muted">Tracing: searching, then checking and dating every result…</p> : null}
+        <div className="flex flex-wrap gap-2">
+          {done ? (
+            <Link href={`/runs/${latest.id}`} className={primary}>
+              Open investigation →
+            </Link>
+          ) : null}
+          {SNAPSHOT ? null : (
+            <button
+              type="button"
+              onClick={() => start.mutate(undefined, { onSuccess: (run) => setRunId(run.id) })}
+              disabled={start.isPending || running}
+              className={latest ? secondary : primary}
+            >
+              {running ? "Running…" : latest ? "Trace again" : "Start trace"}
+            </button>
+          )}
+        </div>
+        {start.error ? <p className="text-[13px]">{start.error.message}</p> : null}
       </div>
-      {start.error ? <p className="px-3 pb-2 text-[12px]">{start.error.message}</p> : null}
       {runId ? <StageStrip order={stageOrder(Object.keys(progress?.stages ?? {}))} progress={progress} /> : null}
-      {progress?.error ? <p className="mono border-t border-line px-3 py-2 text-[11px]">{progress.error}</p> : null}
+      {progress?.error ? <p className="mono border-t border-line px-3 py-2 text-[12px]">{progress.error}</p> : null}
     </Panel>
-  );
-}
-
-function TraceAndSightings({ asset }: { asset: AssetOut }) {
-  const latest = asset.runs[0];
-  const done = latest && (latest.status === "succeeded" || latest.status === "failed");
-  return (
-    <>
-      <Trace asset={asset} />
-      {done ? (
-        <Link
-          href={`/runs/${latest.id}`}
-          className="self-start border border-line px-3 py-1 text-[12px] hover:border-text"
-        >
-          Open the case workspace: timeline, variant graph and evidence →
-        </Link>
-      ) : null}
-      {done ? <SightingsPanel runId={latest.id} /> : null}
-    </>
   );
 }
 
@@ -158,10 +178,16 @@ export function AssetPanel({ assetId }: { assetId: string }) {
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <div className="flex min-w-0 flex-col gap-4">
-        <nav className="text-[12px] text-muted">
-          <Link href={`/cases/${asset.case_id}`} className="hover:text-text">
-            ← Case
+        <nav className="flex items-center gap-2 text-[13px] text-muted" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-text">
+            Cases
           </Link>
+          <span className="text-faint">/</span>
+          <Link href={`/cases/${asset.case_id}`} className="hover:text-text">
+            Case
+          </Link>
+          <span className="text-faint">/</span>
+          <span className="text-text">Image</span>
         </nav>
         <figure className="border border-line bg-surface-1">
           {/* The display copy is re-encoded by the API; Next's optimiser would encode it again. */}
@@ -178,7 +204,15 @@ export function AssetPanel({ assetId }: { assetId: string }) {
             </span>
           </figcaption>
         </figure>
-        <Panel title="Fingerprints">
+      </div>
+      <div className="flex min-w-0 flex-col gap-4 lg:pt-8">
+        <Investigation asset={asset} />
+        <details className="border border-line bg-surface-1">
+          <summary className="label cursor-pointer px-3 py-2 hover:text-text">
+            Technical details: fingerprints, Content Credentials, embedded metadata
+          </summary>
+          <div className="flex flex-col gap-4 border-t border-line p-3">
+            <Panel title="Fingerprints">
           <Fields
             rows={[
               { label: "SHA-256", value: f.sha256, mono: true },
@@ -194,11 +228,10 @@ export function AssetPanel({ assetId }: { assetId: string }) {
             ]}
           />
         </Panel>
-      </div>
-      <div className="flex min-w-0 flex-col gap-4 lg:pt-8">
-        <TraceAndSightings asset={asset} />
-        <Credentials asset={asset} />
-        <Metadata asset={asset} />
+            <Credentials asset={asset} />
+            <Metadata asset={asset} />
+          </div>
+        </details>
       </div>
     </div>
   );

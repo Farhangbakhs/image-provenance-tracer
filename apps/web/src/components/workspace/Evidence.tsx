@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { Fields } from "@/components/Panel";
-import { Term } from "@/components/ui/Term";
 import { API_URL, SNAPSHOT, type ClaimOut, type SightingOut } from "@/lib/api/client";
 import { MATCH_LABEL, explainDate, explainGrade, explainMatch } from "@/lib/explain";
 import { useOverrule } from "@/lib/api/hooks";
@@ -182,7 +181,7 @@ export function EvidenceDrawer({
       <Compare query={`${API_URL}${assetDisplayUrl}`} copy={`${API_URL}${sighting.image_url_local}`} />
 
       <section>
-        <h3 className="label mb-1"><Term name="sighting">Match</Term></h3>
+        <h3 className="label mb-1">Match</h3>
         <Fields
           rows={[
             { label: "Class", value: `${MATCH_LABEL[sighting.match_class] ?? sighting.match_class} (${sighting.match_class.replace("_", "-")})${edits.length ? ` · ${edits.join(", ")}` : ""}` },
@@ -201,7 +200,7 @@ export function EvidenceDrawer({
       </section>
 
       <section>
-        <h3 className="label mb-1"><Term name="interval">Date</Term></h3>
+        <h3 className="label mb-1">Date</h3>
         <p className="mono text-[12px]">
           {formatInterval(sighting.date_lower, sighting.date_upper)}{" "}
           <span style={{ color: CONFIDENCE_COLOUR[sighting.date_confidence] }}>({sighting.date_confidence})</span>
@@ -232,7 +231,7 @@ export function EvidenceDrawer({
       </section>
 
       <section>
-        <h3 className="label mb-1"><Term name="narrative">Claim</Term></h3>
+        <h3 className="label mb-1">Claim</h3>
         {claim ? (
           <div className="flex flex-col gap-1.5 text-[12px]">
             <p>
@@ -257,7 +256,7 @@ export function EvidenceDrawer({
       </section>
 
       <section>
-        <h3 className="label mb-1"><Term name="credibility">Grade</Term></h3>
+        <h3 className="label mb-1">Grade</h3>
         <p className="mono text-[12px]">
           {sighting.reliability ?? "?"}
           {sighting.credibility ?? "?"}

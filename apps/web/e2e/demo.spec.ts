@@ -15,7 +15,7 @@ async function openWorkspace(page: Page, title: string) {
   await page.getByRole("link", { name: new RegExp(title) }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
   await page.locator('a[href^="/assets/"]').first().click();
-  await page.getByRole("link", { name: /Open the case workspace/ }).click();
+  await page.getByRole("link", { name: /Open investigation/ }).click();
   await expect(page).toHaveURL(/\/runs\/[0-9a-f-]+$/);
 }
 
@@ -45,13 +45,15 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
   await expect(drawer).toBeVisible();
   await expect(drawer.getByText(/valencia-news\.example/).first()).toBeVisible();
 
+  // The graph is the first view; it can also band copies by the story their page tells.
   await page.keyboard.press("Escape");
-  await page.keyboard.press("g");
-  await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "graph" })).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Lineage in words" })).toContainText("mirrored");
+  await expect(page.getByRole("list", { name: "Graph in words" })).toContainText("mirrored");
+  await page.getByRole("radio", { name: "What it claims" }).click();
+  await expect(page.getByRole("list", { name: "Graph in words" })).toContainText(/Valencia/);
   await page.keyboard.press("g");
-  await expect(page.getByRole("tab", { name: "evidence" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "list" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("cell", { name: /viral-wire\.example/ }).first()).toBeVisible();
 });
 
@@ -69,10 +71,8 @@ test("the Telegram case is earliest on Telegram and shows the forward", async ({
   await expect(drawer.getByText(/platform/).first()).toBeVisible();
 
   await page.keyboard.press("Escape");
-  await page.keyboard.press("g");
-  await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Lineage in words" })).toContainText("forwarded");
+  await expect(page.getByRole("list", { name: "Graph in words" })).toContainText("forwarded");
   await page.getByRole("button", { name: /^2024-05-11/ }).click();
 });
 

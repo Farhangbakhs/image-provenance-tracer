@@ -53,7 +53,7 @@ export function lineageRows(model: WorkspaceModel, analysis: RunAnalysisOut): Li
 export const WORLD_MIN_WIDTH = 1600;
 export const LANE_GAP = 150;
 
-export type LinkKind = "same" | "crop" | "mirror" | "resize" | "overlay" | "recompress" | "forward";
+export type LinkKind = "crop" | "mirror" | "resize" | "overlay" | "recompress" | "forward";
 
 export interface GraphNode {
   id: string;
@@ -119,46 +119,72 @@ function whenIso(s: SightingOut): string | null {
  * online and grouped in y by variant. Links: consecutive copies of the same variant (faint),
  * derived-from edges between variants (labelled with the edit) and Telegram forwards.
  */
-export function buildLineageGraph(model: WorkspaceModel, analysis: RunAnalysisOut): LineageGraphData {
+export type GroupBy = "variant" | "story";
+
+/**
+ * The investigation as a graph on a time axis. Nodes are copies, placed in x at the earliest
+ * date their evidence allows and banded in y by variant (how the picture looks) or by story
+ * (what its page says). Links are derived-from edges between variants, labelled with the edit,
+ * and Telegram forwards.
+ */
+export function buildLineageGraph(
+  model: WorkspaceModel,
+  analysis: RunAnalysisOut,
+  groupBy: GroupBy = "variant",
+): LineageGraphData {
   const rows = lineageRows(model, analysis);
   const dated = model.sightings.filter((s) => whenIso(s));
   const width = Math.max(WORLD_MIN_WIDTH, dated.length * 70);
-  const scale = scaleUtc().domain(timeExtent(model.sightings)).range([0, width]);
-  const lanes: GraphLane[] = rows.map((row, i) => ({
-    label: row.label,
-    y: i * LANE_GAP,
-    count: row.sightings.length,
-    derivedFrom: row.derivedFrom,
+  // The axis spans where copies are placed, not every bound: most proven bounds are "today".
+  const placedOnly = dated.map((s) => ({ ...s, date_lower: whenIso(s), date_upper: whenIso(s) }));
+  const scale = scaleUtc().domain(timeExtent(placedOnly)).range([0, width]);
+
+  const bandOf: Record<string, number> = {};
+  const lanes: GraphLane[] = [];
+  if (groupBy === "variant") {
+    rows.forEach((row, i) => {
+      lanes.push({ label: row.label, y: i * LANE_GAP, count: row.sightings.length, derivedFrom: row.derivedFrom });
+      for (const s of row.sightings) bandOf[s.id] = i;
+    });
+  } else {
+    model.lanes.forEach((lane, i) => {
+      const count = model.sightings.filter((s) => model.laneOf[s.id] === lane.id).length;
+      lanes.push({
+        label: lane.label,
+        y: i * LANE_GAP,
+        count,
+        derivedFrom: lane.root ? "first story found" : lane.narrative ? "a contradicting story" : null,
+      });
+      for (const s of model.sightings) if (model.laneOf[s.id] === lane.id) bandOf[s.id] = i;
+    });
+  }
+  const variantOf = Object.fromEntries(rows.flatMap((r) => r.sightings.map((s) => [s.id, r.label])));
+
+  const nodes: GraphNode[] = dated.map((s) => ({
+    id: s.id,
+    sighting: s,
+    timeX: scale(new Date(whenIso(s) as string)),
+    laneY: (bandOf[s.id] ?? lanes.length) * LANE_GAP,
+    variant: variantOf[s.id] ?? "",
+    earliest: s.id === model.earliestId,
   }));
 
-  const nodes: GraphNode[] = [];
   const links: GraphLink[] = [];
-  rows.forEach((row, i) => {
-    const placed = row.sightings.filter((s) => whenIso(s));
-    for (const s of placed) {
-      nodes.push({
-        id: s.id,
-        sighting: s,
-        timeX: scale(new Date(whenIso(s) as string)),
-        laneY: i * LANE_GAP,
-        variant: row.label,
-        earliest: s.id === model.earliestId,
-      });
-    }
-    for (let k = 1; k < placed.length; k += 1) {
-      links.push({ source: placed[k - 1].id, target: placed[k].id, kind: "same", label: "" });
-    }
-  });
-
   const present = new Set(nodes.map((n) => n.id));
   const firstOf = Object.fromEntries(rows.map((r) => [r.id, r.sightings.find((s) => whenIso(s))?.id]));
+  // Several edits between the same two variants are one link: "cropped, resized".
+  const merged = new Map<string, GraphLink>();
   for (const e of analysis.edges) {
     const source = firstOf[e.parent_variant_id];
     const target = firstOf[e.child_variant_id];
-    if (source && target && source !== target) {
-      links.push({ source, target, kind: e.kind as LinkKind, label: EDGE_WORD[e.kind] ?? e.kind });
-    }
+    if (!source || !target || source === target) continue;
+    const key = `${source}>${target}`;
+    const word = EDGE_WORD[e.kind] ?? e.kind;
+    const existing = merged.get(key);
+    if (existing) existing.label = `${existing.label}, ${word}`;
+    else merged.set(key, { source, target, kind: e.kind as LinkKind, label: word });
   }
+  links.push(...merged.values());
   for (const e of analysis.propagation) {
     if (present.has(e.from_sighting_id) && present.has(e.to_sighting_id)) {
       links.push({ source: e.from_sighting_id, target: e.to_sighting_id, kind: "forward", label: "forwarded" });
