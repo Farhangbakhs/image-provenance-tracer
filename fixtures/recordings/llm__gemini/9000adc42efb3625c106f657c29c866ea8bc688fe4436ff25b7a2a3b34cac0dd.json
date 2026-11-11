@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "9000adc42efb3625c106f657c29c866ea8bc688fe4436ff25b7a2a3b34cac0dd",
+  "asset_sha256": "7296f8993cd055aa101365353693c6b79a00e96ceb085b752435bb8ec20de801",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "narrative.v1"
+  },
+  "recorded_at": "2026-11-11T09:36:21.858620Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"narratives\\\": [\\n    {\\n      \\\"label\\\": \\\"Smoke rising over the harbour district, 13 May 2024\\\",\\n      \\\"summary\\\": \\\"Claims describing smoke rising over the harbour district on 13 May 2024.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c1\\\",\\n        \\\"c2\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    }\\n  ]\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TAWJcj/jMcyaXTEG+xbHKrKsbs0F6I+vvWUb1BZEex9ENVv9D9UuZe/KPJFcmiznmtTADiiEHLudL6H5oyhtbTU5Uwg6MpZDYQlSL+d8REtlLUtawgzbXoJQ=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 593,\n    \"candidatesTokenCount\": 115,\n    \"totalTokenCount\": 708,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 593\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"Ejf0avzzFfnn7M8PgfXImAI\"\n}\n",
+  "body_sha256": "c11a7dec5736a4f01616c7b674ef6dc3ecf4b774fe4b2e412e15e69e401d9d45"
+}

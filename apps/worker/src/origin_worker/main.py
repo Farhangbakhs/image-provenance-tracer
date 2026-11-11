@@ -22,7 +22,7 @@ from origin_core.providers.fixtures import FixtureStore
 from origin_core.providers.quota import DEFAULT_POLICIES
 from origin_core.providers.registry import build_providers
 from origin_core.providers.runner import ProviderRunner
-from origin_core.settings import get_settings
+from origin_core.settings import Environment, get_settings
 from origin_core.storage import make_blob_store
 from origin_worker.embedding import SSCDEmbedder, ensure_weights
 from origin_worker.matching.thresholds import load_thresholds
@@ -81,7 +81,8 @@ async def startup(ctx: dict[str, Any]) -> None:
             ),
             source=PreviewSource(fetcher, Pacer(settings.telegram_interval_s)),
         )
-        if settings.enable_telegram
+        # Demo mode never contacts Telegram; its Telegram case is seeded offline.
+        if settings.enable_telegram and settings.env is not Environment.DEMO
         else None,
     )
     ctx["engine"] = engine

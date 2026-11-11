@@ -137,6 +137,20 @@ Options for you to choose from:
 - **Public channels only**, named one by one on a watchlist. No groups, member lists or user profiles. Forward names that Telegram hides stay hidden.
 - **The preview markup was checked against live pages on 2026-11-11** (post id, `<time datetime>`, photo URL in a `background-image` style, "Forwarded from" link). A post's own page (`t.me/<channel>/<id>`) carries the photo as `og:image`, so the ordinary verifier fetches and checks every Telegram hit like any web page.
 
+What was built (Phase 5 is done):
+
+| Part | How it works |
+| --- | --- |
+| **Watchlist index** | `telegram_channels` and `telegram_posts` (pHash, PDQ, SSCD embedding with an HNSW index, post time, text, forward header, the photo stored as an artefact). `python -m origin_worker.telegram watch / list / collect / login`. Collection resumes from the newest post collected and skips photos already indexed. |
+| **Throttling** | One request every `ORIGIN_TELEGRAM_INTERVAL_S` (default 3 s). A 429 is honoured for up to 60 s once; longer waits stop that channel. Telethon sleeps through flood waits up to 60 s and raises above that. |
+| **Provider** | `TelegramIndex` returns the 50 nearest posts by SSCD cosine (at least 0.5) plus any within pHash 8. Each hit's page is the post's own page, so the verifier decides. The adapter is `local`: the runner never caches, meters or replays it, because a cached answer would hide posts indexed since. |
+| **Dating** | A Telegram hit's post time is a `platform` signal (exact bound, high confidence). |
+| **Targeted sweep** | A stage after `date`. Keywords are the two most frequent content words in the verified pages' titles. Each watchlist channel is searched (`?q=`), photos posted from 30 days before to 1 day after the earliest web date are indexed, the index is queried again, and new hits are verified and dated. |
+| **Forward edges** | The sweep follows the forward header of every verified Telegram post to a public source post (up to three hops), reading the source's time from its embed page, then verifies it. The branch stage records a `forward` propagation edge between the two sightings; the API returns it, and the graph lists it inside the variant or draws a dashed edge between variants. |
+| **Demo** | The case "Harbour smoke posted on Telegram before the web" serves a synthetic `t.me` from memory. The sweep finds a 12 May post and follows its forward to an 11 May post; both come before the earliest web page (14 May). It is seeded only with the flag on, which `make demo` sets; demo mode never contacts Telegram. |
+
+Not verified live: the Telethon collector (it needs the owner's login), so it is tested with a stand-in client written to Telethon 1.45's documented interface. Albums are indexed photo by photo, but a post's own page shows only its first photo, so later album photos verify only when the verifier finds them on that page.
+
 
 ---
 
@@ -249,7 +263,7 @@ An analyst console: dark, dense and quiet.
 | 2. Discover, verify, date **(done)** | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
 | 3. Branching **(done)** | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
 | 4. Console **(done)** | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
-| 5. Telegram (flagged) **(in progress: see 1.9)** | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
+| 5. Telegram (flagged) **(done: see 1.9)** | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
 | 6. Agent, evals, hardening | eval set and harness; investigator agent; rate limiting and tracing; deployment config | eval report from one command; public demo |
 
 If time runs short, cut the Phase 6 agent first and keep the evals.

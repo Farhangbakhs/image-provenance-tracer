@@ -10,7 +10,7 @@ ORIGIN never reports an "origin". Private, deleted and unindexed posts are invis
 
 Built phase by phase; see [PLAN.md](PLAN.md) for the specification, the verification log for every external service, and the phase list.
 
-Phases 0 to 4 are built: ingest (hashes, metadata, Content Credentials, SSCD embedding), discovery through free-tier providers, verification of every hit by fetching and matching it, evidence-based dating, variants, claims, narratives and grades, and the console with its timeline, variant graph, evidence drawer and exports. Telegram (Phase 5) and the evaluation harness and agent (Phase 6) are next.
+Phases 0 to 5 are built: ingest (hashes, metadata, Content Credentials, SSCD embedding), discovery through free-tier providers, verification of every hit by fetching and matching it, evidence-based dating, variants, claims, narratives and grades, the console with its timeline, variant graph, evidence drawer and exports, and Telegram behind a feature flag (below). Phase 6 has its matching eval, rate limits and end-to-end tests; the agent is not built.
 
 ## Try the demo (no keys, about five minutes)
 
@@ -20,17 +20,18 @@ Requirements: Docker and GNU Make.
 make demo
 ```
 
-This builds and starts the stack in replay mode and seeds three investigations. Open http://localhost:3000, pick a case and open its run.
+This builds and starts the stack in replay mode and seeds four investigations. Open http://localhost:3000, pick a case and open its run.
 
 | Case | What to look for |
 | --- | --- |
 | Flood photo recaptioned as a hurricane | Two early Valencia pages and a later mirrored repost that calls it Hurricane Milton in Florida. The timeline shows the root narrative and the branch, with its divergence sighting. |
 | Cropped and captioned repost | A CDN resize and a blog crop with a caption bar, linked as derivatives in the graph; one unrelated hit and one dead link are rejected and counted. |
 | Signed photo, stripped copies | The query carries Content Credentials from a test signer that is not on the trust list; the reposts lost them. |
+| Harbour smoke posted on Telegram before the web | The Telegram sweep finds a watchlist channel's post from 12 May, two days before the earliest news page, and follows its forward header to the post it came from, dated 11 May. Both are dated by the post time Telegram shows. The graph lists the forward inside the variant. |
 
 In the workspace, `j`/`k` move through sightings, `e` opens the evidence drawer and `g` switches between timeline, graph and evidence views. **Brief (PDF)** opens a printable report; **Evidence pack (JSON)** downloads every finding with the SHA-256, fetch time and storage key of each artefact behind it.
 
-What is synthetic in the demo, and labelled so in `fixtures/demo/cases.json`: the web pages, their `.example` domains, the archive dates and the reverse-image index. Everything ORIGIN does with them is real: each image is fetched through the hardened fetcher, fingerprinted, embedded, matched, dated, clustered, read for claims and graded by the same pipeline as a live trace. Claims and narratives were extracted once by a real model (Gemini, free tier) and are replayed from `fixtures/recordings/`.
+What is synthetic in the demo, and labelled so in `fixtures/demo/cases.json`: the web pages, their `.example` domains, the archive dates, the reverse-image index, and the Telegram channels, posts and post times (served from memory; the demo never contacts Telegram). Everything ORIGIN does with them is real: each image is fetched through the hardened fetcher, fingerprinted, embedded, matched, dated, clustered, read for claims and graded by the same pipeline as a live trace. Claims and narratives were extracted once by a real model (Gemini, free tier) and are replayed from `fixtures/recordings/`.
 
 ## Run it
 
@@ -48,6 +49,18 @@ make dev       # db, redis, s3, migrate, api, worker, web; returns when all are 
 | Readiness | http://localhost:8000/readyz |
 
 `make down` stops the stack and keeps its data volumes.
+
+## Telegram (Phase 5, off by default)
+
+Reverse-image engines do not index Telegram, so ORIGIN keeps its own index of photos from public channels that you list. **Read [PLAN.md 1.9](PLAN.md) first:** Telegram's API terms and its content-licensing terms restrict collecting and indexing its data, and ORIGIN refuses the flag in production.
+
+```sh
+export ORIGIN_ENABLE_TELEGRAM=true
+uv run python -m origin_worker.telegram watch https://t.me/some_public_channel
+uv run python -m origin_worker.telegram collect --pages 2    # public web preview, no account
+```
+
+With the flag on, every trace also asks the index, and a targeted sweep searches each watchlist channel around the earliest web date. A Telegram hit is verified like any web page and dated by its post time; forward headers are followed to public source posts and drawn as forward edges. Coverage is the watchlist: no Telegram hit means "not in the channels ORIGIN indexes". The optional Telethon collector (`uv sync --extra telegram`, then `login` and `collect --via api`) needs your own `TELEGRAM_API_ID`/`TELEGRAM_API_HASH`; its session file is gitignored.
 
 ## Develop
 

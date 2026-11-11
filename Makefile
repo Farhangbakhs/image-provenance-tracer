@@ -34,6 +34,8 @@ dev:
 # Replay mode: every provider and model answer comes from fixtures/, so no keys are needed.
 demo: export ORIGIN_ENV := demo
 demo: export ORIGIN_PROVIDER_MODE := replay
+# The demo's Telegram case is synthetic and offline, so the demo shows it.
+demo: export ORIGIN_ENABLE_TELEGRAM := true
 demo:
 	$(COMPOSE) up -d --build --wait
 	$(COMPOSE) exec -T worker python -m origin_worker.demo seed

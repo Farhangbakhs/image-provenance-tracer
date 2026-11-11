@@ -5,6 +5,7 @@ x-python-env: &python-env
   ORIGIN_ENV: ${ORIGIN_ENV:-development}
   ORIGIN_LOG_JSON: "true"
   ORIGIN_PROVIDER_MODE: ${ORIGIN_PROVIDER_MODE:-live}
+  ORIGIN_ENABLE_TELEGRAM: ${ORIGIN_ENABLE_TELEGRAM:-false}
   DATABASE_URL: postgresql+asyncpg://origin:origin@db:5432/origin
   REDIS_URL: redis://redis:6379/0
   BLOB_BACKEND: s3

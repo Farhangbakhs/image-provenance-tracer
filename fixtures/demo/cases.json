@@ -115,6 +115,79 @@
         {"page_url": "https://photo-agency.example/stories/harbour", "rank": 2}
       ],
       "unrelated": {}
+    },
+    {
+      "key": "telegram-first",
+      "title": "DEMO: Harbour smoke posted on Telegram before the web",
+      "notes": "Synthetic demo case (Phase 5, needs ORIGIN_ENABLE_TELEGRAM=true). Two news pages carry the photo from 14 May 2024. A watchlist channel posted it on 12 May as a forward of another public channel's post from 11 May. The channels, posts and times are invented; demo mode never contacts Telegram.",
+      "query": "fixtures/c2pa/no-manifest.jpg",
+      "requires": "telegram",
+      "pages": [
+        {
+          "url": "https://harbour-herald.example/news/smoke-over-harbour",
+          "title": "Smoke over the harbour district",
+          "caption": "Smoke rises over the harbour district on 13 May 2024, residents said.",
+          "body": "Smoke rose over the harbour district on 13 May 2024, residents said. Fire crews were called to a warehouse near the docks. No injuries were reported.",
+          "published": "2024-05-14T08:10:00Z",
+          "archived": "20240514120000",
+          "image": {
+            "path": "/img/harbour-smoke.jpg",
+            "edit": "none"
+          }
+        },
+        {
+          "url": "https://coastline-daily.example/harbour-warehouse-fire",
+          "title": "Harbour warehouse fire: what we know",
+          "caption": "Smoke over the harbour district after the warehouse fire.",
+          "body": "A warehouse fire in the harbour district sent smoke over the city on 13 May 2024. Investigators have not said what started it.",
+          "published": "2024-05-16T17:45:00Z",
+          "archived": "20240517090000",
+          "image": {
+            "path": "/media/harbour.jpg",
+            "edit": "resize"
+          }
+        }
+      ],
+      "hits": [
+        {
+          "page_url": "https://harbour-herald.example/news/smoke-over-harbour",
+          "rank": 1
+        },
+        {
+          "page_url": "https://coastline-daily.example/harbour-warehouse-fire",
+          "rank": 2
+        }
+      ],
+      "telegram": {
+        "watchlist": [
+          "origin_demo_harbourwatch"
+        ],
+        "channels": {
+          "origin_demo_harbourwatch": [
+            {
+              "id": 118,
+              "posted_at": "2024-05-12T19:40:00Z",
+              "text": "Smoke over the harbour district right now",
+              "edit": "resize",
+              "forward_of": "origin_demo_citydesk/52"
+            },
+            {
+              "id": 119,
+              "posted_at": "2024-05-12T21:05:00Z",
+              "text": "Harbour traffic is diverted tonight",
+              "unrelated": "fixtures/c2pa/signed-test-cert.jpg"
+            }
+          ],
+          "origin_demo_citydesk": [
+            {
+              "id": 52,
+              "posted_at": "2024-05-11T22:15:00Z",
+              "text": "Smoke seen over the harbour district",
+              "edit": "none"
+            }
+          ]
+        }
+      }
     }
   ]
 }

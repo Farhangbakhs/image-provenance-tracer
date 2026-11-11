@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "b618b4f427834c63f6f9ddb9adf8ba71daa4fa3c114d2593da5d413c768ca0f9",
+  "asset_sha256": "da87c23f71da004b741384aba37892783893c3a5f33c6d29d8cba245322d3dbc",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T09:36:16.119149Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"smoke rising over the harbour district\\\",\\n  \\\"place\\\": \\\"the harbour district\\\",\\n  \\\"date_text\\\": \\\"13 May 2024\\\",\\n  \\\"date_iso\\\": \\\"2024-05-13\\\",\\n  \\\"actor_role\\\": \\\"residents\\\",\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Photograph Smoke rises over the harbour district on 13 May 2024, residents said.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0ToTK9A/s7pkUAXPYYokWbpvbclKk7slO1f5N96NtDTTA19D/zwPpS2UQbzZOk8ZqCt+C3lww8xBqI5PZpRgb2N6DJ8y3lcur1nscxeEACFFWYqEG0x0mL6BY=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 517,\n    \"candidatesTokenCount\": 131,\n    \"totalTokenCount\": 648,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 517\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"DTf0aujmAqyPxN8PxYeRiAM\"\n}\n",
+  "body_sha256": "063c1c5492f9eb5891c92822f2107693f407f03028c6a0e9e6fce4ddc415cbb5"
+}

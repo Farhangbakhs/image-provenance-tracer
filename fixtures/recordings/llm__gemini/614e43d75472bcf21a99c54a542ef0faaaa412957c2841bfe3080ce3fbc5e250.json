@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "614e43d75472bcf21a99c54a542ef0faaaa412957c2841bfe3080ce3fbc5e250",
+  "asset_sha256": "bf0447dac30da6575e594eb50e859460c7e468ade79f56379ae64ea591353054",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T09:36:18.522755Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"warehouse fire\\\",\\n  \\\"place\\\": \\\"harbour district\\\",\\n  \\\"date_text\\\": \\\"13 May 2024\\\",\\n  \\\"date_iso\\\": \\\"2024-05-13\\\",\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Photograph Smoke over the harbour district after the warehouse fire.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TvJ+YG/zBCrrIpnas+VIQ9Ws9gogq1z416Fn32JQ2WnDs9qOGv60wENbf8TY4OfRf/m7CHAcQ/Z2HOQp3AXiqWd1zdYwYVVGQ2S2iedzeJR79YRZLzwASqvg=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 506,\n    \"candidatesTokenCount\": 116,\n    \"totalTokenCount\": 622,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 506\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"EDf0ao9M65K90g-Ev4fBBA\"\n}\n",
+  "body_sha256": "a9408f1debb76632c720267cd7d0c47a1d2ed3fb969fee9f460384e0273f2b7d"
+}
