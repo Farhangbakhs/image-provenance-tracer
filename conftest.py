@@ -38,6 +38,28 @@ TEST_DATABASE_URL = os.environ.get(
 TEST_REDIS_URL = os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/15")
 
 
+#: Secrets and switches a developer's .env may hold. Tests must never use them: a test that
+#: builds real settings (the worker's startup, for one) would otherwise call paid or metered
+#: services with the developer's own keys.
+_LIVE_ONLY = (
+    "GOOGLE_VISION_API_KEY",
+    "SERPAPI_API_KEY",
+    "GEMINI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "TELEGRAM_API_ID",
+    "TELEGRAM_API_HASH",
+)
+
+
+@pytest.fixture(autouse=True)
+def _no_live_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Blank every live key (environment variables override .env) and reset providers."""
+    for name in _LIVE_ONLY:
+        monkeypatch.setenv(name, "")
+    monkeypatch.setenv("ORIGIN_PROVIDERS", '["vision","lens"]')
+    monkeypatch.setenv("ORIGIN_ENABLE_TELEGRAM", "false")
+
+
 def _unavailable(service: str, exc: BaseException) -> None:
     if os.environ.get("ORIGIN_REQUIRE_SERVICES") == "1":
         raise exc
