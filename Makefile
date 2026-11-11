@@ -1,12 +1,20 @@
 .DEFAULT_GOAL := help
 WEB := apps/web
 NPM := npm --prefix $(WEB)
-COMPOSE := docker compose -f infra/compose.yaml
+# Docker Desktop ships an extensionless `docker` script next to docker.exe; Windows make finds
+# the script first and cannot run it.
+ifeq ($(OS),Windows_NT)
+DOCKER := docker.exe
+else
+DOCKER := docker
+endif
+COMPOSE := $(DOCKER) compose -f infra/compose.yaml
 
-.PHONY: help install dev down logs migrate client lint fmt test test-py test-web ci
+.PHONY: help install dev demo down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
+	$(info demo      Start in demo mode (replayed providers, no keys) and seed the demo cases)
 	$(info down      Stop the stack (data volumes are kept))
 	$(info logs      Follow stack logs)
 	$(info migrate   Apply database migrations to DATABASE_URL (default: compose db))
@@ -20,6 +28,14 @@ help:
 
 dev:
 	$(COMPOSE) up -d --build --wait
+
+# Replay mode: every provider and model answer comes from fixtures/, so no keys are needed.
+demo: export ORIGIN_ENV := demo
+demo: export ORIGIN_PROVIDER_MODE := replay
+demo:
+	$(COMPOSE) up -d --build --wait
+	$(COMPOSE) exec -T worker python -m origin_worker.demo seed
+	@echo Demo ready: open http://localhost:3000
 
 down:
 	$(COMPOSE) down

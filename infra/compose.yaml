@@ -101,6 +101,8 @@ services:
     volumes:
       # SSCD weights: downloaded on first start, verified on every start.
       - models:/app/models
+      # Recorded provider and model answers for replay mode, and the demo cases.
+      - ../fixtures:/app/fixtures:ro
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
