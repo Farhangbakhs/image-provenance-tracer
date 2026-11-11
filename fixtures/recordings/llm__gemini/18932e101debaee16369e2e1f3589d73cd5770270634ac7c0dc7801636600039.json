@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "18932e101debaee16369e2e1f3589d73cd5770270634ac7c0dc7801636600039",
+  "asset_sha256": "e0767cc14d824496202a333f6353ea76cab3a596aba79e3967359cc5cd27948d",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T09:36:13.183591Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\\"has_claim\\\": false, \\\"event\\\": null, \\\"place\\\": null, \\\"date_text\\\": null, \\\"date_iso\\\": null, \\\"actor_role\\\": null, \\\"stance\\\": null, \\\"quote\\\": null, \\\"language\\\": null, \\\"translation\\\": null}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0T3ZlxQNaGnXYM/F+d7EJi0XNNh+vJRN9IYidG5DIu5cW6dox5YayxszKbfXXmwhwx2XbpzznRHUZBDFWTfQLArfPx5jOlWSZFJVY0OEqm7oWwcsKUs5ItI/s=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 448,\n    \"candidatesTokenCount\": 58,\n    \"totalTokenCount\": 506,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 448\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"CTf0asqpB56lkdUP4JWR6Q4\"\n}\n",
+  "body_sha256": "07d6ce82a2fffd4e250c510cb172c0cdd26cc59055e23e2bf9575c8ba761b0be"
+}

@@ -1,11 +1,14 @@
-"""Demo mode: seed three investigations by running the real pipeline over a synthetic web.
+"""Demo mode: seed the demo investigations by running the real pipeline over a synthetic web.
 
     python -m origin_worker.demo seed             # replay recorded model answers (no keys)
     python -m origin_worker.demo seed --record    # call the real model once and record it
     python -m origin_worker.demo seed --fresh     # re-run every case (new runs; old ones kept)
+    python -m origin_worker.demo seed --fresh --case telegram-first   # re-run one case
 
 What is synthetic, and labelled as such: the web pages and their `.example` domains, archive
-dates, and the reverse-image index (`demo-index`), all declared in fixtures/demo/cases.json.
+dates, the reverse-image index (`demo-index`) and, for the Telegram case, the channels, posts
+and post times served as a stand-in `t.me`, all declared in fixtures/demo/cases.json. Demo
+mode never contacts Telegram. The Telegram case is seeded only with ORIGIN_ENABLE_TELEGRAM=true.
 What is real: every stage that runs over them. Images are fetched through the hardened fetcher
 (from an in-memory transport instead of the internet), fingerprinted, embedded, matched, dated,
 clustered, read for claims and graded exactly as in a live trace. Claims and narratives come
@@ -39,15 +42,18 @@ from origin_core.llm.runner import LLMRunner
 from origin_core.logging import configure_logging
 from origin_core.pipeline.events import RunEventBus
 from origin_core.pipeline.runner import PipelineRunner
-from origin_core.providers.base import AssetRef, CandidateHit, RawResponse
+from origin_core.providers.base import AssetRef, CandidateHit, ProviderAdapter, RawResponse
 from origin_core.providers.fixtures import FixtureStore
 from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner, RetryPolicy
+from origin_core.providers.telegram import TelegramIndex
 from origin_core.settings import ProviderMode, Settings, get_settings
 from origin_core.storage import make_blob_store
 from origin_worker.embedding import SSCDEmbedder, ensure_weights
 from origin_worker.matching.thresholds import load_thresholds
-from origin_worker.stages import TraceServices, build_stages
+from origin_worker.stages import TelegramServices, TraceServices, build_stages
+from origin_worker.telegram.collector import Collector, SSCDModel, add_channel
+from origin_worker.telegram.sources import Pacer, PreviewSource
 
 DEMO_MODEL = "gemini-3.5-flash-lite"
 # The demo web is served from memory; nothing is sent to this address. It must still look like a
@@ -147,6 +153,60 @@ class DemoWeb:
         return httpx.Response(200, json=rows)
 
 
+def _telegram_post(channel: str, post: dict[str, Any]) -> str:
+    forward = ""
+    if post.get("forward_of"):
+        forward = (
+            '<div class="tgme_widget_message_forwarded_from">Forwarded from '
+            f'<a class="tgme_widget_message_forwarded_from_name" '
+            f'href="https://t.me/{post["forward_of"]}">{post["forward_of"].split("/")[0]}</a></div>'
+        )
+    number = post["id"]
+    return (
+        f'<div class="tgme_widget_message js-widget_message" data-post="{channel}/{number}">'
+        f"{forward}"
+        f'<a class="tgme_widget_message_photo_wrap" href="https://t.me/{channel}/{number}" '
+        f"style=\"background-image:url('https://cdn.telesco.pe/{channel}/{number}.jpg')\"></a>"
+        f'<div class="tgme_widget_message_text">{post["text"]}</div>'
+        f'<a class="tgme_widget_message_date" href="https://t.me/{channel}/{number}">'
+        f'<time datetime="{post["posted_at"]}">t</time></a></div>'
+    )
+
+
+def add_telegram(
+    responses: dict[tuple[str, str], tuple[str, bytes]],
+    telegram: dict[str, Any],
+    root: Path,
+    query: bytes,
+) -> None:
+    """A stand-in t.me in the markup of the public preview: channel pages, posts, photos."""
+    html = "text/html; charset=utf-8"
+    for channel, posts in telegram["channels"].items():
+        listing = "".join(_telegram_post(channel, p) for p in posts)
+        responses[("t.me", f"/s/{channel}")] = (
+            html,
+            f"<html><body>{listing}</body></html>".encode(),
+        )
+        for post in posts:
+            number = post["id"]
+            photo_url = f"https://cdn.telesco.pe/{channel}/{number}.jpg"
+            photo = (
+                (root / post["unrelated"]).read_bytes()
+                if post.get("unrelated")
+                else edited(query, post["edit"])
+            )
+            responses[("cdn.telesco.pe", f"/{channel}/{number}.jpg")] = ("image/jpeg", photo)
+            # One page serves both the post link (og:image) and its embed (the widget with time).
+            responses[("t.me", f"/{channel}/{number}")] = (
+                html,
+                (
+                    f'<html><head><meta property="og:image" content="{photo_url}">'
+                    f"<title>{channel}</title></head><body>"
+                    f"{_telegram_post(channel, post)}</body></html>"
+                ).encode(),
+            )
+
+
 def build_web(case: dict[str, Any], root: Path, query: bytes) -> DemoWeb:
     responses: dict[tuple[str, str], tuple[str, bytes]] = {}
     archive: dict[str, str] = {}
@@ -170,10 +230,14 @@ def build_web(case: dict[str, Any], root: Path, query: bytes) -> DemoWeb:
     for url, path in case.get("unrelated", {}).items():
         parts = urlsplit(str(url))
         responses[(parts.hostname or "", parts.path)] = ("image/jpeg", (root / path).read_bytes())
+    if "telegram" in case:
+        add_telegram(responses, case["telegram"], root, query)
     return DemoWeb(responses, archive)
 
 
-async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list[tuple[str, str]]:
+async def seed(
+    settings: Settings, *, record: bool, fresh: bool = False, only: str | None = None
+) -> list[tuple[str, str]]:
     root = _repo_root()
     spec = json.loads((root / "fixtures" / "demo" / "cases.json").read_text(encoding="utf-8"))
     engine = make_engine(settings.database_url)
@@ -204,6 +268,8 @@ async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list
     seeded: list[tuple[str, str]] = []
     try:
         for case in spec["cases"]:
+            if only is not None and case["key"] != only:
+                continue
             async with sessions() as session:
                 existing = (
                     await session.execute(select(Case).where(Case.title == case["title"]))
@@ -223,6 +289,9 @@ async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list
             if done and not fresh:
                 print(f"skip  {case['title']} (already seeded)")
                 continue
+            if case.get("requires") == "telegram" and not settings.enable_telegram:
+                print(f"skip  {case['title']} (needs ORIGIN_ENABLE_TELEGRAM=true)")
+                continue
             query = (root / case["query"]).read_bytes()
             web = build_web(case, root, query)
 
@@ -237,11 +306,26 @@ async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list
                 policies={},
                 retry=RetryPolicy(attempts=1),
             )
+            adapters: list[ProviderAdapter[AssetRef]] = [DemoIndex(case["key"], case["hits"])]
+            telegram: TelegramServices | None = None
+            if "telegram" in case:
+                for channel in case["telegram"]["watchlist"]:
+                    await add_channel(sessions, channel, added_by="demo", note="synthetic")
+                adapters.append(TelegramIndex(sessions))
+                telegram = TelegramServices(
+                    collector=Collector(
+                        sessions=sessions,
+                        blobs=blobs,
+                        embedder=SSCDModel(embedder),
+                        max_pixels=settings.upload_max_pixels,
+                    ),
+                    source=PreviewSource(fetcher, Pacer(0.0)),
+                )
             stages = build_stages(
                 blobs=blobs,
                 embedder=embedder,
                 trace=TraceServices(
-                    providers=ProviderSetup(adapters=[DemoIndex(case["key"], case["hits"])]),
+                    providers=ProviderSetup(adapters=adapters),
                     runner=runner,
                     fetcher=fetcher,
                     thresholds=load_thresholds(),
@@ -249,6 +333,7 @@ async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list
                     exiftool=settings.exiftool_path,
                     llm=llm,
                     llm_runner=llm_runner,
+                    telegram=telegram,
                 ),
             )
             async with sessions.begin() as session:
@@ -265,7 +350,11 @@ async def seed(settings: Settings, *, record: bool, fresh: bool = False) -> list
                     limits=IngestLimits(settings.upload_max_bytes, settings.upload_max_pixels),
                     exiftool=settings.exiftool_path,
                 )
-                run = Run(case_id=row.id, asset_id=result.asset.id, providers=["demo-index"])
+                run = Run(
+                    case_id=row.id,
+                    asset_id=result.asset.id,
+                    providers=[a.name for a in adapters],
+                )
                 session.add(run)
                 await session.flush()
                 run_id = run.id
@@ -292,10 +381,11 @@ def main(argv: list[str] | None = None) -> None:
     seed_cmd.add_argument(
         "--fresh", action="store_true", help="add a new run even to cases already seeded"
     )
+    seed_cmd.add_argument("--case", help="seed only the case with this key")
     args = parser.parse_args(argv)
     settings = get_settings()
     configure_logging(settings.log_level, json=settings.log_json)
-    asyncio.run(seed(settings, record=args.record, fresh=args.fresh))
+    asyncio.run(seed(settings, record=args.record, fresh=args.fresh, only=args.case))
 
 
 if __name__ == "__main__":
