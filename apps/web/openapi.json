@@ -1,6 +1,14 @@
 {
   "components": {
     "schemas": {
+      "AnalystStatus": {
+        "enum": [
+          "accepted",
+          "overruled"
+        ],
+        "title": "AnalystStatus",
+        "type": "string"
+      },
       "AssetBrief": {
         "properties": {
           "c2pa_state": {
@@ -321,6 +329,156 @@
         "title": "CaseOut",
         "type": "object"
       },
+      "ClaimOut": {
+        "properties": {
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "analyst_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyst Note"
+          },
+          "analyst_status": {
+            "$ref": "#/components/schemas/AnalystStatus"
+          },
+          "claimed_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed Date"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "llm_model": {
+            "title": "Llm Model",
+            "type": "string"
+          },
+          "llm_provider": {
+            "title": "Llm Provider",
+            "type": "string"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          },
+          "quote_end": {
+            "title": "Quote End",
+            "type": "integer"
+          },
+          "quote_start": {
+            "title": "Quote Start",
+            "type": "integer"
+          },
+          "sighting_id": {
+            "format": "uuid",
+            "title": "Sighting Id",
+            "type": "string"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stance"
+          },
+          "translation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation"
+          }
+        },
+        "required": [
+          "id",
+          "sighting_id",
+          "event",
+          "place",
+          "claimed_date",
+          "actor_role",
+          "stance",
+          "quote",
+          "quote_start",
+          "quote_end",
+          "language",
+          "translation",
+          "llm_provider",
+          "llm_model",
+          "prompt_version",
+          "analyst_status",
+          "analyst_note"
+        ],
+        "title": "ClaimOut",
+        "type": "object"
+      },
       "CredentialsOut": {
         "properties": {
           "actions": {
@@ -576,6 +734,56 @@
         "title": "Fingerprints",
         "type": "object"
       },
+      "GradeOut": {
+        "properties": {
+          "credibility": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credibility"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "reliability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability"
+          },
+          "sighting_id": {
+            "format": "uuid",
+            "title": "Sighting Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sighting_id",
+          "reliability",
+          "credibility",
+          "rationale"
+        ],
+        "title": "GradeOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -775,6 +983,122 @@
         "title": "MetadataSummary",
         "type": "object"
       },
+      "NarrativeOut": {
+        "properties": {
+          "claim_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Claim Ids",
+            "type": "array"
+          },
+          "divergence_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divergence Reason"
+          },
+          "divergence_sighting_id": {
+            "format": "uuid",
+            "title": "Divergence Sighting Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "llm_model": {
+            "title": "Llm Model",
+            "type": "string"
+          },
+          "llm_provider": {
+            "title": "Llm Provider",
+            "type": "string"
+          },
+          "parent_narrative_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Narrative Id"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "summary",
+          "parent_narrative_id",
+          "divergence_sighting_id",
+          "divergence_reason",
+          "claim_ids",
+          "llm_provider",
+          "llm_model",
+          "prompt_version"
+        ],
+        "title": "NarrativeOut",
+        "type": "object"
+      },
+      "OverruleIn": {
+        "description": "An analyst's decision on a model-made claim or a machine-made match.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "overruled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "OverruleIn",
+        "type": "object"
+      },
       "Readyz": {
         "properties": {
           "checks": {
@@ -803,6 +1127,68 @@
           "checks"
         ],
         "title": "Readyz",
+        "type": "object"
+      },
+      "RunAnalysisOut": {
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimOut"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/VariantEdgeOut"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "grades": {
+            "items": {
+              "$ref": "#/components/schemas/GradeOut"
+            },
+            "title": "Grades",
+            "type": "array"
+          },
+          "narratives": {
+            "items": {
+              "$ref": "#/components/schemas/NarrativeOut"
+            },
+            "title": "Narratives",
+            "type": "array"
+          },
+          "notes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "object"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/VariantOut"
+            },
+            "title": "Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "variants",
+          "edges",
+          "claims",
+          "narratives",
+          "grades",
+          "notes"
+        ],
+        "title": "RunAnalysisOut",
         "type": "object"
       },
       "RunBrief": {
@@ -991,6 +1377,32 @@
       },
       "SightingOut": {
         "properties": {
+          "analyst_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analyst Note"
+          },
+          "analyst_status": {
+            "$ref": "#/components/schemas/AnalystStatus",
+            "default": "accepted"
+          },
+          "credibility": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credibility"
+          },
           "date_confidence": {
             "title": "Date Confidence",
             "type": "string"
@@ -1050,6 +1462,17 @@
             },
             "title": "Evidence",
             "type": "array"
+          },
+          "grade_rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade Rationale"
           },
           "id": {
             "format": "uuid",
@@ -1116,6 +1539,17 @@
             "title": "Provider",
             "type": "string"
           },
+          "reliability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reliability"
+          },
           "sscd_cosine": {
             "anyOf": [
               {
@@ -1153,6 +1587,18 @@
               }
             ],
             "title": "Transform"
+          },
+          "variant_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant Id"
           }
         },
         "required": [
@@ -1314,6 +1760,83 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VariantEdgeOut": {
+        "properties": {
+          "child_variant_id": {
+            "format": "uuid",
+            "title": "Child Variant Id",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "parent_variant_id": {
+            "format": "uuid",
+            "title": "Parent Variant Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parent_variant_id",
+          "child_variant_id",
+          "kind",
+          "reason",
+          "evidence"
+        ],
+        "title": "VariantEdgeOut",
+        "type": "object"
+      },
+      "VariantOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "representative_sighting_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representative Sighting Id"
+          },
+          "sighting_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Sighting Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "representative_sighting_id",
+          "sighting_ids"
+        ],
+        "title": "VariantOut",
         "type": "object"
       }
     }
@@ -1699,6 +2222,60 @@
         ]
       }
     },
+    "/claims/{claim_id}": {
+      "patch": {
+        "description": "Accept or overrule a claim the model extracted. The claim is kept, with the decision.",
+        "operationId": "overrule_claim_claims__claim_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "claim_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Claim Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverruleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overrule Claim",
+        "tags": [
+          "sightings"
+        ]
+      }
+    },
     "/livez": {
       "get": {
         "description": "Process liveness: answers as long as the event loop runs.",
@@ -1793,6 +2370,50 @@
         "summary": "Get Run",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/runs/{run_id}/analysis": {
+      "get": {
+        "description": "Variants and their edit edges, claims, narratives and grades for a run.",
+        "operationId": "run_analysis_runs__run_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunAnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Analysis",
+        "tags": [
+          "sightings"
         ]
       }
     },
@@ -1909,6 +2530,71 @@
           }
         },
         "summary": "Run Sightings",
+        "tags": [
+          "sightings"
+        ]
+      }
+    },
+    "/sightings/{sighting_id}": {
+      "patch": {
+        "description": "Accept or overrule a match. The sighting and its evidence are kept, with the decision.",
+        "operationId": "overrule_sighting_sightings__sighting_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sighting_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Sighting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverruleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "title": "Response Overrule Sighting Sightings  Sighting Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overrule Sighting",
         "tags": [
           "sightings"
         ]

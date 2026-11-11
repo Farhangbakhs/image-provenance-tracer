@@ -137,6 +137,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/claims/{claim_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Overrule Claim
+         * @description Accept or overrule a claim the model extracted. The claim is kept, with the decision.
+         */
+        patch: operations["overrule_claim_claims__claim_id__patch"];
+        trace?: never;
+    };
     "/livez": {
         parameters: {
             query?: never;
@@ -194,6 +214,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Analysis
+         * @description Variants and their edit edges, claims, narratives and grades for a run.
+         */
+        get: operations["run_analysis_runs__run_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{run_id}/events": {
         parameters: {
             query?: never;
@@ -234,6 +274,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sightings/{sighting_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Overrule Sighting
+         * @description Accept or overrule a match. The sighting and its evidence are kept, with the decision.
+         */
+        patch: operations["overrule_sighting_sightings__sighting_id__patch"];
+        trace?: never;
+    };
     "/sightings/{sighting_id}/image": {
         parameters: {
             query?: never;
@@ -258,6 +318,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AnalystStatus
+         * @enum {string}
+         */
+        AnalystStatus: "accepted" | "overruled";
         /** AssetBrief */
         AssetBrief: {
             c2pa_state: components["schemas"]["C2PAState"];
@@ -402,6 +467,48 @@ export interface components {
             /** Title */
             title: string;
         };
+        /** ClaimOut */
+        ClaimOut: {
+            /** Actor Role */
+            actor_role: string | null;
+            /** Analyst Note */
+            analyst_note: string | null;
+            analyst_status: components["schemas"]["AnalystStatus"];
+            /** Claimed Date */
+            claimed_date: string | null;
+            /** Event */
+            event: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Language */
+            language: string | null;
+            /** Llm Model */
+            llm_model: string;
+            /** Llm Provider */
+            llm_provider: string;
+            /** Place */
+            place: string | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Quote */
+            quote: string;
+            /** Quote End */
+            quote_end: number;
+            /** Quote Start */
+            quote_start: number;
+            /**
+             * Sighting Id
+             * Format: uuid
+             */
+            sighting_id: string;
+            /** Stance */
+            stance: string | null;
+            /** Translation */
+            translation: string | null;
+        };
         /** CredentialsOut */
         CredentialsOut: {
             /**
@@ -489,6 +596,20 @@ export interface components {
             /** Sha256 */
             sha256: string;
         };
+        /** GradeOut */
+        GradeOut: {
+            /** Credibility */
+            credibility: number | null;
+            /** Rationale */
+            rationale: string | null;
+            /** Reliability */
+            reliability: string | null;
+            /**
+             * Sighting Id
+             * Format: uuid
+             */
+            sighting_id: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -550,6 +671,48 @@ export interface components {
             /** Software */
             software?: string | null;
         };
+        /** NarrativeOut */
+        NarrativeOut: {
+            /** Claim Ids */
+            claim_ids: string[];
+            /** Divergence Reason */
+            divergence_reason: string | null;
+            /**
+             * Divergence Sighting Id
+             * Format: uuid
+             */
+            divergence_sighting_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Llm Model */
+            llm_model: string;
+            /** Llm Provider */
+            llm_provider: string;
+            /** Parent Narrative Id */
+            parent_narrative_id: string | null;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Summary */
+            summary: string | null;
+        };
+        /**
+         * OverruleIn
+         * @description An analyst's decision on a model-made claim or a machine-made match.
+         */
+        OverruleIn: {
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "accepted" | "overruled";
+        };
         /** Readyz */
         Readyz: {
             /** Checks */
@@ -563,6 +726,28 @@ export interface components {
             status: "ok" | "degraded";
             /** Version */
             version: string;
+        };
+        /** RunAnalysisOut */
+        RunAnalysisOut: {
+            /** Claims */
+            claims: components["schemas"]["ClaimOut"][];
+            /** Edges */
+            edges: components["schemas"]["VariantEdgeOut"][];
+            /** Grades */
+            grades: components["schemas"]["GradeOut"][];
+            /** Narratives */
+            narratives: components["schemas"]["NarrativeOut"][];
+            /** Notes */
+            notes: {
+                [key: string]: string;
+            };
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Variants */
+            variants: components["schemas"]["VariantOut"][];
         };
         /** RunBrief */
         RunBrief: {
@@ -641,6 +826,12 @@ export interface components {
         RunStatus: "queued" | "running" | "succeeded" | "failed" | "cancelled";
         /** SightingOut */
         SightingOut: {
+            /** Analyst Note */
+            analyst_note?: string | null;
+            /** @default accepted */
+            analyst_status: components["schemas"]["AnalystStatus"];
+            /** Credibility */
+            credibility?: number | null;
             /** Date Confidence */
             date_confidence: string;
             /** Date Lower */
@@ -654,6 +845,8 @@ export interface components {
             domain: string;
             /** Evidence */
             evidence: components["schemas"]["EvidenceOut"][];
+            /** Grade Rationale */
+            grade_rationale?: string | null;
             /**
              * Id
              * Format: uuid
@@ -675,6 +868,8 @@ export interface components {
             phash_distance: number | null;
             /** Provider */
             provider: string;
+            /** Reliability */
+            reliability?: string | null;
             /** Sscd Cosine */
             sscd_cosine: number | null;
             /** Threshold Version */
@@ -685,6 +880,8 @@ export interface components {
             transform: {
                 [key: string]: unknown;
             } | null;
+            /** Variant Id */
+            variant_id?: string | null;
         };
         /** StageState */
         StageState: {
@@ -742,6 +939,41 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VariantEdgeOut */
+        VariantEdgeOut: {
+            /**
+             * Child Variant Id
+             * Format: uuid
+             */
+            child_variant_id: string;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string;
+            /**
+             * Parent Variant Id
+             * Format: uuid
+             */
+            parent_variant_id: string;
+            /** Reason */
+            reason: string;
+        };
+        /** VariantOut */
+        VariantOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /** Representative Sighting Id */
+            representative_sighting_id: string | null;
+            /** Sighting Ids */
+            sighting_ids: string[];
         };
     };
     responses: never;
@@ -1025,6 +1257,41 @@ export interface operations {
             };
         };
     };
+    overrule_claim_claims__claim_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                claim_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverruleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     livez_livez_get: {
         parameters: {
             query?: never;
@@ -1105,6 +1372,37 @@ export interface operations {
             };
         };
     };
+    run_analysis_runs__run_id__analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     run_events_runs__run_id__events_get: {
         parameters: {
             query?: never;
@@ -1156,6 +1454,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunSightingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overrule_sighting_sightings__sighting_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sighting_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverruleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string | null;
+                    };
                 };
             };
             /** @description Validation Error */

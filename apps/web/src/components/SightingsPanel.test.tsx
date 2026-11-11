@@ -27,6 +27,7 @@ function sighting(id: string, domain: string, over: Partial<SightingOut> = {}): 
     deciding: null,
     evidence: [],
     image_url_local: `/sightings/${id}/image`,
+    analyst_status: "accepted",
     ...over,
   };
 }
