@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from origin_core.llm.base import LLMProvider
+from origin_core.llm.claude import AnthropicProvider
 from origin_core.llm.gemini import GeminiProvider
 from origin_core.llm.ollama import OllamaProvider
 from origin_core.settings import ProviderMode, Settings
@@ -33,4 +34,12 @@ def build_llm(settings: Settings) -> LLMSetup:
         )
     if choice == "ollama":
         return LLMSetup(OllamaProvider(settings.ollama_url, settings.ollama_model))
+    if choice == "anthropic":
+        key = settings.anthropic_api_key.get_secret_value() if settings.anthropic_api_key else None
+        if not key and not replay:
+            return LLMSetup(None, "ANTHROPIC_API_KEY is not set")
+        return LLMSetup(
+            AnthropicProvider(key or REPLAY_KEY, settings.anthropic_model),
+            secrets=(key,) if key else (),
+        )
     return LLMSetup(None, f"unknown LLM provider '{choice}'")
