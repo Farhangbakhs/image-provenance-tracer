@@ -11,6 +11,7 @@ after the first install and gives the same numbers on every run.
 
 from __future__ import annotations
 
+import importlib.util
 import io
 import statistics
 from collections.abc import Callable, Iterator
@@ -55,9 +56,11 @@ DER = MatchClass.DERIVATIVE
 
 
 def source_dir() -> Path:
-    import skimage  # pyright: ignore[reportMissingImports]  # only in the `eval` group
-
-    return Path(skimage.__file__).parent / "data"  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    """scikit-image's bundled sample photographs (installed by the `eval` dependency group)."""
+    spec = importlib.util.find_spec("skimage")
+    if spec is None or spec.origin is None:
+        raise SystemExit("scikit-image is missing: run `make eval` (uv run --group eval ...)")
+    return Path(spec.origin).parent / "data"
 
 
 def _encode(image: Image.Image, fmt: str = "JPEG", quality: int = 90) -> bytes:
