@@ -259,13 +259,10 @@ class BranchStage:
         def earliest_sighting(claim_ids: list[str]) -> Sighting:
             return min((by_id[aliases[cid].sighting_id] for cid in claim_ids), key=_date_key)
 
-        # The root is decided by the evidence: the narrative holding the earliest-dated claim.
-        root_index = next(i for i, n in enumerate(out.narratives) if "c1" in n.claim_ids)
-        order = [root_index] + [i for i in range(len(out.narratives)) if i != root_index]
+        planned = plan_narratives(out)
         async with ctx.sessions.begin() as session:
             root_id: uuid.UUID | None = None
-            for index in order:
-                item = out.narratives[index]
+            for item in planned:
                 diverges_at = earliest_sighting(item.claim_ids)
                 row = Narrative(
                     run_id=ctx.run_id,
@@ -273,11 +270,7 @@ class BranchStage:
                     summary=item.summary,
                     parent_narrative_id=root_id,
                     divergence_sighting_id=diverges_at.id,
-                    divergence_reason=None
-                    if root_id is None
-                    else (
-                        item.reason or f"contradicts the earliest narrative on {item.contradiction}"
-                    ),
+                    divergence_reason=item.reason,
                     llm_provider=reply.provider,
                     llm_model=reply.model,
                     prompt_version=reply.prompt_version,
@@ -289,7 +282,7 @@ class BranchStage:
                 await session.flush()
                 if root_id is None:
                     root_id = row.id
-        return len(out.narratives), None
+        return len(planned), None
 
     # --- grading -------------------------------------------------------------------------
 
@@ -335,6 +328,39 @@ class BranchStage:
                     )
                 )
         return len(sightings)
+
+
+@dataclass(frozen=True)
+class PlannedNarrative:
+    label: str
+    summary: str
+    claim_ids: list[str]
+    #: None for the root; for a branch, why it contradicts the root.
+    reason: str | None
+
+
+def plan_narratives(out: narrative_prompt.NarrativesOut) -> list[PlannedNarrative]:
+    """Root first, then branches. Only a contradiction opens a branch.
+
+    The root is the group holding c1, the earliest-dated claim (decided by the evidence, not the
+    model). Groups the model kept apart but did not mark as contradicting are compatible with
+    the root, typically vaguer retellings, so their claims join it instead of forming a branch.
+    """
+    root = next(n for n in out.narratives if "c1" in n.claim_ids)
+    compatible = [n for n in out.narratives if n is not root and not n.contradicts_earliest]
+    branches = [n for n in out.narratives if n is not root and n.contradicts_earliest]
+    root_claims = list(root.claim_ids) + [cid for n in compatible for cid in n.claim_ids]
+    planned = [PlannedNarrative(root.label, root.summary, root_claims, None)]
+    for branch in branches:
+        reason = branch.reason or (
+            f"contradicts the earliest narrative on {branch.contradiction}"
+            if branch.contradiction
+            else "contradicts the earliest narrative"
+        )
+        planned.append(
+            PlannedNarrative(branch.label, branch.summary, list(branch.claim_ids), reason)
+        )
+    return planned
 
 
 def _read_page(url: str, body: bytes, image_url: str) -> tuple[Page, str | None, str | None]:

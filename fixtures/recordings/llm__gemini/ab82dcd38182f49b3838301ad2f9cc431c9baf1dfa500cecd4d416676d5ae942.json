@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "ab82dcd38182f49b3838301ad2f9cc431c9baf1dfa500cecd4d416676d5ae942",
+  "asset_sha256": "85e6def107536d9ea18b8fd0ec5743f0b589dbbb156b776a53f2ea61df8117c4",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "narrative.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:58.224198Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"narratives\\\": [\\n    {\\n      \\\"label\\\": \\\"Storm damage and flooding on 5 March 2024\\\",\\n      \\\"summary\\\": \\\"Claims stating the photograph shows water covering a street after a storm on 5 March 2024.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c1\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    },\\n    {\\n      \\\"label\\\": \\\"General news sighting\\\",\\n      \\\"summary\\\": \\\"A claim stating that the image was seen on the news without specific details.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c2\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    }\\n  ]\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TzSWeFT5vMvgDp6M4kEH7nBrBSA/UMflO72v3sA6JAuhRQ4bhbCMvSkBTaJRvsR8EgibX95Y26HGpP+swz260XUF1Y//NVHlu1WsS4El3HIjLjCjgB6hP2x0=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 569,\n    \"candidatesTokenCount\": 188,\n    \"totalTokenCount\": 757,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 569\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"jsHzarrJF7TQvdIPlMbn4Aw\"\n}\n",
+  "body_sha256": "b5b6791e14c1304ca446020af0acd4550f4b28eb036899bfa14be0f5e644f1e1"
+}

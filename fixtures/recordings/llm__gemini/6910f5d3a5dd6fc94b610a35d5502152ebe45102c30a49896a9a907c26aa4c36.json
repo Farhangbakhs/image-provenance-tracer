@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "6910f5d3a5dd6fc94b610a35d5502152ebe45102c30a49896a9a907c26aa4c36",
+  "asset_sha256": "4362c70af10e3ee758519136ba575e243bd9a50a7a0206cd2fa2d4a33bd03538",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:22.342010Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"flooding\\\",\\n  \\\"place\\\": \\\"Valencia\\\",\\n  \\\"date_text\\\": \\\"29 October 2024\\\",\\n  \\\"date_iso\\\": \\\"2024-10-29\\\",\\n  \\\"actor_role\\\": \\\"residents\\\",\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"This photo shows the flooded street in Valencia on 29 October 2024, residents said.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0T7t6UBhCnDNy5idf2LX4mGC/XijKYWAzV486Qq3RbBHzavAobqDQGR47qqHXDeG6VfBmqJ9f250IGu160c8ezprlI4x58VjyWkuDPAUmg793vzehBXIAHDuM=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 514,\n    \"candidatesTokenCount\": 126,\n    \"totalTokenCount\": 640,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 514\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"aMHzauuIH8HxxN8P--qCiQk\"\n}\n",
+  "body_sha256": "a0e25798f72693522d206963aabc77089ecfb410cf19f1604822c5c363b990c6"
+}

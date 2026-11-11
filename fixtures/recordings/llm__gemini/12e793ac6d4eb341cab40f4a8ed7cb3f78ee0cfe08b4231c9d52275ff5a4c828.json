@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "12e793ac6d4eb341cab40f4a8ed7cb3f78ee0cfe08b4231c9d52275ff5a4c828",
+  "asset_sha256": "aa194166aa99709334c36ab58f08211cef8fd57d204efcf5aa5230d3edd4a8d4",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "narrative.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:29.082067Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"narratives\\\": [\\n    {\\n      \\\"label\\\": \\\"Floods in Valencia, Spain, October 2024\\\",\\n      \\\"summary\\\": \\\"Claims stating that the photograph shows floodwaters in Valencia, Spain on 29 October 2024.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c1\\\",\\n        \\\"c2\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    },\\n    {\\n      \\\"label\\\": \\\"Hurricane Milton flooding in Tampa, Florida\\\",\\n      \\\"summary\\\": \\\"A claim stating that the photograph shows flooding in Tampa, Florida caused by Hurricane Milton.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c3\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": true,\\n      \\\"contradiction\\\": \\\"place\\\",\\n      \\\"reason\\\": \\\"This narrative places the event in Tampa, Florida, whereas the earliest narrative places it in Valencia, Spain.\\\"\\n    }\\n  ]\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TnNm+1pVldQt9KiCrEsU552itEh5H0j5VNkCYYb+c4/F0mBJweccfyn3I1Hk50XzfakapEjRU9/5iKn7U5rOEmSYXRz7wXo9cMM2gCfW+Pwmwt5C8WvnQ7ig=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 719,\n    \"candidatesTokenCount\": 223,\n    \"totalTokenCount\": 942,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 719\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"b8HzapmSO_7QnsEP_I_T0AI\"\n}\n",
+  "body_sha256": "3eaa4fc23b934de8326771f1564d1346d61efe19f2b6c8c852c29267e90e831e"
+}

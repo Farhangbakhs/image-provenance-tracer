@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "b55092dbbe57ade2dd032ea52296bbada7498f6908e93d35effdeb3e02663bb4",
+  "asset_sha256": "25c88c95a95f2f4642069c99e39b980d745ff10dc76329e3a5461f545045dbc9",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:48.465688Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"storm damage and flooding\\\",\\n  \\\"place\\\": null,\\n  \\\"date_text\\\": \\\"5 March 2024\\\",\\n  \\\"date_iso\\\": \\\"2024-03-05\\\",\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Water covers a street after the storm on 5 March 2024.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TDLhgoWk+ojHgjGMqXU5lV3WPbhEarwchPFwV1h4/tsTwVF6QHi1ihSUP4wkP+fKj+KzTOSptRs0ZOvIbFuSsUxggzZPDy8FdIyK5QxAu5suphjcPZoirmyQ=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 505,\n    \"candidatesTokenCount\": 120,\n    \"totalTokenCount\": 625,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 505\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"gMHzavjKGNSFxN8PhYHTqAk\"\n}\n",
+  "body_sha256": "61a293d62b7676dbfb949e1153f2c72589fc4cba05f04bc68da49eb05781ef48"
+}
