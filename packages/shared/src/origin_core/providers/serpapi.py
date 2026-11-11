@@ -8,8 +8,8 @@ URL, so verification finds the image on the page.
 Yandex: engine=yandex_images takes only a public image URL, so it needs a public object store
 and is off by default.
 
-Free plan: 250 searches a month, 50 an hour. The upload is metered as a search too until it is
-shown not to be (see PLAN.md 1.3), so a Lens query costs two units.
+Free plan: 250 searches a month. The upload is not billed: a live upload and search on
+2026-11-11 moved the account's monthly usage by one (PLAN.md 1.3), so a Lens query is one unit.
 
 Docs: https://serpapi.com/google-lens-api, https://serpapi.com/google-lens-exact-matches-api,
 https://serpapi.com/image-api, https://serpapi.com/yandex-images-api
@@ -91,7 +91,7 @@ def parse_lens_date(value: object) -> datetime | None:
 class LensExactMatches:
     name: str = "lens"
     quota_key: str = "serpapi"
-    unit_cost: int = 2  # upload + search, until uploads are shown not to count
+    unit_cost: int = 1  # the search; the upload is not billed
     requires_public_url: bool = False
     recipients: tuple[str, ...] = ("SerpApi, which queries Google Lens (receives the image bytes)",)
 
@@ -124,7 +124,7 @@ class LensExactMatches:
         except httpx.HTTPError as exc:
             raise ProviderError(f"lens search failed: {exc!r}", retryable=True) from exc
         _raise_for(response, "lens search")
-        return RawResponse(response.content, units=2)
+        return RawResponse(response.content, units=1)
 
     def parse(self, body: bytes) -> list[CandidateHit]:
         payload = cast(dict[str, Any], json.loads(body))
