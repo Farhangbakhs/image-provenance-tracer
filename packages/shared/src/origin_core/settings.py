@@ -74,6 +74,12 @@ class Settings(BaseSettings):
     )
     google_vision_api_key: SecretStr | None = Field(default=None, alias="GOOGLE_VISION_API_KEY")
     serpapi_api_key: SecretStr | None = Field(default=None, alias="SERPAPI_API_KEY")
+    #: Which model extracts claims and groups narratives: gemini, ollama or anthropic.
+    llm_provider: str = Field(default="gemini", alias="ORIGIN_LLM_PROVIDER")
+    gemini_api_key: SecretStr | None = Field(default=None, alias="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-3.5-flash-lite", alias="ORIGIN_GEMINI_MODEL")
+    ollama_url: str = Field(default="http://127.0.0.1:11434", alias="OLLAMA_URL")
+    ollama_model: str = Field(default="qwen3:8b", alias="ORIGIN_OLLAMA_MODEL")
     enable_unofficial_providers: bool = Field(
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )

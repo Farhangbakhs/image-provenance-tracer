@@ -54,6 +54,11 @@ class FixtureError(Exception):
     pass
 
 
+def fixture_dirname(provider: str) -> str:
+    """A directory name valid on every filesystem: "llm:gemini" becomes "llm__gemini"."""
+    return provider.replace(":", "__")
+
+
 def encode_body(body: bytes) -> tuple[Literal["utf-8", "base64"], str]:
     try:
         return "utf-8", body.decode("utf-8")
@@ -75,7 +80,7 @@ class FixtureStore:
     roots: tuple[Path, ...]
 
     def _path(self, root: Path, provider: str, rh: str) -> Path:
-        return root / provider / f"{rh}.json"
+        return root / fixture_dirname(provider) / f"{rh}.json"
 
     def find(self, provider: str, rh: str) -> Recording | None:
         for root in self.roots:
@@ -131,7 +136,9 @@ def load(path: Path) -> Recording:
     expected = request_hash(recording.provider, recording.asset_sha256, recording.params)
     if expected != recording.request_hash:
         raise FixtureError(f"{path}: request_hash does not match provider, asset and params")
-    if path.stem != recording.request_hash or path.parent.name != recording.provider:
+    if path.stem != recording.request_hash or path.parent.name != fixture_dirname(
+        recording.provider
+    ):
         raise FixtureError(f"{path}: file is not at <provider>/<request_hash>.json")
     return recording
 
