@@ -27,11 +27,28 @@ This builds and starts the stack in replay mode and seeds four investigations. O
 | Flood photo recaptioned as a hurricane | Two early Valencia pages and a later mirrored repost that calls it Hurricane Milton in Florida. The timeline shows the root narrative and the branch, with its divergence sighting. |
 | Cropped and captioned repost | A CDN resize and a blog crop with a caption bar, linked as derivatives in the graph; one unrelated hit and one dead link are rejected and counted. |
 | Signed photo, stripped copies | The query carries Content Credentials from a test signer that is not on the trust list; the reposts lost them. |
-| Harbour smoke posted on Telegram before the web | The Telegram sweep finds a watchlist channel's post from 12 May, two days before the earliest news page, and follows its forward header to the post it came from, dated 11 May. Both are dated by the post time Telegram shows. The graph lists the forward inside the variant. |
+| Harbour smoke posted on Telegram before the web | The Telegram sweep finds a watchlist channel's post from 12 May, two days before the earliest news page, and follows its forward header to the post it came from, dated 11 May. Both are dated by the post time Telegram shows. The lineage view draws the forward as a dashed arrow. |
 
-In the workspace, `j`/`k` move through sightings, `e` opens the evidence drawer and `g` switches between timeline, graph and evidence views. **Brief (PDF)** opens a printable report; **Evidence pack (JSON)** downloads every finding with the SHA-256, fetch time and storage key of each artefact behind it.
+In the workspace, `j`/`k` move through sightings, `e` opens the evidence drawer and `g` switches between the timeline, lineage and evidence views. Dotted-underlined terms explain themselves on hover, and **How to read this investigation** sums up the rest. **Brief (PDF)** opens a printable report; **Evidence pack (JSON)** downloads every finding with the SHA-256, fetch time and storage key of each artefact behind it.
 
 What is synthetic in the demo, and labelled so in `fixtures/demo/cases.json`: the web pages, their `.example` domains, the archive dates, the reverse-image index, and the Telegram channels, posts and post times (served from memory; the demo never contacts Telegram). Everything ORIGIN does with them is real: each image is fetched through the hardened fetcher, fingerprinted, embedded, matched, dated, clustered, read for claims and graded by the same pipeline as a live trace. Claims and narratives were extracted once by a real model (Gemini, free tier) and are replayed from `fixtures/recordings/`.
+
+## Share a read-only copy (free static hosting)
+
+The four demo investigations can be published as a static site: about 2.6 MB of plain files, no server, no database, no running cost. Visitors can open every case, timeline, lineage view, evidence drawer and brief; uploads and new traces are switched off and explained.
+
+```sh
+make demo        # seed the demo cases (or make dev, if they are already seeded)
+make snapshot    # writes apps/web/out
+```
+
+Only cases whose title starts with `DEMO:` are exported, so nothing you traced yourself leaves the machine. Publish `apps/web/out` on any static host:
+
+* **Cloudflare Pages** (free, unlimited bandwidth): `npx wrangler login`, then `npx wrangler pages deploy apps/web/out --project-name origin-demo`.
+* **Netlify** (free): drag the `apps/web/out` folder onto https://app.netlify.com/drop.
+* **A sub-path host** such as GitHub Pages: build with `NEXT_PUBLIC_BASE_PATH=/<repo> make snapshot`.
+
+To preview it locally: `uv run python -m http.server 4173 -d apps/web/out`, then open http://localhost:4173.
 
 ## Run it
 

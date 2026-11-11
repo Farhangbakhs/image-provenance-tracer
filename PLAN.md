@@ -152,6 +152,16 @@ What was built (Phase 5 is done):
 Not verified live: the Telethon collector (it needs the owner's login), so it is tested with a stand-in client written to Telethon 1.45's documented interface. Albums are indexed photo by photo, but a post's own page shows only its first photo, so later album photos verify only when the verifier finds them on that page.
 
 
+### 1.10 Interface and hosting decisions (2026-11-11)
+
+| Decision | Why |
+| --- | --- |
+| **Blueprint-style dark console** | Palantir's Blueprint greys (#111418 to #383E47), larger type (14 px base, 11 px minimum), small uppercase labels, mono for data. A blue intent colour marks selection and focus; amber still means only "earliest found". Status is never shown by colour alone. |
+| **Explain in place** | Every technical term (sighting, variant, near-duplicate, interval, Admiralty grades and so on) is a `<Term>` with its plain definition on hover or focus. Each copy carries one-sentence readings of its match, its dating and its grade, and the workspace opens with the answer (earliest found, where, why) and a "How to read this" guide. |
+| **Lineage replaces the node graph** | Variants are rows on the same horizontal time axis as the narrative timeline, so the order of edits is visible. Arrows run from a picture to the edit made from it; Telegram forwards are dashed. React Flow is no longer used by the workspace. |
+| **Free hosting is a static snapshot** | The live system cannot fit a free tier: the worker alone holds about 1.6 GB (PyTorch and SSCD). `make snapshot` exports the demo cases' API responses and images (about 1 MB) and builds the console as a static site (about 2.6 MB) that reads them. It runs on any free static host with no compute. Only `DEMO:` cases are exported. |
+| **Static export workarounds** | Partial prerendering is turned off in snapshot builds (Next refuses it with `output: "export"`). Dynamic routes list their ids from the snapshot manifest; in normal builds they return one placeholder, because Cache Components needs at least one. Next 16.4 writes route prefetch files as nested folders but requests flat names, so `scripts/flatten-export.mjs` copies them. |
+
 ---
 
 ## 2. Principles
