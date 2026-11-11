@@ -38,7 +38,7 @@ This file refines the original build brief. Section 1 records what was checked a
 
 - ~~The SSCD weight licence~~ **Resolved (Phase 1):** the maintainers state that the whole project, weights included, is MIT ([issue #12](https://github.com/facebookresearch/sscd-copy-detection/issues/12)).
 - The official Cloud Vision pricing page did not render; the 1,000 free units are confirmed only via Google-hosted localised pages in search snippets and a third-party summary.
-- Whether a SerpApi Image API **upload counts as a search**. The meter assumes it does (2 units per Lens trace) until measured.
+- ~~Whether a SerpApi Image API upload counts as a search.~~ **Measured 2026-11-11: it does not.** One upload plus one Lens search moved `this_month_usage` from 0 to 1 (`/account.json`). The meter charges 1 unit per Lens trace.
 - Whether Yandex via SerpApi accepts `image_id`.
 - Gemini **free-tier rate limits** per model (not on the pricing page; read from AI Studio's rate-limit page after you create a key).
 - The exact **c2pa-python validation field names** in v0.38.
@@ -112,7 +112,7 @@ Local tools to install: **exiftool** (not on this machine). Python 3.12 is insta
 
 Open items from Phases 2 to 4:
 
-- **Live provider check.** The Vision and Lens adapters are written from the documented response shapes and tested against synthetic fixtures (`fixtures/synthetic/`). Phase 2's "known viral image" check needs `GOOGLE_VISION_API_KEY` or `SERPAPI_API_KEY`: run once with `ORIGIN_PROVIDER_MODE=record`, commit the recordings, and the contract tests then run against real responses.
+- **Live provider check (Lens done 2026-11-11).** `scripts/record_lens.py` ran a live Lens exact-matches query for the public-domain Apollo 8 "Earthrise" photograph (`fixtures/queries/earthrise.jpg`). SerpApi returned 391 exact matches, 316 of them dated, back to 24 Dec 2005. The recording is in `fixtures/recordings/lens/`, and `test_lens_contract.py` runs the adapter against it offline. Every absolute date parsed; relative ones ("9 days ago") stay unparsed. Vision stays unrecorded: no Vision key, by choice.
 - **Stereo-pair false positive.** The eval's hardest negative (the same scene from a slightly different position) is classified near-duplicate on pHash 4, and SSCD scores it 0.914. Two frames from one burst would look the same. A fix needs a signal that tells near-identical frames apart (dense pixel alignment after registration); not attempted without more such pairs to test on.
 - **Cold demo time.** With images built, `make demo` is ready in about a minute. The first build downloads CPU PyTorch and the SSCD weights (about 2 GB) and takes longer than five minutes on a slow connection; publishing prebuilt images is a Phase 6 item.
 
@@ -252,4 +252,4 @@ If time runs short, cut the Phase 6 agent first and keep the evals.
 
 ## 8. Running cost
 
-Zero. Vision stays under 950 units per month by hard stop. SerpApi stays under 250 searches per month (two per Lens trace at most, so about 125 traces). Wayback and Telegram are free. The LLM is the Gemini free tier, Ollama or recorded output. Hosting is local Docker Compose plus demo mode. Every response is cached by content hash, so re-runs spend nothing.
+Zero. Vision stays under 950 units per month by hard stop. SerpApi stays under 250 searches per month (one per Lens trace; the image upload is not billed). Wayback and Telegram are free. The LLM is the Gemini free tier, Ollama or recorded output. Hosting is local Docker Compose plus demo mode. Every response is cached by content hash, so re-runs spend nothing.

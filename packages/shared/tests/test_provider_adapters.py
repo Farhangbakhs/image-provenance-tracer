@@ -173,7 +173,7 @@ async def test_lens_uploads_then_searches_by_image_id() -> None:
     assert search.url.params["image_id"] == "IMG123"
     assert search.url.params["engine"] == "google_lens"
     assert search.url.params["type"] == "exact_matches"
-    assert raw.units == 2
+    assert raw.units == 1
 
 
 @pytest.mark.parametrize(
