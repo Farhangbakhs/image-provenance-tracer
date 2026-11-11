@@ -6,6 +6,14 @@ x-python-env: &python-env
   ORIGIN_LOG_JSON: "true"
   ORIGIN_PROVIDER_MODE: ${ORIGIN_PROVIDER_MODE:-live}
   ORIGIN_ENABLE_TELEGRAM: ${ORIGIN_ENABLE_TELEGRAM:-false}
+  # Live tracing reads these from the repository's .env (make passes it with --env-file).
+  ORIGIN_PROVIDERS: ${ORIGIN_PROVIDERS:-["vision","lens"]}
+  GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY:-}
+  SERPAPI_API_KEY: ${SERPAPI_API_KEY:-}
+  ORIGIN_LLM_PROVIDER: ${ORIGIN_LLM_PROVIDER:-gemini}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  ORIGIN_GEMINI_MODEL: ${ORIGIN_GEMINI_MODEL:-gemini-3.5-flash-lite}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   DATABASE_URL: postgresql+asyncpg://origin:origin@db:5432/origin
   REDIS_URL: redis://redis:6379/0
   BLOB_BACKEND: s3
@@ -96,6 +104,9 @@ services:
     image: origin-python:dev
     pull_policy: never  # built by the migrate service
     command: ["arq", "origin_worker.main.WorkerSettings"]
+    # A worker killed mid-run (for example out of memory) comes back; arq retries the job and
+    # the run resumes from its last finished stage.
+    restart: unless-stopped
     environment:
       <<: *python-env
       ORIGIN_MODELS_DIR: /app/models

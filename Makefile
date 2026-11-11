@@ -8,7 +8,8 @@ DOCKER := docker.exe
 else
 DOCKER := docker
 endif
-COMPOSE := $(DOCKER) compose -f infra/compose.yaml
+# Keys and provider settings for live traces come from .env when it exists (see .env.example).
+COMPOSE := $(DOCKER) compose -f infra/compose.yaml $(if $(wildcard .env),--env-file .env)
 
 .PHONY: help install dev demo e2e eval down logs migrate client lint fmt test test-py test-web ci
 
