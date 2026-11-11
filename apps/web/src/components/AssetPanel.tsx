@@ -126,6 +126,14 @@ function TraceAndSightings({ asset }: { asset: AssetOut }) {
   return (
     <>
       <Trace asset={asset} />
+      {done ? (
+        <Link
+          href={`/runs/${latest.id}`}
+          className="self-start border border-line px-3 py-1 text-[12px] hover:border-text"
+        >
+          Open the case workspace: timeline, variant graph and evidence →
+        </Link>
+      ) : null}
       {done ? <SightingsPanel runId={latest.id} /> : null}
     </>
   );

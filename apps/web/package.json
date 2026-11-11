@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.107.1",
+    "@xyflow/react": "^12.12.1",
+    "d3-scale": "^4.0.3",
     "next": "16.4.6",
     "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
@@ -22,6 +24,7 @@
     "@tailwindcss/turbopack": "4.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
+    "@types/d3-scale": "^4.0.9",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

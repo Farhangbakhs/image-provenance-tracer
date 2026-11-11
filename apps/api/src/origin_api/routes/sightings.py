@@ -136,6 +136,7 @@ async def run_sightings(run_id: uuid.UUID, session: Session) -> RunSightingsOut:
                 grade_rationale=sighting.grade_rationale,
                 analyst_status=sighting.analyst_status,
                 analyst_note=sighting.analyst_note,
+                extracted_text=sighting.extracted_text,
             )
         )
 
