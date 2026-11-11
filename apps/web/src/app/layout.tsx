@@ -15,7 +15,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header className="flex h-10 items-center justify-between border-b border-line bg-surface-1 px-4">
+        <header className="no-print flex h-10 items-center justify-between border-b border-line bg-surface-1 px-4">
           <span className="text-[12px] font-semibold tracking-[0.14em]">ORIGIN</span>
           <span className="text-[11px] text-muted">All times UTC</span>
         </header>

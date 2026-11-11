@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from origin_api.routes import assets, cases, ops, runs, sightings
+from origin_api.routes import assets, cases, export, ops, runs, sightings
 from origin_api.state import lifespan_for
 from origin_core import __version__
 from origin_core.logging import configure_logging
@@ -29,4 +29,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(assets.router)
     app.include_router(runs.router)
     app.include_router(sightings.router)
+    app.include_router(export.router)
     return app

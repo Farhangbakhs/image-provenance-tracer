@@ -71,6 +71,14 @@ export function RunWorkspace({ runId }: { runId: string }) {
         <span className="mono">
           run {runId.slice(0, 8)} · {run.data.status} · j/k move · e evidence · g switch view
         </span>
+        <span className="flex gap-3">
+          <Link href={`/runs/${runId}/brief`} className="hover:text-text">
+            Brief (PDF)
+          </Link>
+          <a href={`${API_URL}/runs/${runId}/evidence-pack?download=true`} className="hover:text-text">
+            Evidence pack (JSON)
+          </a>
+        </span>
       </nav>
       <div className="flex items-center gap-3">
         {asset.data ? (

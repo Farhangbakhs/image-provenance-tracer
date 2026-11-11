@@ -259,3 +259,18 @@ export function useOverrule(runId: string) {
     },
   });
 }
+
+/** The run's evidence pack: findings plus every artefact with its hash and fetch time. */
+export function useEvidencePack(runId: string) {
+  return useQuery({
+    queryKey: ["evidence-pack", runId],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET("/runs/{run_id}/evidence-pack", {
+        params: { path: { run_id: runId } },
+        signal,
+      });
+      if (!data) fail(response.status, error, "Could not load the evidence pack");
+      return data;
+    },
+  });
+}

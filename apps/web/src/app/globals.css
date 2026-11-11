@@ -68,3 +68,42 @@ body {
     animation-duration: 0ms !important;
   }
 }
+
+/*
+ * The brief is a document, not the console: it is read on paper, so it is set dark on white.
+ * Amber still marks the earliest found sighting; a darker shade keeps it legible on white.
+ */
+.paper {
+  --bg: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f3f4f6;
+  --line: #d4d7dc;
+  --text: #111316;
+  --muted: #4f5661;
+  --accent: #a8640a;
+  --conf-high: #23794a;
+  --conf-medium: #7d6c12;
+  --conf-low: #a33f2e;
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+  html,
+  body {
+    background: #ffffff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .paper section,
+  .paper tr,
+  .paper li {
+    break-inside: avoid;
+  }
+}

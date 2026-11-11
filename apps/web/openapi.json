@@ -701,6 +701,74 @@
         "title": "EvidenceOut",
         "type": "object"
       },
+      "EvidencePack": {
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/RunAnalysisOut"
+          },
+          "artefacts": {
+            "items": {
+              "$ref": "#/components/schemas/PackArtefact"
+            },
+            "title": "Artefacts",
+            "type": "array"
+          },
+          "asset": {
+            "$ref": "#/components/schemas/PackAsset"
+          },
+          "audit": {
+            "items": {
+              "$ref": "#/components/schemas/PackAuditEvent"
+            },
+            "title": "Audit",
+            "type": "array"
+          },
+          "case": {
+            "$ref": "#/components/schemas/PackCase"
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "format": {
+            "title": "Format",
+            "type": "string"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "provider_calls": {
+            "items": {
+              "$ref": "#/components/schemas/PackProviderCall"
+            },
+            "title": "Provider Calls",
+            "type": "array"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunOut"
+          },
+          "sightings": {
+            "$ref": "#/components/schemas/RunSightingsOut"
+          }
+        },
+        "required": [
+          "format",
+          "generated_at",
+          "disclaimer",
+          "case",
+          "asset",
+          "run",
+          "sightings",
+          "analysis",
+          "provider_calls",
+          "artefacts",
+          "audit"
+        ],
+        "title": "EvidencePack",
+        "type": "object"
+      },
       "Fingerprints": {
         "properties": {
           "dhash": {
@@ -1097,6 +1165,324 @@
           "status"
         ],
         "title": "OverruleIn",
+        "type": "object"
+      },
+      "PackArtefact": {
+        "properties": {
+          "byte_size": {
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "storage_key": {
+            "title": "Storage Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "sha256",
+          "storage_key",
+          "content_type",
+          "byte_size",
+          "source_url",
+          "http_status",
+          "fetched_at"
+        ],
+        "title": "PackArtefact",
+        "type": "object"
+      },
+      "PackAsset": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "dhash": {
+            "title": "Dhash",
+            "type": "string"
+          },
+          "display_artefact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Artefact Id"
+          },
+          "embedding_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Model"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "original_artefact_id": {
+            "format": "uuid",
+            "title": "Original Artefact Id",
+            "type": "string"
+          },
+          "original_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Filename"
+          },
+          "pdq": {
+            "title": "Pdq",
+            "type": "string"
+          },
+          "phash": {
+            "title": "Phash",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "original_filename",
+          "content_type",
+          "width",
+          "height",
+          "sha256",
+          "phash",
+          "dhash",
+          "pdq",
+          "embedding_model",
+          "original_artefact_id",
+          "display_artefact_id"
+        ],
+        "title": "PackAsset",
+        "type": "object"
+      },
+      "PackAuditEvent": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
+          },
+          "subject_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Type"
+          }
+        },
+        "required": [
+          "at",
+          "actor",
+          "action",
+          "subject_type",
+          "subject_id",
+          "detail"
+        ],
+        "title": "PackAuditEvent",
+        "type": "object"
+      },
+      "PackCase": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "notes"
+        ],
+        "title": "PackCase",
+        "type": "object"
+      },
+      "PackProviderCall": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "raw_artefact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Artefact Id"
+          },
+          "request_hash": {
+            "title": "Request Hash",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "units": {
+            "title": "Units",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "request_hash",
+          "params",
+          "status",
+          "units",
+          "raw_artefact_id",
+          "error",
+          "at"
+        ],
+        "title": "PackProviderCall",
         "type": "object"
       },
       "Readyz": {
@@ -2500,6 +2886,60 @@
         "summary": "Run Events",
         "tags": [
           "runs"
+        ]
+      }
+    },
+    "/runs/{run_id}/evidence-pack": {
+      "get": {
+        "description": "With `download=true`, served as an attachment named after the run.",
+        "operationId": "evidence_pack_runs__run_id__evidence_pack_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Download",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePack"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evidence Pack",
+        "tags": [
+          "export"
         ]
       }
     },

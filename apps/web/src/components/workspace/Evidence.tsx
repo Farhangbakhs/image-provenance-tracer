@@ -6,19 +6,9 @@ import { Fields } from "@/components/Panel";
 import { API_URL, type ClaimOut, type SightingOut } from "@/lib/api/client";
 import { useOverrule } from "@/lib/api/hooks";
 import { formatInterval, formatUtc } from "@/lib/time";
+import { SIGNAL_LABEL } from "@/lib/copy";
 import { CONFIDENCE_COLOUR, type WorkspaceModel } from "@/lib/workspace";
 
-const SIGNAL_LABEL: Record<string, string> = {
-  observed: "ORIGIN fetched it",
-  platform: "platform timestamp",
-  c2pa: "Content Credentials signing time",
-  wayback_page: "archive capture of the page",
-  wayback_image: "archive capture of the image",
-  provider_crawl: "date shown by the provider",
-  page_metadata: "page's stated date",
-  http_last_modified: "server Last-Modified",
-  exif: "camera time in the file",
-};
 
 type SortKey = "date" | "domain" | "match" | "credibility";
 

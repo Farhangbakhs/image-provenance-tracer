@@ -213,3 +213,30 @@ async def test_analysis_and_overrule(
     assert (
         await client.patch(f"/claims/{uuid.uuid4()}", json={"status": "accepted"})
     ).status_code == 404
+
+
+async def test_evidence_pack_indexes_every_artefact(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, seed_run: SeedRun, tmp_path: Path
+) -> None:
+    run_id = await seed_run()
+    ids = await _seed_sightings(db_engine, run_id, FilesystemBlobStore(tmp_path / "blobs"))
+
+    pack = (await client.get(f"/runs/{run_id}/evidence-pack")).json()
+    assert pack["format"] == "origin.evidence-pack.v1"
+    assert pack["disclaimer"] == "Earliest found in indexed sources. Earlier copies may exist."
+    assert pack["sightings"]["earliest_sighting_id"] == str(ids["early"])
+    assert [c["provider"] for c in pack["provider_calls"]] == ["vision"]
+    artefact_ids = {a["id"] for a in pack["artefacts"]}
+    # The query image and each sighting's fetched copy, each with its hash and fetch time.
+    assert pack["asset"]["original_artefact_id"] in artefact_ids
+    assert len(artefact_ids) >= 3
+    for artefact in pack["artefacts"]:
+        assert len(artefact["sha256"]) == 64
+        assert artefact["fetched_at"] and artefact["storage_key"]
+
+    download = await client.get(f"/runs/{run_id}/evidence-pack", params={"download": "true"})
+    assert download.headers["content-disposition"] == (
+        f'attachment; filename="origin-run-{run_id}.json"'
+    )
+    assert download.json()["run"]["id"] == str(run_id)
+    assert (await client.get(f"/runs/{uuid.uuid4()}/evidence-pack")).status_code == 404
