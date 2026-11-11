@@ -81,6 +81,7 @@ const pack: EvidencePack = {
     run_id: "run",
     variants: [],
     edges: [],
+    propagation: [],
     claims: [
       { id: "c1", sighting_id: "s1", quote: "Floodwater fills a street in Valencia", quote_start: 0, quote_end: 37, prompt_version: "claim.v1", analyst_status: "accepted", ...claimNulls, ...llm },
       { id: "c2", sighting_id: "s2", quote: "Hurricane Milton flooding a street in Tampa", quote_start: 0, quote_end: 43, prompt_version: "claim.v1", analyst_status: "accepted", ...claimNulls, ...llm },

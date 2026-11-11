@@ -18,6 +18,7 @@ from origin_api.schemas import (
     GradeOut,
     NarrativeOut,
     OverruleIn,
+    PropagationEdgeOut,
     RunAnalysisOut,
     RunSightingsOut,
     SightingOut,
@@ -32,6 +33,7 @@ from origin_core.db.models import (
     Claim,
     Narrative,
     NarrativeClaim,
+    PropagationEdge,
     Run,
     Sighting,
     TimestampEvidence,
@@ -181,7 +183,7 @@ async def sighting_image(sighting_id: uuid.UUID, session: Session, state: State)
 
 @router.get("/runs/{run_id}/analysis")
 async def run_analysis(run_id: uuid.UUID, session: Session) -> RunAnalysisOut:
-    """Variants and their edit edges, claims, narratives and grades for a run."""
+    """Variants and their edit edges, propagation edges, claims, narratives and grades."""
     run = await session.get(Run, run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
@@ -197,6 +199,11 @@ async def run_analysis(run_id: uuid.UUID, session: Session) -> RunAnalysisOut:
     )
     edges = list(
         (await session.execute(select(VariantEdge).where(VariantEdge.run_id == run_id))).scalars()
+    )
+    propagation = list(
+        (
+            await session.execute(select(PropagationEdge).where(PropagationEdge.run_id == run_id))
+        ).scalars()
     )
     claims = list((await session.execute(select(Claim).where(Claim.run_id == run_id))).scalars())
     narratives = list(
@@ -238,6 +245,16 @@ async def run_analysis(run_id: uuid.UUID, session: Session) -> RunAnalysisOut:
                 evidence=dict(e.evidence),
             )
             for e in edges
+        ],
+        propagation=[
+            PropagationEdgeOut(
+                from_sighting_id=e.from_sighting_id,
+                to_sighting_id=e.to_sighting_id,
+                kind=e.kind.value,
+                reason=e.reason,
+                evidence=dict(e.evidence),
+            )
+            for e in propagation
         ],
         claims=[
             ClaimOut(

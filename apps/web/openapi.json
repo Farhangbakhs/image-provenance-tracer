@@ -1485,6 +1485,43 @@
         "title": "PackProviderCall",
         "type": "object"
       },
+      "PropagationEdgeOut": {
+        "description": "An explicit link between two sightings, such as a Telegram forward (source to copy).",
+        "properties": {
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "from_sighting_id": {
+            "format": "uuid",
+            "title": "From Sighting Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "to_sighting_id": {
+            "format": "uuid",
+            "title": "To Sighting Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_sighting_id",
+          "to_sighting_id",
+          "kind",
+          "reason",
+          "evidence"
+        ],
+        "title": "PropagationEdgeOut",
+        "type": "object"
+      },
       "Readyz": {
         "properties": {
           "checks": {
@@ -1552,6 +1589,13 @@
             "title": "Notes",
             "type": "object"
           },
+          "propagation": {
+            "items": {
+              "$ref": "#/components/schemas/PropagationEdgeOut"
+            },
+            "title": "Propagation",
+            "type": "array"
+          },
           "run_id": {
             "format": "uuid",
             "title": "Run Id",
@@ -1569,6 +1613,7 @@
           "run_id",
           "variants",
           "edges",
+          "propagation",
           "claims",
           "narratives",
           "grades",
@@ -2408,6 +2453,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many trace starts from this client; see Retry-After"
           }
         },
         "summary": "Start Run",
@@ -2611,6 +2659,9 @@
               }
             },
             "description": "Unprocessable Entity"
+          },
+          "429": {
+            "description": "Too many uploads from this client; see Retry-After"
           }
         },
         "summary": "Upload Asset",
@@ -2772,7 +2823,7 @@
     },
     "/runs/{run_id}/analysis": {
       "get": {
-        "description": "Variants and their edit edges, claims, narratives and grades for a run.",
+        "description": "Variants and their edit edges, propagation edges, claims, narratives and grades.",
         "operationId": "run_analysis_runs__run_id__analysis_get",
         "parameters": [
           {

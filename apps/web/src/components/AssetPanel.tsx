@@ -14,6 +14,14 @@ import { formatUtc } from "@/lib/time";
 
 const STAGE_ORDER = ["ingest", "discover", "verify", "date", "branch", "report"];
 
+/** The fixed stages, plus the Telegram sweep after "date" on runs where it reports. */
+export function stageOrder(seen: string[]): string[] {
+  if (!seen.includes("telegram_sweep")) return STAGE_ORDER;
+  const order = [...STAGE_ORDER];
+  order.splice(order.indexOf("date") + 1, 0, "telegram_sweep");
+  return order;
+}
+
 function bytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -114,7 +122,7 @@ function Trace({ asset }: { asset: AssetOut }) {
         </button>
       </div>
       {start.error ? <p className="px-3 pb-2 text-[12px]">{start.error.message}</p> : null}
-      {runId ? <StageStrip order={STAGE_ORDER} progress={progress} /> : null}
+      {runId ? <StageStrip order={stageOrder(Object.keys(progress?.stages ?? {}))} progress={progress} /> : null}
       {progress?.error ? <p className="mono border-t border-line px-3 py-2 text-[11px]">{progress.error}</p> : null}
     </Panel>
   );

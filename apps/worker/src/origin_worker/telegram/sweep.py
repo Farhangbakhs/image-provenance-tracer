@@ -21,10 +21,12 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, func, select
 
 from origin_core.db.models import Asset, Candidate, Run, Sighting
+from origin_core.enums import CandidateStatus
 from origin_core.pipeline.runner import StageContext, StageResult
 from origin_core.providers.base import AssetRef
 from origin_core.providers.runner import ProviderRunner
-from origin_core.providers.telegram import TelegramIndex
+from origin_core.providers.telegram import TEXT_LIMIT, TelegramIndex
+from origin_core.telegram.preview import post_url
 from origin_worker.telegram.collector import Collector, watchlist
 from origin_worker.telegram.sources import PhotoSource
 from origin_worker.trace import DateStage, VerifyStage
@@ -111,6 +113,8 @@ class SweepStage:
     before_days: int = 30
     after_days: int = 1
     max_keywords: int = 2
+    #: How far back a chain of forwards is followed.
+    max_forward_hops: int = 3
     name: str = "telegram_sweep"
 
     async def run(self, ctx: StageContext) -> StageResult:
@@ -121,6 +125,35 @@ class SweepStage:
                     Candidate.run_id == ctx.run_id, Candidate.raw["sweep"].astext == "true"
                 )
             )
+        counts: dict[str, int] = {}
+        notes: dict[str, str] = {}
+        await self._search(ctx, counts, notes)
+        await self._follow_forwards(ctx, counts, notes)
+        return StageResult(counts=counts, notes=notes)
+
+    async def _add_and_check(self, ctx: StageContext, added: list[Candidate]) -> int:
+        """Store new candidates, then verify and date them like any other. Returns verified."""
+        if not added:
+            return 0
+        async with ctx.sessions.begin() as session:
+            session.add_all(added)
+        verified = await self.verify.verify_candidates(ctx, added, stage=self.name)
+        await self.date.date_sightings(ctx, [c.id for c in added])
+        return verified["verified"]
+
+    async def _known_urls(self, ctx: StageContext) -> set[str | None]:
+        async with ctx.sessions() as session:
+            return set(
+                (
+                    await session.execute(
+                        select(Candidate.page_url).where(Candidate.run_id == ctx.run_id)
+                    )
+                ).scalars()
+            )
+
+    async def _search(
+        self, ctx: StageContext, counts: dict[str, int], notes: dict[str, str]
+    ) -> None:
         async with ctx.sessions() as session:
             web = (
                 await session.execute(
@@ -139,10 +172,12 @@ class SweepStage:
             ).scalar_one()
         dates = [row.when for row in web if row.when is not None]
         if not dates:
-            return StageResult(notes={"sweep": "skipped: no dated web sighting to sweep around"})
+            notes["sweep"] = "skipped: no dated web sighting to sweep around"
+            return
         channels = [row.channel for row in await watchlist(ctx.sessions)]
         if not channels:
-            return StageResult(notes={"sweep": "skipped: the Telegram watchlist is empty"})
+            notes["sweep"] = "skipped: the Telegram watchlist is empty"
+            return
         earliest: datetime = min(dates)
         window = (
             earliest - timedelta(days=self.before_days),
@@ -150,13 +185,13 @@ class SweepStage:
         )
         words = keywords([row.title for row in web if row.title], self.max_keywords)
         if not words:
-            return StageResult(notes={"sweep": "skipped: no keywords in the sightings' titles"})
+            notes["sweep"] = "skipped: no keywords in the sightings' titles"
+            return
 
-        counts: dict[str, int] = {"channels": len(channels), "indexed": 0}
-        notes: dict[str, str] = {
-            "sweep": f"searched for {', '.join(words)} from {window[0]:%Y-%m-%d} "
-            f"to {window[1]:%Y-%m-%d}"
-        }
+        counts |= {"channels": len(channels), "indexed": 0}
+        notes["sweep"] = (
+            f"searched for {', '.join(words)} from {window[0]:%Y-%m-%d} to {window[1]:%Y-%m-%d}"
+        )
         for channel in channels:
             for word in words:
                 report = await self.collector.collect(
@@ -178,31 +213,91 @@ class SweepStage:
         outcome = await self.runner.run(self.index, subject, run_id=ctx.run_id)
         if not outcome.usable:
             notes["index"] = f"{outcome.status.value}: {outcome.error or 'no result'}"
-            return StageResult(counts=counts, notes=notes)
-        async with ctx.sessions.begin() as session:
-            known = set(
-                (
-                    await session.execute(
-                        select(Candidate.page_url).where(Candidate.run_id == ctx.run_id)
-                    )
-                ).scalars()
+            return
+        known = await self._known_urls(ctx)
+        added = [
+            Candidate(
+                run_id=ctx.run_id,
+                provider_call_id=outcome.call_id,
+                provider=self.index.name,
+                page_url=hit.page_url,
+                provider_date=hit.provider_date,
+                provider_rank=hit.rank,
+                raw={**hit.raw, "title": hit.title, "sweep": True},
             )
-            added = [
-                Candidate(
-                    run_id=ctx.run_id,
-                    provider_call_id=outcome.call_id,
-                    provider=self.index.name,
-                    page_url=hit.page_url,
-                    provider_date=hit.provider_date,
-                    provider_rank=hit.rank,
-                    raw={**hit.raw, "title": hit.title, "sweep": True},
-                )
-                for hit in outcome.hits
-                if hit.page_url not in known
-            ]
-            session.add_all(added)
+            for hit in outcome.hits
+            if hit.page_url not in known
+        ]
         counts["new_candidates"] = len(added)
-        verified = await self.verify.verify_candidates(ctx, added, stage=self.name)
-        counts["verified"] = verified["verified"]
-        await self.date.date_sightings(ctx, [c.id for c in added])
-        return StageResult(counts=counts, notes=notes)
+        counts["verified"] = await self._add_and_check(ctx, added)
+
+    async def _follow_forwards(
+        self, ctx: StageContext, counts: dict[str, int], notes: dict[str, str]
+    ) -> None:
+        """Add the original of every verified Telegram post that names a public source post.
+
+        The original's time comes from Telegram's own page for it. It is then verified like any
+        candidate, so a forward header never makes anything a sighting on its own.
+        """
+        followed = 0
+        confirmed = 0
+        for _ in range(self.max_forward_hops):
+            async with ctx.sessions() as session:
+                forwarders = (
+                    (
+                        await session.execute(
+                            select(Candidate).where(
+                                Candidate.run_id == ctx.run_id,
+                                Candidate.provider == self.index.name,
+                                Candidate.status == CandidateStatus.VERIFIED,
+                            )
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+            known = await self._known_urls(ctx)
+            added: list[Candidate] = []
+            for forwarder in forwarders:
+                channel = forwarder.raw.get("forwarded_from_channel")
+                number = forwarder.raw.get("forwarded_from_message_id")
+                if not isinstance(channel, str) or not isinstance(number, int):
+                    continue
+                url = post_url(channel, number)
+                if url in known:
+                    continue
+                known.add(url)
+                post = await self.source.post(channel, number)
+                if post is None or post.posted_at is None:
+                    notes[url] = "forward source could not be read"
+                    continue
+                forward = post.forwarded_from
+                added.append(
+                    Candidate(
+                        run_id=ctx.run_id,
+                        provider_call_id=forwarder.provider_call_id,
+                        provider=self.index.name,
+                        page_url=url,
+                        provider_date=post.posted_at,
+                        raw={
+                            "channel": channel,
+                            "message_id": number,
+                            "text": post.text[:TEXT_LIMIT],
+                            "forwarded_from_channel": forward.channel if forward else None,
+                            "forwarded_from_message_id": forward.message_id if forward else None,
+                            "forwarded_from_name": forward.name if forward else None,
+                            "collected_via": self.source.via,
+                            "found_by": "forward",
+                            "forward_of": forwarder.page_url,
+                            "title": f"Telegram: {channel}/{number}",
+                            "sweep": True,
+                        },
+                    )
+                )
+            if not added:
+                break
+            followed += len(added)
+            confirmed += await self._add_and_check(ctx, added)
+        if followed:
+            counts["forward_sources"] = followed
+            counts["forward_sources_verified"] = confirmed

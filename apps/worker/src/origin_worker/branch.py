@@ -24,16 +24,25 @@ from sqlalchemy import delete, select, update
 
 from origin_core.db.models import (
     Artefact,
+    Candidate,
     Claim,
     Narrative,
     NarrativeClaim,
+    PropagationEdge,
     Sighting,
     Source,
     TimestampEvidence,
     Variant,
     VariantEdge,
 )
-from origin_core.enums import BoundType, Confidence, EvidenceKind, SourceKind, VariantEdgeKind
+from origin_core.enums import (
+    BoundType,
+    Confidence,
+    EvidenceKind,
+    PropagationKind,
+    SourceKind,
+    VariantEdgeKind,
+)
 from origin_core.grading import PROOF_KINDS, UNGRADED_RATIONALE, EvidenceFact, credibility
 from origin_core.grading import RULE_VERSION as GRADING_VERSION
 from origin_core.ingest.hashes import fingerprint
@@ -46,6 +55,7 @@ from origin_core.llm.runner import LLMOutputRejected, LLMRunner
 from origin_core.pages import Page, caption_for, main_text, parse_page
 from origin_core.pipeline.runner import StageContext, StageResult
 from origin_core.storage import BlobStore
+from origin_core.telegram.preview import post_url
 from origin_worker.matching.thresholds import Thresholds
 from origin_worker.variants import Item, build_variant_graph
 
@@ -82,6 +92,9 @@ class BranchStage:
 
         await self._clear(ctx)
         counts |= await self._variants(ctx, sightings)
+        forwards = await self._forwards(ctx, sightings)
+        if forwards:
+            counts["forward_edges"] = forwards
 
         if self.llm.provider is None or self.llm_runner is None:
             notes["claims"] = f"skipped: no language model ({self.llm.unavailable})"
@@ -106,11 +119,68 @@ class BranchStage:
             await session.execute(delete(Claim).where(Claim.run_id == ctx.run_id))
             await session.execute(delete(VariantEdge).where(VariantEdge.run_id == ctx.run_id))
             await session.execute(
+                delete(PropagationEdge).where(PropagationEdge.run_id == ctx.run_id)
+            )
+            await session.execute(
                 update(Sighting).where(Sighting.run_id == ctx.run_id).values(variant_id=None)
             )
             await session.execute(delete(Variant).where(Variant.run_id == ctx.run_id))
 
     # --- variants ------------------------------------------------------------------------
+
+    async def _forwards(self, ctx: StageContext, sightings: list[Sighting]) -> int:
+        """Forward edges from Telegram's own forward headers, between two verified sightings.
+
+        This is recorded propagation, not inference: the forwarding post names its source.
+        """
+        if not sightings:
+            return 0
+        async with ctx.sessions() as session:
+            candidates = {
+                c.id: c
+                for c in (
+                    await session.execute(
+                        select(Candidate).where(
+                            Candidate.id.in_([s.candidate_id for s in sightings])
+                        )
+                    )
+                ).scalars()
+            }
+        by_url = {s.page_url: s for s in sightings if s.page_url}
+        edges: list[PropagationEdge] = []
+        for sighting in sightings:
+            candidate = candidates.get(sighting.candidate_id)
+            if candidate is None or candidate.provider != "telegram":
+                continue
+            channel = candidate.raw.get("forwarded_from_channel")
+            number = candidate.raw.get("forwarded_from_message_id")
+            if not isinstance(channel, str) or not isinstance(number, int):
+                continue
+            source = by_url.get(post_url(channel, number))
+            if source is None or source.id == sighting.id:
+                continue
+            edges.append(
+                PropagationEdge(
+                    run_id=ctx.run_id,
+                    from_sighting_id=source.id,
+                    to_sighting_id=sighting.id,
+                    kind=PropagationKind.FORWARD,
+                    reason="telegram_forward_header",
+                    evidence={
+                        "forwarding_post": sighting.page_url,
+                        "source_post": source.page_url,
+                        "header": {
+                            "channel": channel,
+                            "message_id": number,
+                            "name": candidate.raw.get("forwarded_from_name"),
+                        },
+                    },
+                )
+            )
+        if edges:
+            async with ctx.sessions.begin() as session:
+                session.add_all(edges)
+        return len(edges)
 
     async def _variants(self, ctx: StageContext, sightings: list[Sighting]) -> dict[str, int]:
         items: list[Item] = []

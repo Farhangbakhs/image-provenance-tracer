@@ -17,6 +17,8 @@ type VariantNodeData = {
   colour: string;
   earliest: boolean;
   selected: boolean;
+  /** Telegram forwards between copies inside this variant, as "source → forward". */
+  forwards: string[];
 };
 
 function VariantNode({ data }: NodeProps<Node<VariantNodeData>>) {
@@ -36,6 +38,11 @@ function VariantNode({ data }: NodeProps<Node<VariantNodeData>>) {
           {data.count} cop{data.count === 1 ? "y" : "ies"}
         </span>
       </div>
+      {data.forwards.length ? (
+        <div className="border-t border-line px-1.5 py-1 text-muted" title={data.forwards.join("\n")}>
+          {data.forwards.length} forward{data.forwards.length === 1 ? "" : "s"} inside
+        </div>
+      ) : null}
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
@@ -67,6 +74,36 @@ export function layoutTree(ids: string[], parentOf: Record<string, string>): Rec
   return positions;
 }
 
+/** "channel/123" for a t.me post link, else the link itself. */
+export function postLabel(url: string | null | undefined): string {
+  if (!url) return "?";
+  const match = /^https:\/\/t\.me\/([^/?#]+)\/(\d+)/.exec(url);
+  return match ? `${match[1]}/${match[2]}` : url;
+}
+
+/**
+ * Propagation edges (Telegram forwards) at variant level. A forward between copies of the same
+ * variant is listed inside that variant; one between variants becomes an edge.
+ */
+export function forwardLinks(
+  analysis: Pick<RunAnalysisOut, "variants" | "propagation">,
+  pageOf: Record<string, string | null | undefined>,
+): { inside: Record<string, string[]>; between: { source: string; target: string; label: string }[] } {
+  const variantOf: Record<string, string> = {};
+  for (const v of analysis.variants) for (const s of v.sighting_ids) variantOf[s] = v.id;
+  const inside: Record<string, string[]> = {};
+  const between: { source: string; target: string; label: string }[] = [];
+  for (const e of analysis.propagation) {
+    const from = variantOf[e.from_sighting_id];
+    const to = variantOf[e.to_sighting_id];
+    if (!from || !to) continue;
+    const label = `${postLabel(pageOf[e.from_sighting_id])} → ${postLabel(pageOf[e.to_sighting_id])}`;
+    if (from === to) (inside[from] ??= []).push(label);
+    else between.push({ source: from, target: to, label: `${e.kind}: ${label}` });
+  }
+  return { inside, between };
+}
+
 export function VariantGraph({
   model,
   analysis,
@@ -85,6 +122,8 @@ export function VariantGraph({
     model.lanes.forEach((lane, i) => (narrativeColour[lane.id] = NARRATIVE_COLOURS[i % NARRATIVE_COLOURS.length]));
     const parentOf: Record<string, string> = {};
     for (const e of analysis.edges) parentOf[e.child_variant_id] = e.parent_variant_id;
+    const pageOf = Object.fromEntries(model.sightings.map((s) => [s.id, s.page_url]));
+    const forwards = forwardLinks(analysis, pageOf);
     const positions = layoutTree(
       analysis.variants.map((v) => v.id),
       parentOf,
@@ -103,6 +142,7 @@ export function VariantGraph({
           colour: byNarrative && lane ? narrativeColour[lane] : "var(--line)",
           earliest: model.earliestId !== null && v.sighting_ids.includes(model.earliestId),
           selected: selected !== null && v.sighting_ids.includes(selected),
+          forwards: forwards.inside[v.id] ?? [],
         },
       };
     });
@@ -120,6 +160,17 @@ export function VariantGraph({
         labelBgStyle: { fill: "var(--surface-2)" },
       };
     });
+    for (const [i, f] of forwards.between.entries()) {
+      edges.push({
+        id: `forward-${i}`,
+        source: f.source,
+        target: f.target,
+        label: f.label,
+        style: { stroke: "var(--muted)", strokeDasharray: "4 3" },
+        labelStyle: { fill: "var(--text)", fontSize: 10 },
+        labelBgStyle: { fill: "var(--surface-2)" },
+      });
+    }
     return { nodes, edges };
   }, [analysis, model, selected, byNarrative]);
 
@@ -128,7 +179,7 @@ export function VariantGraph({
   return (
     <div>
       <div className="flex items-center justify-between px-3 py-1.5 text-[11px] text-muted">
-        <span>Each box is a variant: copies of the same picture in the same form. Arrows point from source to edit.</span>
+        <span>Each box is a variant: copies of the same picture in the same form. Arrows point from source to edit; dashed arrows are Telegram forwards.</span>
         <label className="flex items-center gap-1.5">
           <input type="checkbox" checked={byNarrative} onChange={(e) => setByNarrative(e.target.checked)} />
           Colour by narrative

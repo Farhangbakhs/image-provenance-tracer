@@ -223,7 +223,7 @@ export interface paths {
         };
         /**
          * Run Analysis
-         * @description Variants and their edit edges, claims, narratives and grades for a run.
+         * @description Variants and their edit edges, propagation edges, claims, narratives and grades.
          */
         get: operations["run_analysis_runs__run_id__analysis_get"];
         put?: never;
@@ -877,6 +877,30 @@ export interface components {
             /** Units */
             units: number;
         };
+        /**
+         * PropagationEdgeOut
+         * @description An explicit link between two sightings, such as a Telegram forward (source to copy).
+         */
+        PropagationEdgeOut: {
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /**
+             * From Sighting Id
+             * Format: uuid
+             */
+            from_sighting_id: string;
+            /** Kind */
+            kind: string;
+            /** Reason */
+            reason: string;
+            /**
+             * To Sighting Id
+             * Format: uuid
+             */
+            to_sighting_id: string;
+        };
         /** Readyz */
         Readyz: {
             /** Checks */
@@ -905,6 +929,8 @@ export interface components {
             notes: {
                 [key: string]: string;
             };
+            /** Propagation */
+            propagation: components["schemas"]["PropagationEdgeOut"][];
             /**
              * Run Id
              * Format: uuid
@@ -1273,6 +1299,13 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
+            /** @description Too many trace starts from this client; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     list_cases_cases_get: {
@@ -1420,6 +1453,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UploadRejectedOut"];
                 };
+            };
+            /** @description Too many uploads from this client; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
