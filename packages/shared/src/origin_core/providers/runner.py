@@ -13,6 +13,9 @@ For each (adapter, image) it:
 In record mode it also writes each response (secrets redacted) to the fixture tree. In replay
 mode it never touches the network, the cache or the quota: it serves recordings only, and a
 query without a recording fails loudly instead of silently returning nothing.
+
+An adapter with `local = True` (the Telegram watchlist index) queries ORIGIN's own database.
+It is called in every mode and never cached or recorded; its raw answer is still stored.
 """
 
 from __future__ import annotations
@@ -124,10 +127,13 @@ class ProviderRunner:
         rh = request_hash(adapter.name, asset.sha256, params)
         bound = log.bind(provider=adapter.name, request_hash=rh[:12], run_id=str(run_id))
 
-        if self._mode is ProviderMode.REPLAY:
+        # A local adapter reads ORIGIN's own database: nothing to replay, and a cached answer
+        # would hide what was indexed since.
+        local = bool(getattr(adapter, "local", False))
+        if self._mode is ProviderMode.REPLAY and not local:
             return await self._replay(adapter, asset, rh, params, run_id)
 
-        cached = await self._cached_body(adapter.name, rh)
+        cached = None if local else await self._cached_body(adapter.name, rh)
         if cached is not None:
             artefact_id, body = cached
             bound.info("provider.cache_hit")
@@ -187,7 +193,8 @@ class ProviderRunner:
             )
 
         breaker.record_success()
-        self._maybe_record(adapter, asset, rh, params, raw.body, raw.content_type, raw.units)
+        if not local:
+            self._maybe_record(adapter, asset, rh, params, raw.body, raw.content_type, raw.units)
         spent = await self._reconcile(policy, reserved, raw.units)
         latency_ms = int((time.monotonic() - started) * 1000)
         bound.info("provider.ok", units=spent, latency_ms=latency_ms)

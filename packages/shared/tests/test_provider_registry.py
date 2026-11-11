@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from origin_core.providers.registry import build_providers
@@ -45,3 +47,23 @@ def test_unknown_provider_is_reported(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ORIGIN_PROVIDERS", '["tineye"]')
     setup = build_providers(_settings())
     assert setup.unavailable == {"tineye": "unknown provider"}
+
+
+def test_telegram_is_off_by_default_and_reported_when_asked_for(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ORIGIN_PROVIDERS", '["telegram"]')
+    setup = build_providers(_settings())
+    assert setup.adapters == []
+    assert setup.unavailable == {"telegram": "ORIGIN_ENABLE_TELEGRAM is off (see PLAN.md 1.9)"}
+
+
+def test_the_flag_adds_the_telegram_index(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ORIGIN_PROVIDERS", "[]")
+    monkeypatch.setenv("ORIGIN_ENABLE_TELEGRAM", "true")
+    assert build_providers(_settings()).unavailable == {
+        "telegram": "the Telegram index needs the database"
+    }
+    sessions: Any = object()
+    setup = build_providers(_settings(), sessions)
+    assert [a.name for a in setup.adapters] == ["telegram"]

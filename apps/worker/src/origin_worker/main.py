@@ -39,7 +39,7 @@ async def startup(ctx: dict[str, Any]) -> None:
     # Downloads the SSCD weights on first start (99 MB), then verifies them on every start.
     embedder = SSCDEmbedder(await ensure_weights(settings.models_dir))
     sessions = make_sessionmaker(engine)
-    providers = build_providers(settings)
+    providers = build_providers(settings, sessions)
     http = httpx.AsyncClient()
     fetcher = Fetcher()
     runner = ProviderRunner(

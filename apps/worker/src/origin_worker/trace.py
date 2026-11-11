@@ -54,6 +54,7 @@ from origin_core.pipeline.runner import StageContext, StageResult
 from origin_core.providers.base import AssetRef, UrlSubject
 from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner
+from origin_core.providers.telegram import TelegramIndex
 from origin_core.providers.wayback import WaybackFirstCapture, first_capture
 from origin_core.storage import BlobStore
 from origin_worker.embedding import SSCDEmbedder
@@ -446,7 +447,20 @@ class DateStage:
             if capture:
                 add(kind, capture[0], url, {"archive_url": capture[1]})
 
-        if candidate.provider_date is not None:
+        if candidate.provider_date is not None and candidate.provider == TelegramIndex.name:
+            # The message time Telegram itself showed when ORIGIN collected the post.
+            add(
+                EvidenceKind.PLATFORM,
+                candidate.provider_date,
+                candidate.page_url,
+                {
+                    "platform": "telegram",
+                    "channel": candidate.raw.get("channel"),
+                    "message_id": candidate.raw.get("message_id"),
+                    "collected_via": candidate.raw.get("collected_via"),
+                },
+            )
+        elif candidate.provider_date is not None:
             # Lens shows the date a result was posted: Google's reading of the page, a claim.
             add(
                 EvidenceKind.PROVIDER_CRAWL,
