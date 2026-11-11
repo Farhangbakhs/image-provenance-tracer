@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     rate_limit_uploads: int = Field(default=30, alias="ORIGIN_RATE_LIMIT_UPLOADS", ge=0)
     rate_limit_runs: int = Field(default=10, alias="ORIGIN_RATE_LIMIT_RUNS", ge=0)
 
+    #: Provider hits verified per trace, best-ranked first. Each needs a page fetch and up to
+    #: 12 image fetches and embeddings, so this bounds a trace's time and memory.
+    verify_max_candidates: int = Field(default=50, alias="ORIGIN_VERIFY_MAX_CANDIDATES", ge=1)
+
     models_dir: Path = Field(default=Path("models"), alias="ORIGIN_MODELS_DIR")
     exiftool_path: str = Field(default="exiftool", alias="EXIFTOOL_PATH")
 
