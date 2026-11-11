@@ -43,7 +43,7 @@ This file refines the original build brief. Section 1 records what was checked a
 - Gemini **free-tier rate limits** per model (not on the pricing page; read from AI Studio's rate-limit page after you create a key).
 - The exact **c2pa-python validation field names** in v0.38.
 - The Vision API accepting a plain **API key** (standard for Vision; confirmed once your key exists).
-- Telegram API terms and UK data-protection duties for collection (Phase 5 checks these before writing code).
+- ~~Telegram API terms and UK data-protection duties~~ **Checked (2026-11-11): Phase 5 is blocked pending your decision.** See 1.9.
 - **Aside** is not among this session's tools, so the normal web tools were used.
 
 ### 1.4 LLM options (decided: A is the default)
@@ -114,6 +114,22 @@ Open items from Phases 2 to 4:
 
 - **Live provider check.** The Vision and Lens adapters are written from the documented response shapes and tested against synthetic fixtures (`fixtures/synthetic/`). Phase 2's "known viral image" check needs `GOOGLE_VISION_API_KEY` or `SERPAPI_API_KEY`: run once with `ORIGIN_PROVIDER_MODE=record`, commit the recordings, and the contract tests then run against real responses.
 - **Cold demo time.** With images built, `make demo` is ready in about a minute. The first build downloads CPU PyTorch and the SSCD weights (about 2 GB) and takes longer than five minutes on a slow connection; publishing prebuilt images is a Phase 6 item.
+
+### 1.9 Telegram (Phase 5): terms check, 2026-11-11
+
+Phase 5 was not built. The terms that apply to it conflict with the planned design.
+
+- **API Terms, section 1.5** ([core.telegram.org/api/terms](https://core.telegram.org/api/terms)): "you are prohibited from using, accessing or aggregating data obtained from the Telegram platform to train, fine-tune or otherwise engage in the development, enhancement or deployment of artificial intelligence, machine learning models and similar technologies", and use is further subject to the Content Licensing and AI Scraping terms.
+- **Content Licensing and AI Scraping** ([telegram.org/tos/content-licensing](https://telegram.org/tos/content-licensing)): "Telegram firmly prohibits the scraping, indexing, harvesting, aggregation or use of data obtained from its platform" for those purposes. The only general licence is the data "strictly required" to operate a legitimate third-party client. The terms name no research, journalism or search exception.
+- **What Phase 5 would do:** a collector and a *watchlist index* (harvesting and indexing channel media), SSCD embeddings over that media and LLM claim extraction from posts (deploying ML models on Telegram data). That is the conduct the terms name. Breach notices give 10 days before API access is cut.
+- **UK data protection:** the lawful basis would be legitimate interests with a documented balancing test. The ICO warns that "manifestly made public" is narrower than "publicly visible", and posts can carry special-category data. The journalism and research exemptions (DPA 2018, Schedule 2) were not confirmed for this use.
+
+Options for you to choose from:
+
+1. **Drop Phase 5.** The web pipeline is unaffected.
+2. **Manual import only.** The analyst pastes a public `t.me/<channel>/<id>` link. ORIGIN fetches the public web preview (`t.me/s/…`), the same page any browser sees, as a web sighting. No API account, no index, no bulk collection. This still runs ORIGIN's matching over the image, so read the terms yourself before relying on it.
+3. **Build as specified behind the flag, off by default, for your own legal review.** Not recommended without advice.
+
 
 ---
 
@@ -226,7 +242,7 @@ An analyst console: dark, dense and quiet.
 | 2. Discover, verify, date **(done)** | hardened fetcher; Vision adapter; Lens adapter; Yandex adapter; verification; dating rule; Wayback; flat list UI | a known viral image returns a verified, dated list that replays offline |
 | 3. Branching **(done)** | variants and edges; LLM providers; claim extraction; narratives; grading | the seeded miscaptioned case shows ≥ 2 branches with the right divergence sighting |
 | 4. Console **(done)** | timeline; graph; evidence drawer; run monitor; exports; demo mode with three seeded cases; Playwright | a cold reviewer runs the demo with no keys in under five minutes |
-| 5. Telegram (flagged) | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
+| 5. Telegram (flagged) **(blocked: see 1.9)** | collector; watchlist index; adapter; targeted sweep; preview fallback; forward edges | a seeded case surfaces a Telegram sighting earlier than any web sighting |
 | 6. Agent, evals, hardening | eval set and harness; investigator agent; rate limiting and tracing; deployment config | eval report from one command; public demo |
 
 If time runs short, cut the Phase 6 agent first and keep the evals.
