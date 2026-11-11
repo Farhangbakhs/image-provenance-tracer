@@ -113,6 +113,7 @@ Local tools to install: **exiftool** (not on this machine). Python 3.12 is insta
 Open items from Phases 2 to 4:
 
 - **Live provider check.** The Vision and Lens adapters are written from the documented response shapes and tested against synthetic fixtures (`fixtures/synthetic/`). Phase 2's "known viral image" check needs `GOOGLE_VISION_API_KEY` or `SERPAPI_API_KEY`: run once with `ORIGIN_PROVIDER_MODE=record`, commit the recordings, and the contract tests then run against real responses.
+- **Stereo-pair false positive.** The eval's hardest negative (the same scene from a slightly different position) is classified near-duplicate on pHash 4, and SSCD scores it 0.914. Two frames from one burst would look the same. A fix needs a signal that tells near-identical frames apart (dense pixel alignment after registration); not attempted without more such pairs to test on.
 - **Cold demo time.** With images built, `make demo` is ready in about a minute. The first build downloads CPU PyTorch and the SSCD weights (about 2 GB) and takes longer than five minutes on a slow connection; publishing prebuilt images is a Phase 6 item.
 
 ### 1.9 Telegram (Phase 5): terms check, 2026-11-11

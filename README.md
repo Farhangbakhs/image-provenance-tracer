@@ -58,6 +58,8 @@ make test      # pytest and Vitest
 make migrate   # apply migrations to DATABASE_URL
 make client    # regenerate the typed web client after changing the API
 make ci        # the CI jobs in clean Linux containers, against committed HEAD
+make e2e       # Playwright against the running demo (make demo first)
+make eval      # the matching eval; writes evals/report.md
 ```
 
 Database, Redis and S3 tests run against the compose services (`make dev` first) and are skipped when those are unreachable; CI requires them. Copy `.env.example` to `.env` to override any setting; every variable is documented there.
@@ -76,6 +78,10 @@ apps/web (Next.js)  ──HTTP / SSE──▶  apps/api (FastAPI)
 * **Every provider call goes through one runner.** It hashes the request, serves stored responses without spending quota, reserves free-tier quota under a row lock, retries with backoff, trips a circuit breaker on repeated failure, and records a `provider_calls` row for every outcome.
 * **Everything is replayable.** Raw responses and fetched artefacts are stored content-addressed by SHA-256. In replay mode providers are served only from `fixtures/`, with no network and no keys; see [fixtures/README.md](fixtures/README.md).
 * **The schema enforces the evidence rules.** Claims need a sighting, narratives need a claim, the audit log is append-only, quota cannot be overspent.
+
+## Evaluation
+
+`make eval` checks matching against 18 sample photographs, each edited 14 ways a repost is edited (resizes, recompression, mirrors, crops, caption bars, watermarks, screenshots), and against every pair of different photographs. The current report is [evals/report.md](evals/report.md): thresholds `v2` find 93.7% of edited copies, against 75.4% for `v1`. The only false positives are a stereo pair, the same scene photographed from two slightly different positions, which perceptual hashes and SSCD both score as the same picture.
 
 ## Running cost
 
