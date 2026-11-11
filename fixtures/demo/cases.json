@@ -1,0 +1,120 @@
+{
+  "synthetic": true,
+  "note": "Demo investigations. The web pages, domains (.example), archive dates and the reverse-image index are synthetic; the images are derived from the c2pa-python test photos. Everything ORIGIN computes from them (ingest, fetch, matching, dating, claims, narratives, grades) is produced by the real pipeline. Claims and narratives were extracted by a real model once and are replayed from fixtures/recordings.",
+  "cases": [
+    {
+      "key": "miscaptioned-flood",
+      "title": "DEMO: Flood photo recaptioned as a hurricane",
+      "notes": "Synthetic demo case. Two early pages place the photo in Valencia in October 2024; a later mirrored repost says it shows Hurricane Milton in Florida.",
+      "query": "fixtures/c2pa/no-manifest.jpg",
+      "pages": [
+        {
+          "url": "https://valencia-news.example/2024/10/30/floods",
+          "title": "Floods sweep through Valencia",
+          "caption": "Floodwater fills a street in Valencia, Spain, on 29 October 2024 after record rainfall.",
+          "body": "Floodwater fills a street in Valencia, Spain, on 29 October 2024 after record rainfall. Emergency services worked through the night as residents waited for news. Officials said the clean-up would take weeks.",
+          "published": "2024-10-30T07:40:00Z",
+          "archived": "20241030081500",
+          "image": {"path": "/media/flood-street.jpg", "edit": "none"}
+        },
+        {
+          "url": "https://iberia-daily.example/valencia-counts-the-cost",
+          "title": "Valencia counts the cost",
+          "caption": "The flooded street in Valencia on 29 October 2024, as residents described it.",
+          "body": "This photo shows the flooded street in Valencia on 29 October 2024, residents said. Insurers expect thousands of claims after the storm.",
+          "published": "2024-11-04T10:00:00Z",
+          "archived": "20241105120000",
+          "image": {"path": "/img/valencia-street.jpg", "edit": "resize"}
+        },
+        {
+          "url": "https://viral-wire.example/hurricane-devastation",
+          "title": "Hurricane devastation",
+          "caption": "Shocking image of Hurricane Milton flooding a street in Tampa, Florida this week.",
+          "body": "Shocking image of Hurricane Milton flooding a street in Tampa, Florida this week. Share to show the world what we are going through.",
+          "published": "2024-11-11T18:00:00Z",
+          "archived": "20241112090000",
+          "image": {"path": "/uploads/milton.jpg", "edit": "mirror"}
+        }
+      ],
+      "hits": [
+        {"page_url": "https://viral-wire.example/hurricane-devastation", "rank": 1},
+        {"page_url": "https://valencia-news.example/2024/10/30/floods", "rank": 2},
+        {"page_url": "https://iberia-daily.example/valencia-counts-the-cost", "rank": 3},
+        {"image_url": "https://unrelated-photos.example/landscape.jpg", "rank": 4}
+      ],
+      "unrelated": {"https://unrelated-photos.example/landscape.jpg": "fixtures/c2pa/signed-test-cert.jpg"}
+    },
+    {
+      "key": "cropped-repost",
+      "title": "DEMO: Cropped and captioned repost",
+      "notes": "Synthetic demo case. A news photo is resized by a CDN, then cropped and captioned by a blog; one hit is unrelated and one link is dead.",
+      "query": "fixtures/c2pa/no-manifest.jpg",
+      "pages": [
+        {
+          "url": "https://city-herald.example/storm-damage",
+          "title": "Storm damage across the region",
+          "caption": "Water covers a street after the storm on 5 March 2024.",
+          "body": "Water covers a street after the storm on 5 March 2024. The council has opened two shelters for displaced families.",
+          "published": "2024-03-05T09:00:00Z",
+          "archived": "20240306120000",
+          "image": {"path": "/photos/storm.jpg", "edit": "none"}
+        },
+        {
+          "url": "https://weekend-blog.example/posts/what-a-week",
+          "title": "What a week",
+          "caption": "Saw this on the news. Unreal.",
+          "body": "Saw this on the news. Unreal. Stay safe everyone, and check on your neighbours.",
+          "published": "2024-03-08T21:30:00Z",
+          "archived": "20240309100000",
+          "image": {"path": "/wp-content/uploads/storm-crop.jpg", "edit": "crop_caption"}
+        }
+      ],
+      "direct_images": [
+        {
+          "url": "https://cdn.city-herald.example/i/storm-800.jpg",
+          "edit": "resize",
+          "archived": "20240307000000"
+        }
+      ],
+      "hits": [
+        {"page_url": "https://weekend-blog.example/posts/what-a-week", "rank": 1},
+        {"page_url": "https://city-herald.example/storm-damage", "rank": 2},
+        {"image_url": "https://cdn.city-herald.example/i/storm-800.jpg", "rank": 3},
+        {"image_url": "https://unrelated-photos.example/landscape.jpg", "rank": 4},
+        {"page_url": "https://gone.example/deleted-post", "rank": 5}
+      ],
+      "unrelated": {"https://unrelated-photos.example/landscape.jpg": "fixtures/c2pa/signed-test-cert.jpg"}
+    },
+    {
+      "key": "content-credentials",
+      "title": "DEMO: Signed photo, stripped copies",
+      "notes": "Synthetic demo case. The query carries Content Credentials from a test signer that is not on the trust list; reposts re-encode the image and lose them.",
+      "query": "fixtures/c2pa/signed-test-cert.jpg",
+      "pages": [
+        {
+          "url": "https://photo-agency.example/stories/harbour",
+          "title": "Harbour at dawn",
+          "caption": "The harbour at dawn, photographed on 29 September 2023.",
+          "body": "The harbour at dawn, photographed on 29 September 2023 for our coastal series. Licensing enquiries to the picture desk.",
+          "published": "2023-09-30T08:00:00Z",
+          "archived": "20231001090000",
+          "image": {"path": "/assets/harbour.jpg", "edit": "original_bytes"}
+        },
+        {
+          "url": "https://repost-hub.example/p/harbour",
+          "title": "Beautiful harbour",
+          "caption": "Beautiful harbour pic, found online.",
+          "body": "Beautiful harbour pic, found online. Credit unknown.",
+          "published": "2024-01-15T12:00:00Z",
+          "archived": "20240116000000",
+          "image": {"path": "/media/harbour-small.jpg", "edit": "resize"}
+        }
+      ],
+      "hits": [
+        {"page_url": "https://repost-hub.example/p/harbour", "rank": 1},
+        {"page_url": "https://photo-agency.example/stories/harbour", "rank": 2}
+      ],
+      "unrelated": {}
+    }
+  ]
+}

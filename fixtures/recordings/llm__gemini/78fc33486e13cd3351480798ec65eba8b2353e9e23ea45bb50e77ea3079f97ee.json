@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "78fc33486e13cd3351480798ec65eba8b2353e9e23ea45bb50e77ea3079f97ee",
+  "asset_sha256": "79ba3fdbfe8ed4706bbdeabb4d3473c9e916d7398e2ceb277744633f842fd1b4",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:24.120606Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"Hurricane Milton flooding a street\\\",\\n  \\\"place\\\": \\\"Tampa, Florida\\\",\\n  \\\"date_text\\\": \\\"this week\\\",\\n  \\\"date_iso\\\": null,\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Shocking image of Hurricane Milton flooding a street in Tampa, Florida this week.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TfYL1RzzDalqefDmIUaP4N0tXJIP9BA1yve4W3o8EpFwIFIZQcVfkiBOKWIyXkivC3goZYbbxY5c48MKoNeL3Jud8lC+xIwL7TzHYaYuUSTa6KZ6SrLM2m90=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 498,\n    \"candidatesTokenCount\": 108,\n    \"totalTokenCount\": 606,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 498\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"bsHzarbLM7iP28oP5s3qiQo\"\n}\n",
+  "body_sha256": "7372921b18179c4cdd58e644e3be2d66bc8895bfee86e9bad65ffc2d5497e779"
+}

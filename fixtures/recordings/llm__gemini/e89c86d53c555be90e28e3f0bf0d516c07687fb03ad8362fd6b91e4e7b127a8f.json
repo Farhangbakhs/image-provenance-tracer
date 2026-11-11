@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "e89c86d53c555be90e28e3f0bf0d516c07687fb03ad8362fd6b91e4e7b127a8f",
+  "asset_sha256": "ba87f7af4a523dde7cdda4343abf2a26e12f28fdd69dda04d19e611367b7f4b4",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:15:15.355648Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"harbour at dawn\\\",\\n  \\\"place\\\": null,\\n  \\\"date_text\\\": \\\"29 September 2023\\\",\\n  \\\"date_iso\\\": \\\"2023-09-29\\\",\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"The harbour at dawn, photographed on 29 September 2023.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0T1y2T0wKVzUG64tF8ZqbU1dKAHAvoprfnFL+S6JUYM5u4+11KzLy+O0a3vDDLZ1wY6cPUueSNNvjKDkbQSpiOPihYmZJoLAeId367shlYILAQhMpVZe5sqdc=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 502,\n    \"candidatesTokenCount\": 121,\n    \"totalTokenCount\": 623,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 502\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"nMHzatjnOuPo7M8P1IG46QQ\"\n}\n",
+  "body_sha256": "fd0ef1dd85a807fff373bcaaa9739f8418d24185fb4bacee133487bc76834478"
+}

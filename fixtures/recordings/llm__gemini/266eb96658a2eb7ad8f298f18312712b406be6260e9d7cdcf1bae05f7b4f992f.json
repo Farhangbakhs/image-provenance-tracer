@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "266eb96658a2eb7ad8f298f18312712b406be6260e9d7cdcf1bae05f7b4f992f",
+  "asset_sha256": "1d9184944498fb3fa19d5ad3c37b94dd186de6138204eec70d11cd7398bf6c6d",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:15:26.220238Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"a scenic view of a harbour\\\",\\n  \\\"place\\\": null,\\n  \\\"date_text\\\": null,\\n  \\\"date_iso\\\": null,\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Beautiful harbour pic, found online.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TLNhG857gJlmHuapBSHa3cav8rDITaqRzipC6nzrSCn9OFqlrANgdt4rCAf3N3FBrzRiokYURntjnjMCaP6JQK7JmhbfPqwVDA7UgCUvadcwgTJaT17wvs2o=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 472,\n    \"candidatesTokenCount\": 95,\n    \"totalTokenCount\": 567,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 472\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"p8HzarOxMpqXvdIPpPTpoQQ\"\n}\n",
+  "body_sha256": "3bc94ba55653599540d47f4def86a0a6fe9c8bc71cca2a77dd9b8185ffb197bb"
+}

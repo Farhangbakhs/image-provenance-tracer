@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "cb611ddf11695f76442ce627e61e4d418c655a739d984497aaf5ee3d1f1c93c1",
+  "asset_sha256": "b85b4f07a41caea5d8ff2f6d5cba6f21a3f7af20fa015410637e3779a565720a",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:16.154764Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"Floods sweep through Valencia\\\",\\n  \\\"place\\\": \\\"Valencia, Spain\\\",\\n  \\\"date_text\\\": \\\"29 October 2024\\\",\\n  \\\"date_iso\\\": \\\"2024-10-29\\\",\\n  \\\"actor_role\\\": \\\"emergency services\\\",\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Floodwater fills a street in Valencia, Spain, on 29 October 2024 after record rainfall.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TVUGSePot/d2VJNSqay5FRfwNO7QRjOHfMDxwfmFfF4E03n0/slVWAW4YlukwtdFGJVWP291D5qxyGs/tNGjZg/ya/cmaGRUqoc6TPeyxd8A0UvoHLuk4b+Q=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 532,\n    \"candidatesTokenCount\": 134,\n    \"totalTokenCount\": 666,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 532\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"ZsHzat-QI4CP28oPpq-roQQ\"\n}\n",
+  "body_sha256": "46cc921bb98b709e35702c2f316cba32f5cfc1af11e6faf28b70d90c35a256ae"
+}

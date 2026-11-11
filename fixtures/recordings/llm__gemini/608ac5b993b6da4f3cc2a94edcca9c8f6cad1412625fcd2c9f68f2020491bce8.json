@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "608ac5b993b6da4f3cc2a94edcca9c8f6cad1412625fcd2c9f68f2020491bce8",
+  "asset_sha256": "4b1d3579d724b45d89656db0c73483b3bc249951aed2dc05866fd14e99fa946b",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "narrative.v1"
+  },
+  "recorded_at": "2026-11-11T01:15:27.938557Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"narratives\\\": [\\n    {\\n      \\\"label\\\": \\\"Harbour at dawn on 29 September 2023\\\",\\n      \\\"summary\\\": \\\"The photograph depicts a harbour at dawn, specifically stated to have been photographed on 29 September 2023.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c1\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    },\\n    {\\n      \\\"label\\\": \\\"Scenic view of a harbour found online\\\",\\n      \\\"summary\\\": \\\"The photograph shows a scenic view of a harbour found online, without a specific date or event attached.\\\",\\n      \\\"claim_ids\\\": [\\n        \\\"c2\\\"\\n      ],\\n      \\\"contradicts_earliest\\\": false,\\n      \\\"contradiction\\\": null,\\n      \\\"reason\\\": null\\n    }\\n  ]\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TThZyC0bf69fo6GlIaUveHK/KrXWAWWI/m5PJJnORhYKmYWTgLg+3nP9h3cq9IA2ddMG41wcYuBoVI2aX6g07tLTWz/yUjMjwuEDeOgy0NfNhMGr5STReraY=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 573,\n    \"candidatesTokenCount\": 201,\n    \"totalTokenCount\": 774,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 573\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"rsHzaoCjJ7f7nsEPxNuN0AY\"\n}\n",
+  "body_sha256": "34628d9536d9ac86a02b88ac3c46b7b0954c6efa6adf9d9f248b46cbbbdd26a6"
+}

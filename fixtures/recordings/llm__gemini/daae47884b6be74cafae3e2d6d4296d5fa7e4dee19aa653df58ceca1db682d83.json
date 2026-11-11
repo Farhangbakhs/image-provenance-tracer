@@ -1,0 +1,18 @@
+{
+  "format": "origin.provider-recording/v1",
+  "provider": "llm:gemini",
+  "request_hash": "daae47884b6be74cafae3e2d6d4296d5fa7e4dee19aa653df58ceca1db682d83",
+  "asset_sha256": "fc9559a072e3b1c42d06112ab661ceca4a31b6b5a321117c26a4e1a3cf4d4778",
+  "params": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "claim.v1"
+  },
+  "recorded_at": "2026-11-11T01:14:54.307131Z",
+  "synthetic": false,
+  "note": null,
+  "content_type": "application/json",
+  "units": 1,
+  "body_encoding": "utf-8",
+  "body": "{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"{\\n  \\\"has_claim\\\": true,\\n  \\\"event\\\": \\\"seen on the news\\\",\\n  \\\"place\\\": null,\\n  \\\"date_text\\\": null,\\n  \\\"date_iso\\\": null,\\n  \\\"actor_role\\\": null,\\n  \\\"stance\\\": \\\"asserts\\\",\\n  \\\"quote\\\": \\\"Saw this on the news.\\\",\\n  \\\"language\\\": \\\"en\\\",\\n  \\\"translation\\\": null\\n}\",\n            \"thoughtSignature\": \"EmAKXgFpFH0TzAkTqYCAB7MDkgVa550HJhB8CN7j2S5L2C0N6GHNvEkhBk1jUx0upR1PwM2oZviMPRTMeaWegNb1R/rGdiVgX8P2A3CpZhuvkT4JQyHU5zRrfkcLoqqOF1E=\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 483,\n    \"candidatesTokenCount\": 92,\n    \"totalTokenCount\": 575,\n    \"promptTokensDetails\": [\n      {\n        \"modality\": \"TEXT\",\n        \"tokenCount\": 483\n      }\n    ],\n    \"serviceTier\": \"standard\"\n  },\n  \"modelVersion\": \"gemini-3.5-flash-lite\",\n  \"responseId\": \"iMHzaqfTNqeXvdIP69390AM\"\n}\n",
+  "body_sha256": "7340a9cdc0fffe32e629459b2763e7dbea863c936ddb7e9c6fac3249286ae77f"
+}
