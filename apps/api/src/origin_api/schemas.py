@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from origin_core.enums import C2PAState, RunStatus
+from origin_core.enums import AnalystStatus, C2PAState, RunStatus
 
 
 class Livez(BaseModel):
@@ -220,6 +220,12 @@ class SightingOut(BaseModel):
     deciding: EvidenceOut | None
     evidence: list[EvidenceOut]
     image_url_local: str
+    variant_id: uuid.UUID | None = None
+    reliability: str | None = None
+    credibility: int | None = None
+    grade_rationale: str | None = None
+    analyst_status: AnalystStatus = AnalystStatus.ACCEPTED
+    analyst_note: str | None = None
 
 
 class CandidateCounts(BaseModel):
@@ -236,3 +242,80 @@ class RunSightingsOut(BaseModel):
     candidates: CandidateCounts
     notes: dict[str, str]
     sightings: list[SightingOut]
+
+
+# --- Branching: variants, edges, claims, narratives -------------------------------------
+
+
+class VariantOut(BaseModel):
+    id: uuid.UUID
+    label: str
+    representative_sighting_id: uuid.UUID | None
+    sighting_ids: list[uuid.UUID]
+
+
+class VariantEdgeOut(BaseModel):
+    parent_variant_id: uuid.UUID
+    child_variant_id: uuid.UUID
+    kind: str
+    reason: str
+    evidence: dict[str, Any]
+
+
+class ClaimOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sighting_id: uuid.UUID
+    event: str | None
+    place: str | None
+    claimed_date: str | None
+    actor_role: str | None
+    stance: str | None
+    quote: str
+    quote_start: int
+    quote_end: int
+    language: str | None
+    translation: str | None
+    llm_provider: str
+    llm_model: str
+    prompt_version: str
+    analyst_status: AnalystStatus
+    analyst_note: str | None
+
+
+class NarrativeOut(BaseModel):
+    id: uuid.UUID
+    label: str
+    summary: str | None
+    parent_narrative_id: uuid.UUID | None
+    divergence_sighting_id: uuid.UUID
+    divergence_reason: str | None
+    claim_ids: list[uuid.UUID]
+    llm_provider: str
+    llm_model: str
+    prompt_version: str
+
+
+class GradeOut(BaseModel):
+    sighting_id: uuid.UUID
+    reliability: str | None
+    credibility: int | None
+    rationale: str | None
+
+
+class RunAnalysisOut(BaseModel):
+    run_id: uuid.UUID
+    variants: list[VariantOut]
+    edges: list[VariantEdgeOut]
+    claims: list[ClaimOut]
+    narratives: list[NarrativeOut]
+    grades: list[GradeOut]
+    notes: dict[str, str]
+
+
+class OverruleIn(BaseModel):
+    """An analyst's decision on a model-made claim or a machine-made match."""
+
+    status: Literal["accepted", "overruled"]
+    note: str | None = Field(default=None, max_length=2000)

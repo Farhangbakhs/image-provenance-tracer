@@ -152,3 +152,64 @@ async def test_sightings_are_ordered_by_proven_date(
 
 async def test_unknown_run_is_404(client: httpx.AsyncClient) -> None:
     assert (await client.get(f"/runs/{uuid.uuid4()}/sightings")).status_code == 404
+
+
+async def test_analysis_and_overrule(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, seed_run: SeedRun, tmp_path: Path
+) -> None:
+    from origin_core.db.models import Claim, Narrative, NarrativeClaim, Variant
+    from origin_core.enums import AnalystStatus
+
+    run_id = await seed_run()
+    ids = await _seed_sightings(db_engine, run_id, FilesystemBlobStore(tmp_path / "blobs"))
+    async with make_sessionmaker(db_engine).begin() as session:
+        variant = Variant(run_id=run_id, label="V1", representative_sighting_id=ids["early"])
+        claim = Claim(
+            run_id=run_id,
+            sighting_id=ids["early"],
+            event="flood",
+            place="Valencia",
+            quote="Floodwater in Valencia",
+            quote_start=0,
+            quote_end=22,
+            llm_provider="gemini",
+            llm_model="gemini-3.5-flash-lite",
+            prompt_version="claim.v1",
+        )
+        session.add_all([variant, claim])
+        await session.flush()
+        narrative = Narrative(
+            run_id=run_id,
+            label="Flood in Valencia",
+            divergence_sighting_id=ids["early"],
+            llm_provider="gemini",
+            llm_model="gemini-3.5-flash-lite",
+            prompt_version="narrative.v1",
+        )
+        session.add(narrative)
+        await session.flush()
+        session.add(NarrativeClaim(narrative_id=narrative.id, claim_id=claim.id))
+        await session.execute(
+            update(Sighting).where(Sighting.id == ids["early"]).values(variant_id=variant.id)
+        )
+        claim_id, narrative_id = claim.id, narrative.id
+
+    body = (await client.get(f"/runs/{run_id}/analysis")).json()
+    assert [v["label"] for v in body["variants"]] == ["V1"]
+    assert body["variants"][0]["sighting_ids"] == [str(ids["early"])]
+    assert body["claims"][0]["quote"] == "Floodwater in Valencia"
+    assert body["narratives"][0]["claim_ids"] == [str(claim_id)]
+    assert body["narratives"][0]["id"] == str(narrative_id)
+
+    overruled = await client.patch(
+        f"/claims/{claim_id}", json={"status": "overruled", "note": "sarcasm, not a claim"}
+    )
+    assert overruled.status_code == 200
+    assert overruled.json()["analyst_status"] == AnalystStatus.OVERRULED.value
+    match = await client.patch(f"/sightings/{ids['late']}", json={"status": "overruled"})
+    assert match.json()["analyst_status"] == "overruled"
+    listed = (await client.get(f"/runs/{run_id}/sightings")).json()["sightings"]
+    assert {s["id"]: s["analyst_status"] for s in listed}[str(ids["late"])] == "overruled"
+    assert (
+        await client.patch(f"/claims/{uuid.uuid4()}", json={"status": "accepted"})
+    ).status_code == 404
