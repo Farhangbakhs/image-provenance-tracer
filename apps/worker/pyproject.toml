@@ -12,6 +12,10 @@ dependencies = [
     "opencv-python-headless>=4.10",
 ]
 
+[project.optional-dependencies]
+# Optional Telethon collector for Phase 5 (python -m origin_worker.telegram collect --via api).
+telegram = ["telethon>=1.45,<2"]
+
 [tool.uv.sources]
 origin-core = { workspace = true }
 
