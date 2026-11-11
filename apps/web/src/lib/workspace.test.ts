@@ -108,7 +108,7 @@ describe("buildLineageGraph", () => {
     expect(x.b).toBeLessThan(x.c);
     expect(graph.nodes.find((n) => n.id === "a")?.earliest).toBe(true);
     expect(graph.nodes.find((n) => n.id === "c")?.laneY).toBeGreaterThan(0);
-    expect(graph.links.map((l) => `${l.source}>${l.target}:${l.kind}`)).toEqual(["a>b:same", "a>c:mirror", "a>b:forward"]);
+    expect(graph.links.map((l) => `${l.source}>${l.target}:${l.kind}`)).toEqual(["a>c:mirror", "a>b:forward"]);
     expect(graph.links.find((l) => l.kind === "mirror")?.label).toBe("mirrored");
     expect(graph.days.map((d) => d.day)).toEqual(["2024-10-30", "2024-11-05", "2024-11-20"]);
   });
@@ -155,5 +155,38 @@ describe("stageOrder", () => {
     expect(stageOrder(["ingest"])).not.toContain("telegram_sweep");
     const order = stageOrder(["telegram_sweep"]);
     expect(order[order.indexOf("date") + 1]).toBe("telegram_sweep");
+  });
+});
+
+describe("buildLineageGraph grouping", () => {
+  it("bands copies by story when asked", () => {
+    const withStories = buildWorkspace(sightings, analysis);
+    const graph = buildLineageGraph(withStories, { ...analysis, variants: [], edges: [], propagation: [], grades: [], notes: {} } as RunAnalysisOut, "story");
+    expect(graph.lanes.map((l) => l.label)).toEqual(["Valencia", "Florida", "No claim read"]);
+    const lane = Object.fromEntries(graph.nodes.map((n) => [n.id, n.laneY]));
+    expect(lane.a).toBeLessThan(lane.c);
+  });
+});
+
+describe("buildLineageGraph edges", () => {
+  it("merges several edits between the same variants into one labelled link", () => {
+    const graph = buildLineageGraph(buildWorkspace(sightings, undefined), {
+      run_id: "r",
+      variants: [
+        { id: "v1", label: "V1", representative_sighting_id: "a", sighting_ids: ["a"] },
+        { id: "v2", label: "V2", representative_sighting_id: "c", sighting_ids: ["c"] },
+      ],
+      edges: [
+        { parent_variant_id: "v1", child_variant_id: "v2", kind: "crop", reason: "r", evidence: {} },
+        { parent_variant_id: "v1", child_variant_id: "v2", kind: "resize", reason: "r", evidence: {} },
+      ],
+      propagation: [],
+      claims: [],
+      narratives: [],
+      grades: [],
+      notes: {},
+    });
+    expect(graph.links).toHaveLength(1);
+    expect(graph.links[0].label).toBe("cropped, resized");
   });
 });

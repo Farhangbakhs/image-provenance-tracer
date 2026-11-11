@@ -24,10 +24,12 @@ export function CaseView({ caseId }: { caseId: string }) {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6">
-      <nav className="text-[12px] text-muted">
+      <nav className="flex items-center gap-2 text-[13px] text-muted" aria-label="Breadcrumb">
         <Link href="/" className="hover:text-text">
-          ← All cases
+          Cases
         </Link>
+        <span className="text-faint">/</span>
+        <span className="text-text">Case</span>
       </nav>
       <header>
         <h1 className="text-[15px] font-semibold">{data.title}</h1>
@@ -36,9 +38,9 @@ export function CaseView({ caseId }: { caseId: string }) {
       </header>
       <Panel title="Images" aside={`${data.assets.length}`}>
         {data.assets.length === 0 ? <p className="px-3 py-2 text-muted">No images yet.</p> : null}
-        <ul className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+        <ul className="grid grid-cols-2 sm:grid-cols-4">
           {data.assets.map((a) => (
-            <li key={a.id} className="bg-surface-1">
+            <li key={a.id} className="border-b border-r border-line">
               <Link href={`/assets/${a.id}`} className="block hover:bg-surface-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
