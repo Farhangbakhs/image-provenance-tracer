@@ -164,3 +164,45 @@ def parse_page(url: str, body: bytes) -> Page:
         images=images[:MAX_IMAGES],
         published=published_date(html, doc),
     )
+
+
+MAX_TEXT_CHARS = 4000
+
+
+def caption_for(url: str, body: bytes, image_url: str) -> str | None:
+    """The alt text and figure caption attached to `image_url` on the page, if any."""
+    try:
+        doc: Any = _html.document_fromstring(body.decode("utf-8", errors="replace"))
+    except (ValueError, _etree.ParserError):
+        return None
+    target = urlsplit(image_url).path
+    parts: list[str] = []
+    imgs: list[Any] = doc.xpath("//img")
+    for img in imgs:
+        sources = [img.get("src"), img.get("data-src"), *str(img.get("srcset") or "").split(",")]
+        if not any(
+            s and urlsplit(urljoin(url, s.strip().split(" ")[0])).path == target for s in sources
+        ):
+            continue
+        if img.get("alt"):
+            parts.append(str(img.get("alt")).strip())
+        figure: list[Any] = img.xpath("ancestor::figure[1]//figcaption")
+        parts.extend(" ".join(f.text_content().split()) for f in figure)
+        break
+    joined = " ".join(p for p in parts if p)
+    return joined or None
+
+
+def main_text(body: bytes) -> str | None:
+    """The page's main article text (boilerplate, navigation and comments removed)."""
+    from trafilatura import extract  # pyright: ignore[reportMissingTypeStubs]
+
+    text: str | None = extract(
+        body.decode("utf-8", errors="replace"),
+        include_comments=False,
+        include_tables=False,
+        favor_precision=True,
+    )
+    if not text:
+        return None
+    return text[:MAX_TEXT_CHARS]

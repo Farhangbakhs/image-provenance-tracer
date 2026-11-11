@@ -8,10 +8,8 @@ fingerprints, SSCD, homography matching, the dating rule, Postgres and the blob 
 from __future__ import annotations
 
 import io
-import json
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import httpx
 import pytest
@@ -19,7 +17,7 @@ from PIL import Image, ImageDraw
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
-from testkit import SeedRun
+from testkit import ScriptedProvider, SeedRun
 
 from origin_core.db.models import Candidate, Sighting, TimestampEvidence
 from origin_core.db.session import make_sessionmaker
@@ -28,7 +26,6 @@ from origin_core.fetch import Fetcher
 from origin_core.pipeline.events import RunEventBus
 from origin_core.pipeline.runner import PipelineRunner
 from origin_core.providers import wayback
-from origin_core.providers.base import AssetRef, CandidateHit, RawResponse
 from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner, RetryPolicy
 from origin_core.storage import FilesystemBlobStore
@@ -46,28 +43,6 @@ def _jpeg(image: Image.Image) -> bytes:
     out = io.BytesIO()
     image.save(out, format="JPEG", quality=90)
     return out.getvalue()
-
-
-class ScriptedProvider:
-    """Test double standing in for a reverse-image engine."""
-
-    name: str = "scripted"
-    quota_key: str = "scripted"
-    unit_cost: int = 0
-    requires_public_url: bool = False
-    recipients: tuple[str, ...] = ("nobody (test)",)
-
-    def __init__(self, hits: list[dict[str, Any]]) -> None:
-        self._body = json.dumps(hits).encode()
-
-    def params(self) -> dict[str, Any]:
-        return {}
-
-    async def fetch(self, subject: AssetRef, client: httpx.AsyncClient) -> RawResponse:
-        return RawResponse(self._body)
-
-    def parse(self, body: bytes) -> list[CandidateHit]:
-        return [CandidateHit(**hit) for hit in json.loads(body)]
 
 
 def _web(photo: Image.Image) -> dict[tuple[str, str], httpx.Response]:
@@ -143,7 +118,8 @@ async def test_full_trace_produces_verified_dated_sightings(
             {"image_url": "https://cdn.example/copy.jpg", "rank": 2},
             {"image_url": "https://other.example/x.jpg", "rank": 3},
             {"page_url": "https://gone.example/", "rank": 4},
-        ]
+        ],
+        name="scripted-trace",
     )
     runner = ProviderRunner(
         sessions=sessions,
