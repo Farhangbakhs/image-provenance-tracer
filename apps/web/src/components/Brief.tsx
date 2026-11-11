@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { API_URL, type EvidencePack, type SightingOut } from "@/lib/api/client";
+import { API_URL, SNAPSHOT, type EvidencePack, type SightingOut } from "@/lib/api/client";
 import { useEvidencePack } from "@/lib/api/hooks";
 import { EARLIEST_DISCLAIMER, SIGNAL_LABEL } from "@/lib/copy";
 import { formatInterval, formatUtc } from "@/lib/time";
@@ -59,7 +59,13 @@ export function BriefDocument({ pack }: { pack: EvidencePack }) {
           </Link>
           <span className="flex-1" />
           <a
-            href={`${API_URL}/runs/${pack.run.id}/evidence-pack?download=true`}
+            // A snapshot serves the saved pack as a plain file; the API streams it as a download.
+            href={
+              SNAPSHOT
+                ? `${API_URL}/runs/${pack.run.id}/evidence-pack.json`
+                : `${API_URL}/runs/${pack.run.id}/evidence-pack?download=true`
+            }
+            download={SNAPSHOT ? `origin-run-${pack.run.id}.json` : undefined}
             className="border border-line px-2 py-1 hover:border-text"
           >
             Download evidence pack (JSON)
