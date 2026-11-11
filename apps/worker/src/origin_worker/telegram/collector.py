@@ -156,8 +156,12 @@ class Collector:
         query: str | None = None,
         max_pages: int = 5,
         resume: bool = True,
+        window: tuple[datetime, datetime] | None = None,
     ) -> CollectReport:
-        """Backfill one watchlist channel (or search it, with `query`) into the index."""
+        """Backfill one watchlist channel (or search it, with `query`) into the index.
+
+        With `window`, only posts made inside it are indexed (the rest count as skipped).
+        """
         report = CollectReport(channel)
         async with self.sessions() as session:
             row = (
@@ -174,6 +178,9 @@ class Collector:
             async for photo in source.photos(
                 channel, newer_than=newer_than, query=query, max_pages=max_pages
             ):
+                if window is not None and not window[0] <= photo.posted_at <= window[1]:
+                    report.skipped += 1
+                    continue
                 try:
                     post = await self.index_photo(photo, via=source.via)
                 except UploadRejected as exc:

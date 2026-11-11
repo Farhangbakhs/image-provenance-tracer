@@ -25,7 +25,7 @@ from origin_core.db.models import (
     Sighting,
     TimestampEvidence,
 )
-from origin_core.pipeline.registry import STAGE_ORDER
+from origin_core.pipeline.registry import stage_order
 from origin_core.wording import EARLIEST_DISCLAIMER
 
 router = APIRouter(tags=["export"])
@@ -179,7 +179,7 @@ async def evidence_pack(
             original_artefact_id=asset.original_artefact_id,
             display_artefact_id=asset.display_artefact_id,
         ),
-        run=RunOut.from_row(run, list(STAGE_ORDER)),
+        run=RunOut.from_row(run, stage_order(run.stages)),
         sightings=sightings_out,
         analysis=analysis_out,
         provider_calls=[
