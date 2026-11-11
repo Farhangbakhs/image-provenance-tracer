@@ -10,11 +10,12 @@ DOCKER := docker
 endif
 COMPOSE := $(DOCKER) compose -f infra/compose.yaml
 
-.PHONY: help install dev demo down logs migrate client lint fmt test test-py test-web ci
+.PHONY: help install dev demo e2e down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
 	$(info demo      Start in demo mode (replayed providers, no keys) and seed the demo cases)
+	$(info e2e       Playwright end-to-end tests against the running demo (make demo first))
 	$(info down      Stop the stack (data volumes are kept))
 	$(info logs      Follow stack logs)
 	$(info migrate   Apply database migrations to DATABASE_URL (default: compose db))
@@ -73,6 +74,9 @@ test-py:
 
 test-web:
 	$(NPM) test
+
+e2e:
+	$(NPM) run e2e
 
 ci:
 	uv run python scripts/ci_local.py
