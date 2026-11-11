@@ -69,6 +69,7 @@ async def startup(ctx: dict[str, Any]) -> None:
         thresholds=load_thresholds(),
         max_pixels=settings.upload_max_pixels,
         exiftool=settings.exiftool_path,
+        verify_limit=settings.verify_max_candidates,
         llm=llm,
         llm_runner=llm_runner,
         telegram=TelegramServices(

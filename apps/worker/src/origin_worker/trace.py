@@ -169,6 +169,8 @@ class VerifyStage:
     thresholds: Thresholds
     max_pixels: int
     concurrency: int = 3
+    #: Provider hits checked per run, best-ranked first; the rest stay pending, marked unchecked.
+    max_candidates: int = 50
     name: str = "verify"
 
     async def _page(self, cache: _Cache, url: str) -> tuple[FetchResult, Page] | str:
@@ -238,8 +240,27 @@ class VerifyStage:
                 .all()
             )
 
-        counts = await self.verify_candidates(ctx, list(candidates))
-        return StageResult(counts={"candidates": len(candidates), **counts})
+        ordered = sorted(
+            candidates, key=lambda c: (c.provider_rank is None, c.provider_rank or 0, c.provider)
+        )
+        chosen, skipped = ordered[: self.max_candidates], ordered[self.max_candidates :]
+        notes: dict[str, str] = {}
+        if skipped:
+            async with ctx.sessions.begin() as session:
+                await session.execute(
+                    update(Candidate)
+                    .where(Candidate.id.in_([c.id for c in skipped]))
+                    .values(reject_reason=f"not checked: beyond the top {self.max_candidates} hits")
+                )
+            notes["verify"] = (
+                f"checked the top {len(chosen)} of {len(candidates)} provider hits; "
+                f"{len(skipped)} lower-ranked hits were not checked (ORIGIN_VERIFY_MAX_CANDIDATES)"
+            )
+        counts = await self.verify_candidates(ctx, chosen)
+        return StageResult(
+            counts={"candidates": len(candidates), "unchecked": len(skipped), **counts},
+            notes=notes,
+        )
 
     async def verify_candidates(
         self, ctx: StageContext, candidates: list[Candidate], *, stage: str | None = None
@@ -257,6 +278,8 @@ class VerifyStage:
             nonlocal done
             async with gate:
                 status, _ = await self._verify(ctx, query, cache, candidate)
+            if candidate.page_url:
+                cache.pages.pop(candidate.page_url, None)
             counts[status.value] = counts.get(status.value, 0) + 1
             done += 1
             if done % 5 == 0:
@@ -296,6 +319,8 @@ class VerifyStage:
             result = classify(query, loaded_image.side, self.thresholds)
             if not result.related:
                 last_reason = result.reason
+                # Keep the verdict, not the decoded image: a trace can see thousands of images.
+                cache.images[url] = result.reason
                 continue
             assert result.match_class is not None
             if (

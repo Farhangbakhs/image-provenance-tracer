@@ -83,6 +83,7 @@ class TraceServices:
     llm: LLMSetup = field(default_factory=lambda: LLMSetup(None, "not configured"))
     llm_runner: LLMRunner | None = None
     telegram: TelegramServices | None = None
+    verify_limit: int = 50
 
 
 def build_stages(
@@ -96,6 +97,7 @@ def build_stages(
             embedder=embedder,
             thresholds=trace.thresholds,
             max_pixels=trace.max_pixels,
+            max_candidates=trace.verify_limit,
         )
         date = DateStage(runner=trace.runner, blobs=blobs, exiftool=trace.exiftool)
         stages += [
