@@ -264,6 +264,16 @@ class VariantEdgeOut(BaseModel):
     evidence: dict[str, Any]
 
 
+class PropagationEdgeOut(BaseModel):
+    """An explicit link between two sightings, such as a Telegram forward (source to copy)."""
+
+    from_sighting_id: uuid.UUID
+    to_sighting_id: uuid.UUID
+    kind: str
+    reason: str
+    evidence: dict[str, Any]
+
+
 class ClaimOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -310,6 +320,7 @@ class RunAnalysisOut(BaseModel):
     run_id: uuid.UUID
     variants: list[VariantOut]
     edges: list[VariantEdgeOut]
+    propagation: list[PropagationEdgeOut]
     claims: list[ClaimOut]
     narratives: list[NarrativeOut]
     grades: list[GradeOut]

@@ -21,9 +21,22 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine
 from testkit import ScriptedProvider, SeedRun
 
-from origin_core.db.models import Candidate, Run, Sighting, TelegramPost, TimestampEvidence
+from origin_core.db.models import (
+    Candidate,
+    PropagationEdge,
+    Run,
+    Sighting,
+    TelegramPost,
+    TimestampEvidence,
+)
 from origin_core.db.session import make_sessionmaker
-from origin_core.enums import BoundType, CandidateStatus, EvidenceKind, RunStatus
+from origin_core.enums import (
+    BoundType,
+    CandidateStatus,
+    EvidenceKind,
+    PropagationKind,
+    RunStatus,
+)
 from origin_core.fetch import Fetcher
 from origin_core.pipeline.events import RunEventBus
 from origin_core.pipeline.runner import PipelineRunner
@@ -50,9 +63,17 @@ def _jpeg(image: Image.Image) -> bytes:
     return out.getvalue()
 
 
-def _post(channel: str, number: int, when: str) -> str:
+def _post(channel: str, number: int, when: str, source: str = "") -> str:
+    forward = (
+        f'<div class="tgme_widget_message_forwarded_from">Forwarded from <a '
+        f'class="tgme_widget_message_forwarded_from_name" href="https://t.me/{source}">'
+        f"Source</a></div>"
+        if source
+        else ""
+    )
     return (
         f'<div class="tgme_widget_message js-widget_message" data-post="{channel}/{number}">'
+        f"{forward}"
         f'<a class="tgme_widget_message_photo_wrap" href="https://t.me/{channel}/{number}" '
         f"style=\"background-image:url('https://cdn.telesco.pe/{channel}/{number}.jpg')\"></a>"
         f'<div class="tgme_widget_message_text">Floods in the valley, post {number}</div>'
@@ -61,7 +82,7 @@ def _post(channel: str, number: int, when: str) -> str:
     )
 
 
-def _web(photo: Image.Image, channel: str) -> dict[tuple[str, str], httpx.Response]:
+def _web(photo: Image.Image, channel: str, source: str) -> dict[tuple[str, str], httpx.Response]:
     w, h = photo.size
     html = {"content-type": "text/html"}
     jpeg = {"content-type": "image/jpeg"}
@@ -69,7 +90,8 @@ def _web(photo: Image.Image, channel: str) -> dict[tuple[str, str], httpx.Respon
     preview = (
         "<html><body>"
         + _post(channel, 39, "2024-01-01T08:00:00+00:00")  # outside the sweep window
-        + _post(channel, 40, "2024-03-01T10:00:00+00:00")  # the same picture, earlier
+        # The same picture, earlier than the web, forwarded from another public channel.
+        + _post(channel, 40, "2024-03-01T10:00:00+00:00", f"{source}/7")
         + _post(channel, 41, "2024-03-04T12:00:00+00:00")  # a different picture
         + "</body></html>"
     ).encode()
@@ -100,6 +122,20 @@ def _web(photo: Image.Image, channel: str) -> dict[tuple[str, str], httpx.Respon
                 f'content="https://cdn.telesco.pe/{channel}/{number}.jpg"></head></html>'
             ).encode(),
         )
+    # The forwarded post's own page: og:image for the verifier, the widget for its time.
+    web[("cdn.telesco.pe", f"/{source}/7.jpg")] = httpx.Response(
+        200, headers=jpeg, content=_jpeg(photo)
+    )
+    web[("t.me", f"/{source}/7")] = httpx.Response(
+        200,
+        headers=html,
+        content=(
+            f'<html><head><meta property="og:image" '
+            f'content="https://cdn.telesco.pe/{source}/7.jpg"></head><body>'
+            + _post(source, 7, "2024-02-20T06:30:00+00:00")
+            + "</body></html>"
+        ).encode(),
+    )
     return web
 
 
@@ -127,7 +163,8 @@ async def test_sweep_surfaces_a_telegram_post_earlier_than_the_web(
     photo_bytes = (FIXTURES / "no-manifest.jpg").read_bytes()
     with Image.open(io.BytesIO(photo_bytes)) as opened:
         photo = opened.convert("RGB")
-    web = _web(photo, channel)
+    source = f"src_{uuid.uuid4().hex[:10]}"
+    web = _web(photo, channel, source)
     requested: list[str] = []
 
     async def resolve(host: str, port: int) -> list[str]:
@@ -213,6 +250,11 @@ async def test_sweep_surfaces_a_telegram_post_earlier_than_the_web(
                 )
             )
         ).scalar_one_or_none()
+        edges = (
+            (await session.execute(select(PropagationEdge).where(PropagationEdge.run_id == run_id)))
+            .scalars()
+            .all()
+        )
         by_url = {s.page_url: (s, c) for s, c in rows}
         tg, tg_candidate = by_url[f"https://t.me/{channel}/40"]
         platform = (
@@ -237,6 +279,18 @@ async def test_sweep_surfaces_a_telegram_post_earlier_than_the_web(
     assert platform.bound is BoundType.EXACT
     assert platform.value == datetime(2024, 3, 1, 10, tzinfo=UTC)
     assert tg.date_upper == datetime(2024, 3, 1, 10, tzinfo=UTC)
+
+    # The forward header was followed: the source post is verified, dated by its own time,
+    # and linked to the forward by a propagation edge.
+    original, original_candidate = by_url[f"https://t.me/{source}/7"]
+    assert original_candidate.raw["found_by"] == "forward"
+    assert original_candidate.raw["forward_of"] == f"https://t.me/{channel}/40"
+    assert original.date_upper == datetime(2024, 2, 20, 6, 30, tzinfo=UTC)
+    assert sweep["counts"]["forward_sources_verified"] == 1
+    [edge] = edges
+    assert (edge.from_sighting_id, edge.to_sighting_id) == (original.id, tg.id)
+    assert edge.kind is PropagationKind.FORWARD
+    assert edge.evidence["header"]["channel"] == source
 
     # It is earlier than every web sighting.
     earliest_telegram = tg.date_upper

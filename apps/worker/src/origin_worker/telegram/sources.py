@@ -34,7 +34,13 @@ from origin_core.fetch import (
     FetchFailed,
     FetchResult,
 )
-from origin_core.telegram.preview import Forward, channel_page_url, parse_preview
+from origin_core.telegram.preview import (
+    Forward,
+    PreviewPost,
+    channel_page_url,
+    embed_url,
+    parse_preview,
+)
 
 log = structlog.get_logger(__name__)
 
@@ -73,6 +79,10 @@ class PhotoSource(Protocol):
         query: str | None = None,
         max_pages: int = 5,
     ) -> AsyncIterator[ChannelPhoto]: ...
+
+    async def post(self, channel: str, message_id: int) -> PreviewPost | None:
+        """One public post's time, text and forward header; None if it cannot be read."""
+        ...
 
 
 class Pacer:
@@ -130,6 +140,19 @@ class PreviewSource:
                 return result
             await self.pacer.back_off(_retry_after(result.headers))
         raise Throttled(f"still throttled after backing off: {url}")
+
+    async def post(self, channel: str, message_id: int) -> PreviewPost | None:
+        try:
+            result = await self._get(embed_url(channel, message_id), image=False)
+        except (FetchBlocked, FetchFailed, Throttled) as exc:
+            log.info("telegram_post_fetch_failed", channel=channel, post=message_id, error=str(exc))
+            return None
+        if result.status != 200:
+            return None
+        for post in parse_preview(result.body).posts:
+            if post.channel.lower() == channel.lower() and post.message_id == message_id:
+                return post
+        return None
 
     async def photos(
         self,
@@ -240,6 +263,19 @@ class TelethonSource:
             getattr(header, "from_name", None),
             channel,
             int(post) if channel and isinstance(post, int) else None,
+        )
+
+    async def post(self, channel: str, message_id: int) -> PreviewPost | None:
+        await self._pacer.wait()
+        message = await self._client.get_messages(channel, ids=message_id)
+        if message is None or message.date is None:
+            return None
+        return PreviewPost(
+            channel=channel,
+            message_id=message_id,
+            posted_at=message.date.astimezone(UTC),
+            text=message.message or "",
+            forwarded_from=await self._forward(message.fwd_from),
         )
 
     async def photos(
