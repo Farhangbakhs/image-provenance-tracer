@@ -21,7 +21,7 @@ async function openWorkspace(page: Page, title: string) {
 
 test("home shows the demo cases and every service is ready", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(shown(page, DISCLAIMER)).toBeVisible();
+  await expect(shown(page, DISCLAIMER).first()).toBeVisible();
   for (const title of [FLOOD, "DEMO: Cropped and captioned repost", "DEMO: Signed photo, stripped copies", TELEGRAM]) {
     await expect(page.getByRole("link", { name: new RegExp(title) })).toBeVisible();
   }
@@ -35,8 +35,8 @@ test("home shows the demo cases and every service is ready", async ({ page }) =>
 
 test("the miscaptioned case shows its branch, evidence and graph", async ({ page }) => {
   await openWorkspace(page, FLOOD);
-  await expect(page.getByRole("heading", { name: /3 verified sightings · 2 variants · 2 narratives/ })).toBeVisible();
-  await expect(shown(page, DISCLAIMER)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Summary" })).toContainText("valencia-news.example");
+  await expect(shown(page, DISCLAIMER).first()).toBeVisible();
 
   // Keyboard: j selects the first (earliest) sighting, e opens its evidence.
   await page.keyboard.press("j");
@@ -47,7 +47,8 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
 
   await page.keyboard.press("Escape");
   await page.keyboard.press("g");
-  await expect(page.getByRole("tab", { name: "graph" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("img", { name: /Lineage/ })).toContainText("mirrored");
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "evidence" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("cell", { name: /viral-wire\.example/ }).first()).toBeVisible();
@@ -55,8 +56,9 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
 
 test("the Telegram case is earliest on Telegram and shows the forward", async ({ page }) => {
   await openWorkspace(page, TELEGRAM);
-  await expect(page.getByRole("heading", { name: /4 verified sightings · 1 variant/ })).toBeVisible();
-  await expect(shown(page, DISCLAIMER)).toBeVisible();
+  const summary = page.getByRole("region", { name: "Summary" });
+  await expect(summary).toContainText("2024-05-11");
+  await expect(summary).toContainText("t.me");
 
   // The earliest sighting is the channel post the watchlist post was forwarded from.
   await page.keyboard.press("j");
@@ -67,15 +69,15 @@ test("the Telegram case is earliest on Telegram and shows the forward", async ({
 
   await page.keyboard.press("Escape");
   await page.keyboard.press("g");
-  await expect(page.getByRole("tab", { name: "graph" })).toHaveAttribute("aria-selected", "true");
-  await expect(shown(page, "1 forward inside")).toBeVisible();
+  await expect(page.getByRole("tab", { name: "lineage" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("img", { name: /Lineage/ })).toContainText("forwarded");
 });
 
 test("the brief cites the branch and prints to PDF", async ({ page }) => {
   await openWorkspace(page, FLOOD);
   await page.getByRole("link", { name: "Brief (PDF)" }).click();
   await expect(shown(page, /Earliest found:/)).toBeVisible();
-  await expect(shown(page, DISCLAIMER)).toBeVisible();
+  await expect(shown(page, DISCLAIMER).first()).toBeVisible();
   await expect(shown(page, /^Branch: /)).toContainText(/Milton|Florida|Tampa/);
   await expect(shown(page, /Diverges at S\d/)).toBeVisible();
 

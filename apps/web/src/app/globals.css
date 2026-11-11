@@ -2,22 +2,27 @@
 
 /*
  * ORIGIN design tokens. The console is dark-only by design: it is an instrument, and
- * analysts compare thumbnails against a fixed neutral ground.
+ * analysts compare thumbnails against a fixed neutral ground. The greys follow Palantir's
+ * Blueprint dark scale; data is set in mono, labels in small uppercase.
  *
- * Amber (--accent) means "earliest known" and nothing else.
- * The three confidence colours are used only to express confidence.
+ * Amber (--accent) means "earliest found" and nothing else.
+ * Blue (--intent) marks selection, focus and things you can act on.
+ * The three confidence colours are used only to express confidence, and always with a word.
  */
 :root {
-  --bg: #0e0f11;
-  --surface-1: #15171a;
-  --surface-2: #1c1f23;
-  --line: #2a2e34;
-  --text: #e6e8eb;
-  --muted: #9aa1ab;
+  --bg: #111418;
+  --surface-1: #1c2127;
+  --surface-2: #252a31;
+  --surface-3: #2f343c;
+  --line: #383e47;
+  --text: #f6f7f9;
+  --muted: #abb3bf;
+  --faint: #8f99a8;
   --accent: #f2a93b;
+  --intent: #4c90f0;
   --conf-high: #4fb477;
   --conf-medium: #c9b458;
-  --conf-low: #c96a5a;
+  --conf-low: #e07a67;
   color-scheme: dark;
 }
 
@@ -25,10 +30,13 @@
   --color-bg: var(--bg);
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-line: var(--line);
   --color-text: var(--text);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-accent: var(--accent);
+  --color-intent: var(--intent);
   --color-conf-high: var(--conf-high);
   --color-conf-medium: var(--conf-medium);
   --color-conf-low: var(--conf-low);
@@ -45,8 +53,8 @@ body {
 
 body {
   font-family: var(--font-inter), system-ui, sans-serif;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
 
@@ -55,8 +63,24 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Small uppercase label: section headers, column heads, field names. */
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* A defined term: dotted underline; its definition appears on hover or focus. */
+.term {
+  text-decoration: underline dotted var(--faint);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
 :focus-visible {
-  outline: 1px solid var(--text);
+  outline: 2px solid var(--intent);
   outline-offset: 1px;
 }
 
@@ -80,7 +104,10 @@ body {
   --line: #d4d7dc;
   --text: #111316;
   --muted: #4f5661;
+  --faint: #6b7380;
+  --surface-3: #e8eaed;
   --accent: #a8640a;
+  --intent: #2d72d2;
   --conf-high: #23794a;
   --conf-medium: #7d6c12;
   --conf-low: #a33f2e;

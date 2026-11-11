@@ -5,7 +5,7 @@ import Link from "next/link";
 import { DISCLOSURE } from "@/components/Intake";
 import { DropZone } from "@/components/DropZone";
 import { Panel } from "@/components/Panel";
-import { API_URL } from "@/lib/api/client";
+import { API_URL, SNAPSHOT } from "@/lib/api/client";
 import { useCase, useUploadToCase } from "@/lib/api/hooks";
 import { formatUtc } from "@/lib/time";
 
@@ -58,6 +58,7 @@ export function CaseView({ caseId }: { caseId: string }) {
           ))}
         </ul>
       </Panel>
+      {SNAPSHOT ? null : (
       <Panel title="Add an image">
         <div className="flex flex-col gap-3 p-3">
           <DropZone onFile={(file) => upload.mutate(file)} busy={upload.isPending} />
@@ -69,6 +70,7 @@ export function CaseView({ caseId }: { caseId: string }) {
           <p className="text-[11px] text-muted">{DISCLOSURE}</p>
         </div>
       </Panel>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { DropZone } from "@/components/DropZone";
 import { Panel } from "@/components/Panel";
+import { SNAPSHOT } from "@/lib/api/client";
 import { ApiError, createCase, uploadAsset, useCases } from "@/lib/api/hooks";
 import { formatUtc } from "@/lib/time";
 
@@ -61,7 +62,7 @@ export function Intake() {
 export function RecentCases() {
   const { data, isPending, error } = useCases();
   return (
-    <Panel title="Recent cases">
+    <Panel title={SNAPSHOT ? "Demo investigations" : "Recent cases"}>
       {isPending ? <p className="px-3 py-2 text-muted">Loading…</p> : null}
       {error ? <p className="px-3 py-2 text-[12px]">{error.message}</p> : null}
       {data && data.length === 0 ? <p className="px-3 py-2 text-muted">No cases yet.</p> : null}
@@ -69,9 +70,12 @@ export function RecentCases() {
         <ul className="divide-y divide-line">
           {data.map((c) => (
             <li key={c.id}>
-              <Link href={`/cases/${c.id}`} className="flex justify-between gap-3 px-3 py-1.5 hover:bg-surface-2">
-                <span className="truncate">{c.title}</span>
-                <span className="mono shrink-0 text-[11px] text-muted">{formatUtc(c.created_at)}</span>
+              <Link href={`/cases/${c.id}`} className="block px-3 py-2 hover:bg-surface-2">
+                <span className="flex justify-between gap-3">
+                  <span className="truncate font-medium">{c.title}</span>
+                  <span className="mono shrink-0 text-[12px] text-faint">{formatUtc(c.created_at, "day")}</span>
+                </span>
+                {c.notes ? <span className="mt-0.5 line-clamp-2 block text-[13px] text-muted">{c.notes}</span> : null}
               </Link>
             </li>
           ))}

@@ -51,6 +51,7 @@ export function useCase(caseId: string) {
 export function useAsset(assetId: string) {
   return useQuery({
     queryKey: ["asset", assetId],
+    enabled: assetId !== "",
     queryFn: async ({ signal }) => {
       const { data, error, response } = await api.GET("/assets/{asset_id}", {
         params: { path: { asset_id: assetId } },

@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { RunAnalysisOut, RunSightingsOut, SightingOut } from "./api/client";
 import { NO_CLAIM_LANE, buildWorkspace, step } from "./workspace";
-import { layoutTree } from "@/components/workspace/VariantGraph";
+import { lineageRows } from "@/components/workspace/Lineage";
+import { stageOrder } from "@/components/AssetPanel";
+
+import { explainDate, explainGrade, explainMatch } from "./explain";
 
 const sighting = (id: string, upper: string): SightingOut =>
   ({ id, date_upper: upper, date_lower: null, date_confidence: "high", domain: `${id}.example` }) as SightingOut;
@@ -60,12 +63,56 @@ describe("step", () => {
   });
 });
 
-describe("layoutTree", () => {
-  it("places parents above and centred over their children", () => {
-    const pos = layoutTree(["root", "x", "y", "lone"], { x: "root", y: "root" });
-    expect(pos.root.y).toBe(0);
-    expect(pos.x.y).toBe(170);
-    expect(pos.root.x).toBe((pos.x.x + pos.y.x) / 2);
-    expect(pos.lone.y).toBe(0);
+describe("lineageRows", () => {
+  it("orders variants by their earliest copy and says what each was derived from", () => {
+    const model = buildWorkspace(sightings, undefined);
+    const rows = lineageRows(model, {
+      run_id: "r",
+      variants: [
+        { id: "v2", label: "V2", representative_sighting_id: "c", sighting_ids: ["c"] },
+        { id: "v1", label: "V1", representative_sighting_id: "a", sighting_ids: ["b", "a"] },
+      ],
+      edges: [{ parent_variant_id: "v1", child_variant_id: "v2", kind: "crop", reason: "r", evidence: {} }],
+      propagation: [],
+      claims: [],
+      narratives: [],
+      grades: [],
+      notes: {},
+    });
+    expect(rows.map((r) => r.label)).toEqual(["V1", "V2"]);
+    expect(rows[0].first?.id).toBe("a");
+    expect(rows[0].derivedFrom).toBeNull();
+    expect(rows[1].derivedFrom).toBe("cropped from V1");
+  });
+});
+
+describe("explanations", () => {
+  const s = (over: Partial<SightingOut>): SightingOut => ({ ...sighting("x", "2024-01-02T00:00:00Z"), ...over }) as SightingOut;
+
+  it("describes the match in words", () => {
+    expect(explainMatch(s({ match_class: "exact" }))).toBe("Identical file to yours.");
+    expect(explainMatch(s({ match_class: "derivative", transform: { edits: ["crop", "overlay"] } }))).toBe(
+      "Edited copy: cropped, text or graphics added.",
+    );
+  });
+
+  it("says what dated the copy", () => {
+    const deciding = { id: "e", kind: "wayback_page", value: "", bound: "no_later_than", confidence: "medium", source_url: null, detail: {} };
+    expect(explainDate(s({ date_lower: null, deciding }))).toBe("Online by 2024-01-02 (archive capture of the page).");
+    expect(explainDate(s({ date_lower: "2024-01-02T00:00:00Z", deciding: { ...deciding, kind: "platform", bound: "exact" } }))).toBe(
+      "Posted 2024-01-02 (platform timestamp).",
+    );
+  });
+
+  it("reads the Admiralty grades", () => {
+    expect(explainGrade(s({ reliability: "F", credibility: 4 }))).toBe("Source not yet graded (F); credibility 4 of 6.");
+  });
+});
+
+describe("stageOrder", () => {
+  it("shows the Telegram sweep after date only when the run reports it", () => {
+    expect(stageOrder(["ingest"])).not.toContain("telegram_sweep");
+    const order = stageOrder(["telegram_sweep"]);
+    expect(order[order.indexOf("date") + 1]).toBe("telegram_sweep");
   });
 });

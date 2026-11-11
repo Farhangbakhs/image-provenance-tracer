@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Fields, Panel } from "@/components/Panel";
 import { SightingsPanel } from "@/components/SightingsPanel";
 import { StageStrip } from "@/components/StageStrip";
-import { API_URL, type AssetOut } from "@/lib/api/client";
+import { API_URL, SNAPSHOT, type AssetOut } from "@/lib/api/client";
 import { useAsset, useRunProgress, useStartRun } from "@/lib/api/hooks";
 import { describeCredentials } from "@/lib/credentials";
 import { formatUtc } from "@/lib/time";
@@ -108,12 +108,13 @@ function Trace({ asset }: { asset: AssetOut }) {
       aside={latest ? `last run ${formatUtc(latest.created_at)} · ${latest.status}` : "not run yet"}
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
-        <p className="max-w-prose text-[12px] text-muted">
+        <p className="max-w-prose text-[13px] text-muted">
           A trace asks the enabled reverse-image providers where this picture appears, fetches every hit,
           keeps only proven copies and edits, and dates each one from the evidence.
         </p>
         <button
           type="button"
+          hidden={SNAPSHOT}
           onClick={() => start.mutate(undefined, { onSuccess: (run) => setRunId(run.id) })}
           disabled={start.isPending || progress?.status === "running" || progress?.status === "connecting"}
           className="border border-line px-3 py-1 text-[12px] hover:border-text disabled:cursor-not-allowed disabled:text-muted"

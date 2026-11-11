@@ -3,7 +3,9 @@
 import { useState } from "react";
 
 import { Fields } from "@/components/Panel";
-import { API_URL, type ClaimOut, type SightingOut } from "@/lib/api/client";
+import { Term } from "@/components/ui/Term";
+import { API_URL, SNAPSHOT, type ClaimOut, type SightingOut } from "@/lib/api/client";
+import { MATCH_LABEL, explainDate, explainGrade, explainMatch } from "@/lib/explain";
 import { useOverrule } from "@/lib/api/hooks";
 import { formatInterval, formatUtc } from "@/lib/time";
 import { SIGNAL_LABEL } from "@/lib/copy";
@@ -38,8 +40,8 @@ export function EvidenceTable({
   );
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[12px]">
-        <thead className="border-b border-line text-[11px] uppercase tracking-[0.08em]">
+      <table className="w-full border-collapse text-[13px]">
+        <thead className="border-b border-line bg-surface-2 text-[11px] uppercase tracking-[0.1em]">
           <tr>
             {header("date", "Date")}
             {header("domain", "Source")}
@@ -47,7 +49,7 @@ export function EvidenceTable({
             <th scope="col" className="px-2 py-1.5 text-left font-normal text-muted">
               Set by
             </th>
-            {header("credibility", "Grade")}
+            {header("credibility", "Grade (A–F, 1–6)")}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
@@ -66,14 +68,14 @@ export function EvidenceTable({
                 {s.domain}
                 {s.analyst_status === "overruled" ? <span className="ml-1 text-muted">(overruled)</span> : null}
               </td>
-              <td className="px-2 py-1.5">
-                {s.match_class.replace("_", "-")}
+              <td className="px-2 py-1.5" title={explainMatch(s)}>
+                {MATCH_LABEL[s.match_class] ?? s.match_class}
                 {s.transform && (s.transform.edits as string[] | undefined)?.length
-                  ? ` · ${(s.transform.edits as string[]).join(", ")}`
+                  ? <span className="text-muted"> · {(s.transform.edits as string[]).join(", ")}</span>
                   : ""}
               </td>
               <td className="px-2 py-1.5 text-muted">{s.deciding ? SIGNAL_LABEL[s.deciding.kind] ?? s.deciding.kind : "—"}</td>
-              <td className="mono px-2 py-1.5">
+              <td className="mono px-2 py-1.5" title={explainGrade(s) ?? undefined}>
                 {s.reliability ?? "?"}
                 {s.credibility ?? "?"}
               </td>
@@ -157,10 +159,10 @@ export function EvidenceDrawer({
   const edits = (sighting.transform?.edits as string[] | undefined) ?? [];
 
   return (
-    <aside aria-label="Evidence" className="flex flex-col gap-3 border-l border-line bg-surface-1 p-3">
+    <aside aria-label="Evidence" className="flex flex-col gap-3 border border-line bg-surface-1 p-3 lg:sticky lg:top-3 lg:max-h-[calc(100vh-1.5rem)] lg:overflow-y-auto">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          {earliest ? <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-accent">earliest found</div> : null}
+          {earliest ? <div className="label text-accent">earliest found</div> : null}
           <a href={sighting.page_url ?? sighting.image_url} target="_blank" rel="noopener noreferrer nofollow" className="break-all hover:underline">
             {sighting.page_url ?? sighting.image_url}
           </a>
@@ -171,13 +173,19 @@ export function EvidenceDrawer({
         </button>
       </header>
 
+      <section aria-label="In plain words" className="border border-line border-l-2 border-l-intent bg-surface-2 px-3 py-2 text-[13px]">
+        <p>{explainMatch(sighting)}</p>
+        <p className="mt-1">{explainDate(sighting)}</p>
+        {explainGrade(sighting) ? <p className="mt-1 text-muted">{explainGrade(sighting)}</p> : null}
+      </section>
+
       <Compare query={`${API_URL}${assetDisplayUrl}`} copy={`${API_URL}${sighting.image_url_local}`} />
 
       <section>
-        <h3 className="mb-1 text-[11px] uppercase tracking-[0.1em] text-muted">Match</h3>
+        <h3 className="label mb-1"><Term name="sighting">Match</Term></h3>
         <Fields
           rows={[
-            { label: "Class", value: `${sighting.match_class.replace("_", "-")}${edits.length ? ` · ${edits.join(", ")}` : ""}` },
+            { label: "Class", value: `${MATCH_LABEL[sighting.match_class] ?? sighting.match_class} (${sighting.match_class.replace("_", "-")})${edits.length ? ` · ${edits.join(", ")}` : ""}` },
             { label: "Why", value: sighting.match_reason, mono: true },
             { label: "SSCD", value: sighting.sscd_cosine?.toFixed(3) ?? null, mono: true },
             { label: "pHash / PDQ", value: `${sighting.phash_distance ?? "–"} / ${sighting.pdq_distance ?? "–"} bits`, mono: true },
@@ -185,7 +193,7 @@ export function EvidenceDrawer({
             { label: "Analyst", value: sighting.analyst_status === "overruled" ? `overruled${sighting.analyst_note ? `: ${sighting.analyst_note}` : ""}` : "accepted" },
           ]}
         />
-        <div className="mt-1 flex gap-2">
+        <div className={SNAPSHOT ? "hidden" : "mt-1 flex gap-2"}>
           <button type="button" className="border border-line px-2 py-0.5 text-[12px] hover:border-text" onClick={() => decide("sighting", sighting.id, sighting.analyst_status === "overruled" ? "accepted" : "overruled")}>
             {sighting.analyst_status === "overruled" ? "Accept match" : "Overrule match"}
           </button>
@@ -193,12 +201,12 @@ export function EvidenceDrawer({
       </section>
 
       <section>
-        <h3 className="mb-1 text-[11px] uppercase tracking-[0.1em] text-muted">Date</h3>
+        <h3 className="label mb-1"><Term name="interval">Date</Term></h3>
         <p className="mono text-[12px]">
           {formatInterval(sighting.date_lower, sighting.date_upper)}{" "}
           <span style={{ color: CONFIDENCE_COLOUR[sighting.date_confidence] }}>({sighting.date_confidence})</span>
         </p>
-        <ul className="mt-1 divide-y divide-line border border-line text-[12px]">
+        <ul className="mt-1 divide-y divide-line border border-line text-[13px]">
           {sighting.evidence.map((e) => (
             <li key={e.id} className="grid grid-cols-[1fr_auto] gap-2 px-2 py-1">
               <span>
@@ -217,11 +225,14 @@ export function EvidenceDrawer({
             </li>
           ))}
         </ul>
-        <p className="mt-1 text-[11px] text-muted">▸ marks the signal that set the date. Rule {sighting.dating_rule_version}.</p>
+        <p className="mt-1 text-[12px] text-muted">
+          ▸ marks the evidence that set the date. &ldquo;No later than&rdquo; proves the copy existed by then; &ldquo;claimed&rdquo; is
+          what a page or file states. Rule {sighting.dating_rule_version}.
+        </p>
       </section>
 
       <section>
-        <h3 className="mb-1 text-[11px] uppercase tracking-[0.1em] text-muted">Claim</h3>
+        <h3 className="label mb-1"><Term name="narrative">Claim</Term></h3>
         {claim ? (
           <div className="flex flex-col gap-1.5 text-[12px]">
             <p>
@@ -234,7 +245,7 @@ export function EvidenceDrawer({
               extracted by {claim.llm_provider} {claim.llm_model} · {claim.prompt_version}
               {claim.analyst_status === "overruled" ? ` · overruled${claim.analyst_note ? `: ${claim.analyst_note}` : ""}` : ""}
             </p>
-            <div>
+            <div className={SNAPSHOT ? "hidden" : ""}>
               <button type="button" className="border border-line px-2 py-0.5 hover:border-text" onClick={() => decide("claim", claim.id, claim.analyst_status === "overruled" ? "accepted" : "overruled")}>
                 {claim.analyst_status === "overruled" ? "Accept claim" : "Overrule claim"}
               </button>
@@ -246,7 +257,7 @@ export function EvidenceDrawer({
       </section>
 
       <section>
-        <h3 className="mb-1 text-[11px] uppercase tracking-[0.1em] text-muted">Grade</h3>
+        <h3 className="label mb-1"><Term name="credibility">Grade</Term></h3>
         <p className="mono text-[12px]">
           {sighting.reliability ?? "?"}
           {sighting.credibility ?? "?"}
