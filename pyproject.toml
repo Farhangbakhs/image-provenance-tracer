@@ -33,6 +33,8 @@ dev = [
     "pytest>=8.4",
     "pytest-asyncio>=1.2",
 ]
+# The eval harness's source photographs (scikit-image sample data). `make eval` installs it on demand.
+eval = ["scikit-image==0.25.2"]
 
 [tool.ruff]
 line-length = 100
@@ -48,7 +50,7 @@ ignore = ["S101"]
 "**/migrations/**" = ["E501"]
 
 [tool.pyright]
-include = ["conftest.py", "testkit.py", "scripts", "packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
+include = ["conftest.py", "testkit.py", "scripts", "evals", "packages/shared/src", "apps/api/src", "apps/worker/src", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 venvPath = "."
