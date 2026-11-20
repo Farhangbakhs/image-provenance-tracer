@@ -75,7 +75,8 @@ export function InvestigationGraph({
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
-  const [groupBy, setGroupBy] = useState<GroupBy>("variant");
+  // The group-by switch lives in the workspace; this graph shows how the copies look.
+  const groupBy: GroupBy = "variant";
   const data = useMemo(() => buildLineageGraph(model, analysis, groupBy), [model, analysis, groupBy]);
   const graph = useMemo(() => ({ nodes: data.nodes.map((n) => ({ ...n })), links: data.links.map((l) => ({ ...l })) }), [data]);
   const fg = useRef<ForceGraphMethods<Node, Link> | undefined>(undefined);
@@ -334,26 +335,7 @@ export function InvestigationGraph({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2">
-        <div role="radiogroup" aria-label="Group copies by" className="flex items-center gap-2 text-[12px]">
-          <span className="label">Group by</span>
-          {(
-            [
-              ["variant", "How it looks"],
-              ["story", "What it claims"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              role="radio"
-              aria-checked={groupBy === value}
-              onClick={() => setGroupBy(value)}
-              className={`border px-2 py-1 ${groupBy === value ? "border-accent bg-accent-soft text-text" : "border-line text-muted hover:text-text"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <p className="label">How the copies look</p>
         <div className="flex items-center gap-1.5">
           <button type="button" onClick={() => zoomBy(1 / 1.6)} className={button} aria-label="Zoom out">
             −

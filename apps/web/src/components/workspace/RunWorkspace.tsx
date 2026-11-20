@@ -10,18 +10,24 @@ import { CandidatesPanel } from "@/components/workspace/CandidatesPanel";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { InvestigationGraph } from "@/components/workspace/InvestigationGraph";
 import { RunDetails } from "@/components/workspace/RunDetails";
+import { StoryPanel } from "@/components/workspace/StoryPanel";
+import { StoryTimeline } from "@/components/workspace/StoryTimeline";
 import { API_URL } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
 import { searchProblem } from "@/lib/search-problem";
+import { buildStories } from "@/lib/stories";
 import { buildSummary } from "@/lib/summary";
-import { buildWorkspace, step } from "@/lib/workspace";
+import { buildWorkspace, NO_CLAIM_LANE, step } from "@/lib/workspace";
 
 const VIEWS = ["graph", "list"] as const;
 type View = (typeof VIEWS)[number];
+type Group = "story" | "variant";
+type Side = "copy" | "story" | "details" | null;
 
 /**
- * One investigation: the answer first, then the copies as a graph over time or as a list, sharing
- * one selection and one evidence panel. Keys: j/k move, e opens evidence, g switches view.
+ * One investigation: the answer first, then the copies as stories on a timeline (or by how they
+ * look) or as a list, sharing one selection and one side panel. Keys: j/k move, e opens the
+ * evidence, g switches view, Esc closes the panel.
  */
 export function RunWorkspace({ runId }: { runId: string }) {
   const run = useRun(runId);
@@ -29,11 +35,12 @@ export function RunWorkspace({ runId }: { runId: string }) {
   const analysis = useRunAnalysis(runId);
   const asset = useAsset(run.data?.asset_id ?? "");
   const [view, setView] = useState<View>("graph");
+  const [group, setGroup] = useState<Group>("story");
   // Until the reader picks something, the earliest copy is selected and its evidence is open:
   // the page answers the question with zero clicks.
   const [picked, setPicked] = useState<string | null | undefined>(undefined);
-  const [drawerOpen, setDrawerOpen] = useState<boolean | undefined>(undefined);
-  const [details, setDetails] = useState(false);
+  const [sideChoice, setSide] = useState<Side | undefined>(undefined);
+  const [storyId, setStoryId] = useState<string | null>(null);
 
   const model = useMemo(
     () => (sightings.data ? buildWorkspace(sightings.data, analysis.data) : null),
@@ -43,7 +50,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
   const earliestId = model?.earliestId ?? null;
 
   const selected = picked === undefined ? earliestId : picked;
-  const drawer = drawerOpen ?? true;
+  const side = sideChoice === undefined ? "copy" : sideChoice;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -51,12 +58,14 @@ export function RunWorkspace({ runId }: { runId: string }) {
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (event.key === "j" || event.key === "k") {
         setPicked((current) => step(order, current === undefined ? earliestId : current, event.key === "j" ? 1 : -1));
+        setSide("copy");
       } else if (event.key === "e") {
-        setDrawerOpen(true);
+        setSide("copy");
       } else if (event.key === "g") {
         setView((v) => VIEWS[(VIEWS.indexOf(v) + 1) % VIEWS.length]);
       } else if (event.key === "Escape") {
-        setDrawerOpen(false);
+        setSide(null);
+        setStoryId(null);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -70,14 +79,21 @@ export function RunWorkspace({ runId }: { runId: string }) {
 
   const select = (id: string) => {
     setPicked(id);
-    setDetails(false);
-    setDrawerOpen(true);
+    setSide("copy");
+    const lane = model.laneOf[id];
+    setStoryId(lane && lane !== NO_CLAIM_LANE ? lane : null);
+  };
+  const selectStory = (id: string) => {
+    setStoryId(id);
+    setSide("story");
   };
   const current = model.sightings.find((s) => s.id === selected) ?? null;
   const claim = analysis.data?.claims.find((c) => c.sighting_id === selected);
   const notes = { ...sightings.data.notes, ...(analysis.data?.notes ?? {}) };
   const problem = searchProblem(sightings.data.notes, sightings.data.candidates);
   const summary = buildSummary(model, analysis.data, sightings.data.candidates);
+  const storyRow = storyId ? buildStories(model, analysis.data, true).rows.find((r) => r.id === storyId) ?? null : null;
+  const sideOpen = side === "details" || (side === "story" && storyRow !== null) || (side === "copy" && current !== null);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
@@ -107,7 +123,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
         summary={summary}
         imageUrl={asset.data ? `${API_URL}${asset.data.display_url}` : null}
         onSelect={select}
-        onDetails={() => setDetails((d) => !d)}
+        onDetails={() => setSide(side === "details" ? "copy" : "details")}
       />
 
       {problem ? (
@@ -122,12 +138,13 @@ export function RunWorkspace({ runId }: { runId: string }) {
           <p>
             Every copy here was fetched by ORIGIN and proved to be your picture: an{" "}
             <Term name="exact">identical file</Term>, the <Term name="near_duplicate">same picture</Term> or an{" "}
-            <Term name="derivative">edited copy</Term>. The graph places each one at the earliest date its evidence allows.
+            <Term name="derivative">edited copy</Term>. Each one is drawn at the earliest date its evidence allows; a hollow
+            dot means the date is uncertain.
           </p>
           <p>
-            <Term name="variant">Variants</Term> are copies that look alike; arrows show which edit was made from which.
-            Switch the graph to <span className="text-text">What it claims</span> to group copies by the{" "}
-            <Term name="narrative">story</Term> their page tells.
+            Each row is a <Term name="narrative">story</Term> a page tells about the picture, the original first. Switch to{" "}
+            <span className="text-text">How it looks</span> to see the <Term name="variant">variants</Term> and which edit was
+            made from which.
           </p>
           <p>
             Dates are <Term name="interval">ranges</Term> with a stated <Term name="confidence" />. The{" "}
@@ -141,27 +158,63 @@ export function RunWorkspace({ runId }: { runId: string }) {
         </div>
       </details>
 
-      <div className={`grid gap-4 ${details || (drawer && current) ? "lg:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
+      <div className={`grid gap-4 ${sideOpen ? "lg:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
         <div className="flex min-w-0 flex-col gap-4">
           <section className="border border-line bg-surface-1" aria-label="Copies">
-            <div role="tablist" aria-label="Views" className="flex border-b border-line bg-surface-2">
-              {VIEWS.map((v) => (
-                <button
-                  key={v}
-                  role="tab"
-                  type="button"
-                  aria-selected={view === v}
-                  onClick={() => setView(v)}
-                  className={`-mb-px px-4 py-2 text-[13px] capitalize ${view === v ? "border-b-2 border-accent text-text" : "text-muted hover:text-text"}`}
-                >
-                  {v}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center justify-between border-b border-line bg-surface-2">
+              <div role="tablist" aria-label="Views" className="flex">
+                {VIEWS.map((v) => (
+                  <button
+                    key={v}
+                    role="tab"
+                    type="button"
+                    aria-selected={view === v}
+                    onClick={() => setView(v)}
+                    className={`-mb-px px-4 py-2 text-[13px] capitalize ${view === v ? "border-b-2 border-accent text-text" : "text-muted hover:text-text"}`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              {view === "graph" ? (
+                <div role="radiogroup" aria-label="Group copies by" className="flex items-center gap-2 px-3 text-[12px]">
+                  <span className="label">Group by</span>
+                  {(
+                    [
+                      ["story", "What it claims"],
+                      ["variant", "How it looks"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={group === value}
+                      onClick={() => setGroup(value)}
+                      className={`border px-2 py-1 ${group === value ? "border-accent bg-accent-soft text-text" : "border-line text-muted hover:text-text"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            {view === "graph" && analysis.data ? (
+            {view === "graph" && group === "story" ? (
+              <StoryTimeline
+                model={model}
+                analysis={analysis.data}
+                selected={selected}
+                selectedStory={storyId}
+                onSelect={select}
+                onSelectStory={selectStory}
+              />
+            ) : null}
+            {view === "graph" && group === "variant" && analysis.data ? (
               <InvestigationGraph model={model} analysis={analysis.data} selected={selected} onSelect={select} />
             ) : null}
-            {view === "graph" && !analysis.data ? <p className="px-3 py-2 text-muted">No analysis for this run yet.</p> : null}
+            {view === "graph" && group === "variant" && !analysis.data ? (
+              <p className="px-3 py-2 text-muted">No analysis for this run yet.</p>
+            ) : null}
             {view === "list" ? <EvidenceTable model={model} selected={selected} onSelect={select} /> : null}
           </section>
           {Object.keys(notes).length ? (
@@ -178,17 +231,20 @@ export function RunWorkspace({ runId }: { runId: string }) {
           ) : null}
           <CandidatesPanel runId={runId} />
         </div>
-        {details ? (
-          <RunDetails runId={runId} counts={sightings.data.candidates} onClose={() => setDetails(false)} />
+        {side === "details" ? (
+          <RunDetails runId={runId} counts={sightings.data.candidates} onClose={() => setSide(null)} />
         ) : null}
-        {!details && drawer && current && asset.data ? (
+        {side === "story" && storyRow ? (
+          <StoryPanel row={storyRow} selected={selected} onSelect={select} onClose={() => setSide(null)} />
+        ) : null}
+        {side === "copy" && current && asset.data ? (
           <EvidenceDrawer
             runId={runId}
             assetDisplayUrl={asset.data.display_url}
             sighting={current}
             claim={claim}
             earliest={current.id === model.earliestId}
-            onClose={() => setDrawerOpen(false)}
+            onClose={() => setSide(null)}
           />
         ) : null}
       </div>

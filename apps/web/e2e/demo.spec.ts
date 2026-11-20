@@ -33,25 +33,35 @@ test("home shows the demo cases and every service is ready", async ({ page }) =>
   await expect(status.getByText("down", { exact: true })).toHaveCount(0);
 });
 
-test("the miscaptioned case shows its branch, evidence and graph", async ({ page }) => {
+test("the miscaptioned case answers first, then shows its stories in order", async ({ page }) => {
   await openWorkspace(page, FLOOD);
-  await expect(page.getByRole("region", { name: "Summary" })).toContainText("valencia-news.example");
+  const summary = page.getByRole("region", { name: "Summary" });
+  await expect(summary).toContainText("First found 30 Oct 2024 on valencia-news.example as Floods in Valencia");
+  await expect(summary).toContainText("Since reused in 1 other story, which contradicts it.");
   await expect(shown(page, DISCLAIMER).first()).toBeVisible();
 
-  // Keyboard: j selects the first (earliest) sighting, e opens its evidence.
-  await page.keyboard.press("j");
-  await page.keyboard.press("e");
+  // The earliest copy is already selected: its evidence is open with no click.
   const drawer = page.getByRole("complementary", { name: "Evidence" });
-  await expect(drawer).toBeVisible();
   await expect(drawer.getByText(/valencia-news\.example/).first()).toBeVisible();
 
-  // The graph is the first view; it can also band copies by the story their page tells.
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("tab", { name: "graph" })).toHaveAttribute("aria-selected", "true");
+  // Stories are rows, the original first, each with its status in words.
+  const rows = page.getByRole("button", { name: /(Original story|Contradicts original) · \d+ cop/ });
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText("Original story");
+  await expect(rows.nth(1)).toContainText("Contradicts original");
+
+  // Clicking a dot selects its copy, and its evidence opens.
+  await page.getByRole("button", { name: /viral-wire\.example/ }).click();
+  await expect(drawer.getByText(/viral-wire\.example/).first()).toBeVisible();
+
+  // Clicking a story lists its copies in the side panel.
+  await rows.nth(1).click();
+  await expect(page.getByRole("complementary", { name: "Story" })).toContainText("Hurricane Milton");
+
+  // How it looks: the variants, with the mirror edit.
+  await page.getByRole("radio", { name: "How it looks" }).click();
   await expect(page.locator("canvas")).toBeVisible();
   await expect(page.getByRole("list", { name: "Graph in words" })).toContainText("mirrored");
-  await page.getByRole("radio", { name: "What it claims" }).click();
-  await expect(page.getByRole("list", { name: "Graph in words" })).toContainText(/Valencia/);
   await page.keyboard.press("g");
   await expect(page.getByRole("tab", { name: "list" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("cell", { name: /viral-wire\.example/ }).first()).toBeVisible();
@@ -63,17 +73,16 @@ test("the Telegram case is earliest on Telegram and shows the forward", async ({
   await expect(summary).toContainText("11 May 2024");
   await expect(summary).toContainText("t.me");
 
-  // The earliest sighting is the channel post the watchlist post was forwarded from.
-  await page.keyboard.press("j");
-  await page.keyboard.press("e");
+  // The earliest sighting is the channel post the watchlist post was forwarded from, and its
+  // evidence is already open.
   const drawer = page.getByRole("complementary", { name: "Evidence" });
   await expect(drawer.getByText(/origin_demo_citydesk\/52/).first()).toBeVisible();
   await expect(drawer.getByText(/platform/).first()).toBeVisible();
 
-  await page.keyboard.press("Escape");
+  // The forward is an edge between copies, drawn in the lineage.
+  await page.getByRole("radio", { name: "How it looks" }).click();
   await expect(page.locator("canvas")).toBeVisible();
   await expect(page.getByRole("list", { name: "Graph in words" })).toContainText("forwarded");
-  await page.getByRole("button", { name: /^2024-05-11/ }).click();
 });
 
 test("the brief cites the branch and prints to PDF", async ({ page }) => {
