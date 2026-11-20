@@ -146,7 +146,7 @@ class BranchStage:
                     )
                 ).scalars()
             }
-        by_url = {s.page_url: s for s in sightings if s.page_url}
+        by_url = {url: s for s in sightings for url in (s.page_url, s.provider_url) if url}
         edges: list[PropagationEdge] = []
         for sighting in sightings:
             candidate = candidates.get(sighting.candidate_id)

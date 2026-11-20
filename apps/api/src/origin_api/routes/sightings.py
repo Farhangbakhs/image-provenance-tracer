@@ -117,6 +117,7 @@ async def run_sightings(run_id: uuid.UUID, session: Session) -> RunSightingsOut:
                 id=sighting.id,
                 provider=candidate.provider,
                 page_url=sighting.page_url,
+                provider_url=sighting.provider_url,
                 image_url=sighting.image_url,
                 domain=urlsplit(sighting.page_url or sighting.image_url).hostname or "",
                 title=sighting.title,

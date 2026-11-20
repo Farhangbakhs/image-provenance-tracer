@@ -203,6 +203,8 @@ class SightingOut(BaseModel):
     id: uuid.UUID
     provider: str
     page_url: str | None
+    #: The link the provider gave, when it differs from `page_url` (Lens: a google.com redirect).
+    provider_url: str | None = None
     image_url: str
     domain: str
     title: str | None
@@ -235,6 +237,7 @@ class CandidateCounts(BaseModel):
     verified: int = 0
     unrelated: int = 0
     fetch_failed: int = 0
+    blocked: int = 0
 
 
 class CandidateOut(BaseModel):

@@ -57,6 +57,7 @@ from origin_core.providers.registry import ProviderSetup
 from origin_core.providers.runner import ProviderRunner
 from origin_core.providers.telegram import TelegramIndex
 from origin_core.providers.wayback import WaybackFirstCapture, first_capture
+from origin_core.redirects import google_block
 from origin_core.storage import BlobStore
 from origin_worker.embedding import SSCDEmbedder
 from origin_worker.matching.classify import MatchResult, Side, classify
@@ -330,6 +331,17 @@ class VerifyStage:
         page = load.page
         tried: list[dict[str, Any]] = []
 
+        blocked = google_block(load.result.final_url) if load.result is not None else None
+        if blocked is not None and load.result is not None:
+            return await self._reject(
+                ctx,
+                candidate,
+                load,
+                tried,
+                CandidateStatus.BLOCKED,
+                f"blocked by Google redirect ({blocked}, HTTP {load.result.status})",
+            )
+
         if candidate.image_url:
             urls = [candidate.image_url]
         elif page is not None:
@@ -392,13 +404,17 @@ class VerifyStage:
             page_artefact_id: uuid.UUID | None = None
             if load.result is not None and page is not None:
                 page_artefact_id = await _store_page(session, self.blobs, load.result)
+            # The publisher's page after every redirect; the provider's own link is kept apart.
+            final_url = load.result.final_url if load.result is not None else candidate.page_url
+            provider_url = candidate.page_url if candidate.page_url != final_url else None
             session.add(
                 Sighting(
                     run_id=ctx.run_id,
                     candidate_id=candidate.id,
                     image_artefact_id=image_artefact.id,
                     page_artefact_id=page_artefact_id,
-                    page_url=candidate.page_url,
+                    page_url=final_url,
+                    provider_url=provider_url,
                     image_url=image.url,
                     title=(page.title if page else None) or candidate.raw.get("title"),
                     match_class=match.match_class,
@@ -576,7 +592,7 @@ class DateStage:
             add(
                 EvidenceKind.PLATFORM,
                 candidate.provider_date,
-                candidate.page_url,
+                sighting.page_url,
                 {
                     "platform": "telegram",
                     "channel": candidate.raw.get("channel"),
@@ -589,7 +605,7 @@ class DateStage:
             add(
                 EvidenceKind.PROVIDER_CRAWL,
                 candidate.provider_date,
-                candidate.page_url,
+                sighting.page_url,
                 {"provider": candidate.provider, "shown_as": candidate.raw.get("date")},
                 bound=BoundType.CLAIMED,
                 confidence=Confidence.MEDIUM,

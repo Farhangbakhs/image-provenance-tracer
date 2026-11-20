@@ -73,7 +73,7 @@ const pack: EvidencePack = {
     run_id: "run",
     status: "succeeded",
     earliest_sighting_id: "s1",
-    candidates: { pending: 0, verified: 2, unrelated: 1, fetch_failed: 0 },
+    candidates: { pending: 0, verified: 2, unrelated: 1, fetch_failed: 0, blocked: 0 },
     notes: {},
     sightings: [sighting("s1", "valencia.example", "2024-10-30T08:15:00Z"), sighting("s2", "viral.example", "2024-11-12T09:00:00Z")],
   },

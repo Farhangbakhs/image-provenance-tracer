@@ -136,7 +136,13 @@ async def test_sightings_are_ordered_by_proven_date(
     body = (await client.get(f"/runs/{run_id}/sightings")).json()
     assert [s["id"] for s in body["sightings"]] == [str(ids["early"]), str(ids["late"])]
     assert body["earliest_sighting_id"] == str(ids["early"])
-    assert body["candidates"] == {"pending": 0, "verified": 2, "unrelated": 1, "fetch_failed": 0}
+    assert body["candidates"] == {
+        "pending": 0,
+        "verified": 2,
+        "unrelated": 1,
+        "fetch_failed": 0,
+        "blocked": 0,
+    }
     assert body["notes"] == {"lens": "not queried: SERPAPI_API_KEY is not set"}
     first = body["sightings"][0]
     assert first["domain"] == "early.example"

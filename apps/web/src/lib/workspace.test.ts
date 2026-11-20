@@ -14,7 +14,7 @@ const sightings: RunSightingsOut = {
   run_id: "r",
   status: "succeeded",
   earliest_sighting_id: "a",
-  candidates: { pending: 0, verified: 3, unrelated: 0, fetch_failed: 0 },
+  candidates: { pending: 0, verified: 3, unrelated: 0, fetch_failed: 0, blocked: 0 },
   notes: {},
   sightings: [sighting("a", "2024-10-30T00:00:00Z"), sighting("b", "2024-11-05T00:00:00Z"), sighting("c", "2024-11-20T00:00:00Z")],
 };

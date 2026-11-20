@@ -109,7 +109,7 @@ function LatestResult({ runId }: { runId: string }) {
       )}
       <p className="mt-1 text-[13px] text-muted">
         {data.sightings.length} verified cop{data.sightings.length === 1 ? "y" : "ies"} out of{" "}
-        {data.sightings.length + data.candidates.unrelated + data.candidates.fetch_failed + data.candidates.pending} search
+        {data.sightings.length + data.candidates.unrelated + data.candidates.fetch_failed + data.candidates.blocked + data.candidates.pending} search
         results.
       </p>
     </div>

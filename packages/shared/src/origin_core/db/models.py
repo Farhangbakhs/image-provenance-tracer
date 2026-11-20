@@ -273,7 +273,11 @@ class Sighting(Base):
     )
     variant_id: Mapped[uuid.UUID | None] = _fk("variants.id", nullable=True, ondelete="SET NULL")
     source_id: Mapped[uuid.UUID | None] = _fk("sources.id", nullable=True, ondelete="SET NULL")
+    #: The publisher's page, after every redirect. Dating, grading and the console use this.
     page_url: Mapped[str | None] = mapped_column(Text)
+    #: The link the provider gave when it differs (for Lens, a google.com redirect), kept as
+    #: provenance.
+    provider_url: Mapped[str | None] = mapped_column(Text)
     image_url: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[str | None] = mapped_column(Text)
     extracted_text: Mapped[str | None] = mapped_column(Text)

@@ -4,9 +4,9 @@
  */
 export function searchProblem(
   notes: Record<string, string>,
-  candidates: { pending: number; verified: number; unrelated: number; fetch_failed: number },
+  candidates: { pending: number; verified: number; unrelated: number; fetch_failed: number; blocked: number },
 ): string | null {
-  const total = candidates.pending + candidates.verified + candidates.unrelated + candidates.fetch_failed;
+  const total = candidates.pending + candidates.verified + candidates.unrelated + candidates.fetch_failed + candidates.blocked;
   if (total > 0) return null;
   const messages = Object.values(notes);
   if (messages.some((m) => m.includes("replay mode: no recording"))) {

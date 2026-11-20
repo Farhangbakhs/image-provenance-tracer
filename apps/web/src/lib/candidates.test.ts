@@ -45,6 +45,17 @@ describe("readCandidate", () => {
     expect(r.facts).toContainEqual({ label: "Error", value: "page fetch failed: timed out" });
   });
 
+  it("names a Google redirect page as the blocker, not the publisher", () => {
+    const r = readCandidate({
+      ...base,
+      status: "blocked",
+      reason: "blocked by Google redirect (www.google.com/sorry/index, HTTP 429)",
+      fetch_info: { page: { status: 429, final_url: "https://www.google.com/sorry/index" } },
+    });
+    expect(r.headline).toContain("Google's own redirect page answered instead of the publisher's page");
+    expect(r.facts).toContainEqual({ label: "Page", value: "HTTP 429" });
+  });
+
   it("counts the images that were compared", () => {
     const r = readCandidate({
       ...base,

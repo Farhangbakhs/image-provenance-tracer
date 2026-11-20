@@ -469,6 +469,11 @@ export interface components {
         /** CandidateCounts */
         CandidateCounts: {
             /**
+             * Blocked
+             * @default 0
+             */
+            blocked: number;
+            /**
              * Fetch Failed
              * @default 0
              */
@@ -1142,6 +1147,8 @@ export interface components {
             phash_distance: number | null;
             /** Provider */
             provider: string;
+            /** Provider Url */
+            provider_url?: string | null;
             /** Reliability */
             reliability?: string | null;
             /** Sscd Cosine */

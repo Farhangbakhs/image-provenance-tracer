@@ -202,6 +202,11 @@
       },
       "CandidateCounts": {
         "properties": {
+          "blocked": {
+            "default": 0,
+            "title": "Blocked",
+            "type": "integer"
+          },
           "fetch_failed": {
             "default": 0,
             "title": "Fetch Failed",
@@ -2116,6 +2121,17 @@
           "provider": {
             "title": "Provider",
             "type": "string"
+          },
+          "provider_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Url"
           },
           "reliability": {
             "anyOf": [

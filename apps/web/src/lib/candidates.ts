@@ -48,6 +48,8 @@ export function readCandidate(candidate: CandidateOut): CandidateReading {
   let headline: string;
   if (candidate.status === "pending") {
     headline = "Not checked: it ranked below the checking limit.";
+  } else if (candidate.status === "blocked") {
+    headline = "Google's own redirect page answered instead of the publisher's page, so ORIGIN never reached it.";
   } else if (page.status === 401 || page.status === 403 || page.status === 429) {
     headline = `The site refused ORIGIN's request (HTTP ${page.status}), so the page could not be read.`;
   } else if (reason.startsWith("page HTTP")) {

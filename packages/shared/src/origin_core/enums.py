@@ -38,6 +38,9 @@ class CandidateStatus(StrEnum):
     VERIFIED = "verified"
     UNRELATED = "unrelated"
     FETCH_FAILED = "fetch_failed"
+    #: The page was never reached: a search engine's own redirect, consent or captcha page
+    #: answered instead of the publisher's page.
+    BLOCKED = "blocked"
 
 
 class MatchClass(StrEnum):

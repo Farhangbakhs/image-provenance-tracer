@@ -166,6 +166,11 @@ export function EvidenceDrawer({
             {sighting.page_url ?? sighting.image_url}
           </a>
           {sighting.title ? <div className="text-[12px] text-muted">{sighting.title}</div> : null}
+          {sighting.provider_url ? (
+            <div className="mono break-all text-[11px] text-muted" title="The link the search engine gave, kept as provenance">
+              found via {sighting.provider_url}
+            </div>
+          ) : null}
         </div>
         <button type="button" onClick={onClose} className="border border-line px-2 text-[12px] hover:border-text" aria-label="Close evidence">
           ✕
