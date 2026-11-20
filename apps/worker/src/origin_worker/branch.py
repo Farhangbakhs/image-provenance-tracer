@@ -52,7 +52,7 @@ from origin_core.llm.prompts import claim as claim_prompt
 from origin_core.llm.prompts import narrative as narrative_prompt
 from origin_core.llm.registry import LLMSetup
 from origin_core.llm.runner import LLMOutputRejected, LLMRunner
-from origin_core.pages import Page, caption_for, main_text, parse_page
+from origin_core.pages import Page, caption_for, main_text, page_text, parse_page
 from origin_core.pipeline.runner import StageContext, StageResult
 from origin_core.storage import BlobStore
 from origin_core.telegram.preview import post_url
@@ -434,7 +434,8 @@ def plan_narratives(out: narrative_prompt.NarrativesOut) -> list[PlannedNarrativ
 
 
 def _read_page(url: str, body: bytes, image_url: str) -> tuple[Page, str | None, str | None]:
-    return parse_page(url, body), caption_for(url, body, image_url), main_text(body)
+    parsed = parse_page(url, body)
+    return parsed, caption_for(url, body, image_url), page_text(parsed, main_text(body))
 
 
 def contradicted_claim(evidence: list[TimestampEvidence]) -> bool:

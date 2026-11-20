@@ -48,6 +48,9 @@ class PublishedDate:
 class Page:
     url: str
     title: str | None
+    #: The page's own summary (og:description, twitter:description or meta description). Social
+    #: pages keep their post text here when the body is a login wall.
+    description: str | None = None
     images: list[str] = field(default_factory=list[str])
     published: PublishedDate | None = None
 
@@ -125,6 +128,17 @@ def _too_small(img: Any) -> bool:
     return False
 
 
+def _first_meta(doc: Any, keys: tuple[str, ...]) -> str | None:
+    """The first non-empty meta content among these property or name keys, in order."""
+    for key in keys:
+        values: list[Any] = doc.xpath(f"//meta[@property='{key}' or @name='{key}']/@content")
+        for value in values:
+            text = " ".join(str(value).split())
+            if text:
+                return text
+    return None
+
+
 def parse_page(url: str, body: bytes) -> Page:
     html = body.decode("utf-8", errors="replace")
     try:
@@ -136,6 +150,8 @@ def parse_page(url: str, body: bytes) -> Page:
         "//title/text()"
     )
     title = str(title_nodes[0]).strip() if title_nodes else None
+
+    description = _first_meta(doc, ("og:description", "twitter:description", "description"))
 
     images: list[str] = []
 
@@ -161,12 +177,17 @@ def parse_page(url: str, body: bytes) -> Page:
     return Page(
         url=url,
         title=title or None,
+        description=description,
         images=images[:MAX_IMAGES],
         published=published_date(html, doc),
     )
 
 
 MAX_TEXT_CHARS = 4000
+
+#: A page's extracted text shorter than this is taken to be boilerplate (a login wall, a cookie
+#: notice), and its own og:description is used instead when it says more.
+MIN_ARTICLE_CHARS = 80
 
 
 def caption_for(url: str, body: bytes, image_url: str) -> str | None:
@@ -206,3 +227,18 @@ def main_text(body: bytes) -> str | None:
     if not text:
         return None
     return text[:MAX_TEXT_CHARS]
+
+
+def page_text(page: Page, extracted: str | None) -> str | None:
+    """The text a claim is read from: the article body, or for social pages the post summary.
+
+    Instagram, Facebook, X and Threads serve a login wall as the body, but keep the post's
+    caption in og:title and og:description. When the extracted body is missing or boilerplate,
+    that description is used, so a claim can still be read from the post.
+    """
+    description = (page.description or "")[:MAX_TEXT_CHARS] or None
+    if description and (extracted is None or len(extracted) < MIN_ARTICLE_CHARS):
+        if extracted and extracted not in description:
+            return f"{extracted}\n{description}"[:MAX_TEXT_CHARS]
+        return description
+    return extracted

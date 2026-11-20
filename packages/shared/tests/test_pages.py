@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from origin_core.pages import MAX_IMAGES, parse_page
+from origin_core.pages import MAX_IMAGES, page_text, parse_page
 
 ARTICLE = b"""<!doctype html><html><head>
 <title>Fallback title</title>
@@ -60,3 +60,44 @@ def test_image_list_is_capped() -> None:
         + b"</body></html>"
     )
     assert len(parse_page("https://x.example/", body).images) == MAX_IMAGES
+
+
+SOCIAL = b"""<!doctype html><html><head>
+<title>Instagram</title>
+<meta property="og:title" content="Irish Examiner on Instagram: &quot;Our front page&quot;">
+<meta property="og:description" content="  12 likes, 3 comments - irishexaminer on March 4, 2026:
+&quot;Our front page today: a strike on a school in Minab.&quot;  ">
+<meta name="description" content="Instagram">
+<meta property="og:image" content="https://cdn.example/post.jpg">
+</head><body>Log in to continue</body></html>"""
+
+
+def test_social_page_keeps_its_og_title_and_description() -> None:
+    page = parse_page("https://www.instagram.com/p/abc/", SOCIAL)
+    assert page.title == 'Irish Examiner on Instagram: "Our front page"'
+    # Whitespace is collapsed, and og:description wins over the generic meta description.
+    assert page.description == (
+        '12 likes, 3 comments - irishexaminer on March 4, 2026: "Our front page today: a strike on '
+        'a school in Minab."'
+    )
+
+
+def test_description_falls_back_through_twitter_then_meta() -> None:
+    twitter = b'<html><head><meta name="twitter:description" content="A tweet"></head></html>'
+    plain = b'<html><head><meta name="description" content="A summary"></head></html>'
+    assert parse_page("https://x.example/", twitter).description == "A tweet"
+    assert parse_page("https://x.example/", plain).description == "A summary"
+    assert parse_page("https://x.example/", b"<html><head></head></html>").description is None
+
+
+def test_page_text_uses_the_description_when_the_body_is_a_wall() -> None:
+    page = parse_page("https://www.instagram.com/p/abc/", SOCIAL)
+    assert page.description is not None
+    assert page_text(page, None) == page.description
+    # A login-wall body is boilerplate; the post text is added to it, not lost.
+    assert page.description in (page_text(page, "Log in to continue") or "")
+    # A real article body is left alone.
+    article = "A full article about the strike. " * 10
+    assert page_text(page, article) == article
+    # No description: the extracted body is all there is.
+    assert page_text(parse_page("https://x.example/", b"<html></html>"), None) is None
