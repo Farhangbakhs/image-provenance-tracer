@@ -207,7 +207,9 @@ class VerifyStage:
     max_candidates: int = 50
     name: str = "verify"
 
-    async def _page(self, cache: _Cache, url: str) -> _PageLoad:
+    async def _page(
+        self, cache: _Cache, url: str, prefer: tuple[int, int] | None = None
+    ) -> _PageLoad:
         async with cache.lock(f"page:{url}"):
             if url not in cache.pages:
                 try:
@@ -218,7 +220,7 @@ class VerifyStage:
                     if result.status != 200:
                         cache.pages[url] = _PageLoad(result, error=f"page HTTP {result.status}")
                     else:
-                        parsed = parse_page(result.final_url, result.body)
+                        parsed = parse_page(result.final_url, result.body, prefer=prefer)
                         cache.pages[url] = _PageLoad(result, parsed)
             return cache.pages[url]
 
@@ -327,7 +329,12 @@ class VerifyStage:
     async def _verify(
         self, ctx: StageContext, query: Side, cache: _Cache, candidate: Candidate
     ) -> tuple[CandidateStatus, str | None]:
-        load = await self._page(cache, candidate.page_url) if candidate.page_url else _PageLoad()
+        target = _matched_size(candidate)
+        load = (
+            await self._page(cache, candidate.page_url, target)
+            if candidate.page_url
+            else _PageLoad()
+        )
         page = load.page
         tried: list[dict[str, Any]] = []
 
@@ -433,7 +440,7 @@ class VerifyStage:
                 .values(
                     status=CandidateStatus.VERIFIED,
                     reject_reason=match.reason,
-                    fetch_info=_fetch_info(load, tried, match.reason),
+                    fetch_info=_fetch_info(load, tried, match.reason, target),
                     page_artefact_id=page_artefact_id,
                 )
             )
@@ -461,15 +468,34 @@ class VerifyStage:
                 .values(
                     status=status,
                     reject_reason=reason,
-                    fetch_info=_fetch_info(load, tried, reason),
+                    fetch_info=_fetch_info(load, tried, reason, _matched_size(candidate)),
                     page_artefact_id=page_artefact_id,
                 )
             )
         return status, reason
 
 
-def _fetch_info(load: _PageLoad, tried: list[dict[str, Any]], verdict: str) -> dict[str, Any]:
-    return {"page": load.info(), "images": tried, "verdict": verdict}
+def _fetch_info(
+    load: _PageLoad, tried: list[dict[str, Any]], verdict: str, target: tuple[int, int] | None
+) -> dict[str, Any]:
+    return {
+        "page": load.info(),
+        "images": tried,
+        "verdict": verdict,
+        # The size the provider said its matched image has: page images of that size go first.
+        "matched_size": list(target) if target else None,
+    }
+
+
+def _matched_size(candidate: Candidate) -> tuple[int, int] | None:
+    """The width and height a provider reports for the image it matched (Lens does)."""
+    width, height = (
+        candidate.raw.get("actual_image_width"),
+        candidate.raw.get("actual_image_height"),
+    )
+    if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
+        return width, height
+    return None
 
 
 def _tried(url: str, image: _Image, result: MatchResult) -> dict[str, Any]:

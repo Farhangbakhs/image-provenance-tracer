@@ -101,3 +101,55 @@ def test_page_text_uses_the_description_when_the_body_is_a_wall() -> None:
     assert page_text(page, article) == article
     # No description: the extracted body is all there is.
     assert page_text(parse_page("https://x.example/", b"<html></html>"), None) is None
+
+
+def _gallery(target_index: int) -> bytes:
+    """An og:image, then twenty images; one of them is declared 600x400."""
+    imgs: list[str] = []
+    for i in range(20):
+        size = 'width="600" height="400"' if i == target_index else 'width="300" height="300"'
+        imgs.append(f'<img src="/img/{i}.jpg" {size}>')
+    return (
+        '<html><head><meta property="og:image" content="/og.jpg"></head><body>'
+        + "".join(imgs)
+        + "</body></html>"
+    ).encode()
+
+
+def test_without_a_matched_size_the_cap_can_lose_the_image() -> None:
+    page = parse_page("https://news.example/a", _gallery(17))
+    assert len(page.images) == MAX_IMAGES
+    assert "https://news.example/img/17.jpg" not in page.images
+
+
+def test_the_image_of_the_matched_size_is_not_lost_behind_the_cap() -> None:
+    page = parse_page("https://news.example/a", _gallery(17), prefer=(600, 400))
+    assert len(page.images) == MAX_IMAGES
+    # The page's own og:image still comes first; the image sized like the match is next.
+    assert page.images[:2] == ["https://news.example/og.jpg", "https://news.example/img/17.jpg"]
+    assert page.image_sizes["https://news.example/img/17.jpg"] == (600, 400)
+
+
+def test_same_shape_comes_before_unsized_images() -> None:
+    body = (
+        b'<html><body><img src="/plain.jpg"><img src="/small.jpg" width="300" height="200">'
+        b'<img src="/other.jpg" width="500" height="500"></body></html>'
+    )
+    page = parse_page("https://x.example/", body, prefer=(1200, 800))
+    # 300x200 has the matched 3:2 shape; the other two are not sized like it, and keep order.
+    assert page.images == [
+        "https://x.example/small.jpg",
+        "https://x.example/plain.jpg",
+        "https://x.example/other.jpg",
+    ]
+
+
+def test_og_image_dimensions_are_read() -> None:
+    body = (
+        b'<html><head><meta property="og:image" content="/og.jpg">'
+        b'<meta property="og:image:width" content="1200">'
+        b'<meta property="og:image:height" content="630"></head></html>'
+    )
+    assert parse_page("https://x.example/", body).image_sizes == {
+        "https://x.example/og.jpg": (1200, 630)
+    }

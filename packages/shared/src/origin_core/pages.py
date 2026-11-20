@@ -52,6 +52,8 @@ class Page:
     #: pages keep their post text here when the body is a login wall.
     description: str | None = None
     images: list[str] = field(default_factory=list[str])
+    #: Sizes the page itself declares for some of its images (width, height).
+    image_sizes: dict[str, tuple[int, int]] = field(default_factory=dict[str, tuple[int, int]])
     published: PublishedDate | None = None
 
 
@@ -139,7 +141,30 @@ def _first_meta(doc: Any, keys: tuple[str, ...]) -> str | None:
     return None
 
 
-def parse_page(url: str, body: bytes) -> Page:
+def _declared_size(img: Any) -> tuple[int, int] | None:
+    sides: list[int] = []
+    for attribute in ("width", "height"):
+        value = str(img.get(attribute) or "").strip().removesuffix("px")
+        if not value.isdigit():
+            return None
+        sides.append(int(value))
+    return (sides[0], sides[1]) if all(sides) else None
+
+
+def _size_score(size: tuple[int, int] | None, prefer: tuple[int, int]) -> int:
+    """2 for the size the provider reported, 1 for the same shape, else 0."""
+    if size is None:
+        return 0
+    (w, h), (pw, ph) = size, prefer
+    if abs(w - pw) <= 2 and abs(h - ph) <= 2:
+        return 2
+    return 1 if abs(w / h - pw / ph) <= 0.01 * (pw / ph) else 0
+
+
+def parse_page(url: str, body: bytes, *, prefer: tuple[int, int] | None = None) -> Page:
+    """Read a page. `prefer` is the size of the image a provider says it matched: the page's own
+    og/twitter images still come first, then the other images whose declared size matches it,
+    so the matching one is not lost behind the cap on how many images are fetched."""
     html = body.decode("utf-8", errors="replace")
     try:
         doc: Any = _html.document_fromstring(html)
@@ -154,31 +179,49 @@ def parse_page(url: str, body: bytes) -> Page:
     description = _first_meta(doc, ("og:description", "twitter:description", "description"))
 
     images: list[str] = []
+    sizes: dict[str, tuple[int, int]] = {}
+    declared = {side: _first_meta(doc, (f"og:image:{side}",)) for side in ("width", "height")}
 
-    def add(value: str | None) -> None:
+    def add(value: str | None, size: tuple[int, int] | None = None) -> None:
         absolute = _absolute(url, value)
         if absolute and absolute not in images and not absolute.lower().endswith(".svg"):
             images.append(absolute)
+            if size is not None:
+                sizes[absolute] = size
 
     for key in ("og:image", "og:image:url", "og:image:secure_url", "twitter:image"):
         values: list[Any] = doc.xpath(f"//meta[@property='{key}' or @name='{key}']/@content")
         for value in values:
-            add(str(value))
+            og_size = (
+                (int(declared["width"] or 0), int(declared["height"] or 0))
+                if key == "og:image"
+                and (declared["width"] or "").isdigit()
+                and (declared["height"] or "").isdigit()
+                else None
+            )
+            add(str(value), og_size)
+    from_meta = len(images)
     imgs: list[Any] = doc.xpath("//img")
     for img in imgs:
         if _too_small(img):
             continue
+        size = _declared_size(img)
         srcset = str(img.get("srcset") or "")
         if srcset:
             # The largest candidate in a srcset is listed last by convention.
             add(srcset.split(",")[-1].strip().split(" ")[0])
-        add(img.get("src") or img.get("data-src"))
+        add(img.get("src") or img.get("data-src"), size)
+    if prefer is not None:
+        # Stable: images the page does not size keep their order, after the ones that match.
+        rest = sorted(images[from_meta:], key=lambda u: -_size_score(sizes.get(u), prefer))
+        images[from_meta:] = rest
 
     return Page(
         url=url,
         title=title or None,
         description=description,
         images=images[:MAX_IMAGES],
+        image_sizes={u: s for u, s in sizes.items() if u in images[:MAX_IMAGES]},
         published=published_date(html, doc),
     )
 
