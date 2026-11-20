@@ -13,7 +13,7 @@ import type { TimelineView } from "@/lib/useTimelineView";
 import { fitTimes, outsideCount, panBy, wheelIntent, zoomAt } from "@/lib/viewport";
 import type { WorkspaceModel } from "@/lib/workspace";
 
-const LABEL_W = 220;
+const LABEL_W = 240;
 const ROW_H = 56;
 const THIN_H = 48;
 const MORE_H = 32;
@@ -365,8 +365,9 @@ export function StoryTimeline({
                   focused ? "border-l-2 border-l-accent bg-surface-2" : "border-l-2 border-l-transparent"
                 }`}
               >
-                <span className="line-clamp-2 text-[13px] leading-tight">{row.label}</span>
-                <span className="truncate text-[12px] tabular-nums text-muted">
+                {/* With copies outside the view the note needs room: the name gives up its second line. */}
+                <span className={`text-[13px] leading-tight ${outside > 0 ? "line-clamp-1" : "line-clamp-2"}`}>{row.label}</span>
+                <span className={`text-[12px] leading-tight tabular-nums text-muted ${outside > 0 ? "line-clamp-2" : "truncate"}`}>
                   {row.status} · {copyCount(row.copies.length)}
                   {outside > 0 ? ` · ${outside} outside view` : ""}
                 </span>

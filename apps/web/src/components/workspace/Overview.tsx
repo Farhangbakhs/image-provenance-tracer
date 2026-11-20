@@ -77,9 +77,9 @@ export function Overview({
             <rect
               key={i}
               x={pad + (i / bins.length) * inner}
-              y={OVERVIEW_H - 2 - (n / peak) * 14}
+              y={OVERVIEW_H - 2 - 3 - Math.sqrt(n / peak) * 11}
               width={Math.max(1, inner / bins.length - 1)}
-              height={(n / peak) * 14}
+              height={3 + Math.sqrt(n / peak) * 11}
               fill="var(--faint)"
               opacity={0.6}
               pointerEvents="none"
