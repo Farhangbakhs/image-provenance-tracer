@@ -2,7 +2,6 @@ import { Intake, RecentCases } from "@/components/Intake";
 import { Panel } from "@/components/Panel";
 import { SystemStatus } from "@/components/SystemStatus";
 import { Term } from "@/components/ui/Term";
-import { SNAPSHOT } from "@/lib/api/client";
 
 const STEPS = [
   {
@@ -49,21 +48,11 @@ export default function Home() {
             ))}
           </ol>
         </Panel>
-        {SNAPSHOT ? (
-          <Panel title="This is a snapshot">
-            <p className="px-3 py-3 text-[13px] text-muted">
-              A read-only copy of four demo investigations, so it runs without a server. Open a case on the right to
-              explore it. The web pages, Telegram channels and dates in these cases are synthetic; everything ORIGIN
-              computed from them is real output of the pipeline. To trace your own images, run ORIGIN locally.
-            </p>
-          </Panel>
-        ) : (
-          <Intake />
-        )}
+        <Intake />
       </div>
       <div className="flex min-w-0 flex-col gap-4">
         <RecentCases />
-        {SNAPSHOT ? null : <SystemStatus />}
+        <SystemStatus />
       </div>
     </div>
   );

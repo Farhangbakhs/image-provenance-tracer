@@ -33,23 +33,6 @@ Open a case, then an image, then **Open investigation**. It starts with the answ
 
 What is synthetic in the demo, and labelled so in `fixtures/demo/cases.json`: the web pages, their `.example` domains, the archive dates, the reverse-image index, and the Telegram channels, posts and post times (served from memory; the demo never contacts Telegram). Everything ORIGIN does with them is real: each image is fetched through the hardened fetcher, fingerprinted, embedded, matched, dated, clustered, read for claims and graded by the same pipeline as a live trace. Claims and narratives were extracted once by a real model (Gemini, free tier) and are replayed from `fixtures/recordings/`.
 
-## Share a read-only copy (free static hosting)
-
-The four demo investigations can be published as a static site: about 2.6 MB of plain files, no server, no database, no running cost. Visitors can open every case, timeline, lineage view, evidence drawer and brief; uploads and new traces are switched off and explained.
-
-```sh
-make demo        # seed the demo cases (or make dev, if they are already seeded)
-make snapshot    # writes apps/web/out
-```
-
-Only cases whose title starts with `DEMO:` are exported, so nothing you traced yourself leaves the machine. Publish `apps/web/out` on any static host:
-
-* **Cloudflare** (free; this is how the public demo is hosted, on Workers static assets): `npx wrangler login` once, then `make deploy`. `wrangler.jsonc` holds the settings.
-* **Netlify** (free): drag the `apps/web/out` folder onto https://app.netlify.com/drop.
-* **A sub-path host** such as GitHub Pages: build with `NEXT_PUBLIC_BASE_PATH=/<repo> make snapshot`.
-
-To preview it locally: `uv run python -m http.server 4173 -d apps/web/out`, then open http://localhost:4173.
-
 ## Run it
 
 

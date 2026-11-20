@@ -7,7 +7,7 @@ import { Panel } from "@/components/Panel";
 import { Term } from "@/components/ui/Term";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { InvestigationGraph } from "@/components/workspace/InvestigationGraph";
-import { API_URL, SNAPSHOT } from "@/lib/api/client";
+import { API_URL } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
 import { explainDate } from "@/lib/explain";
 import { searchProblem } from "@/lib/search-problem";
@@ -96,11 +96,9 @@ export function RunWorkspace({ runId }: { runId: string }) {
           <Link href={`/runs/${runId}/brief`} className="hover:text-text">
             Brief (PDF)
           </Link>
-          {SNAPSHOT ? null : (
-            <a href={`${API_URL}/runs/${runId}/evidence-pack?download=true`} className="hover:text-text">
-              Evidence pack (JSON)
-            </a>
-          )}
+          <a href={`${API_URL}/runs/${runId}/evidence-pack?download=true`} className="hover:text-text">
+            Evidence pack (JSON)
+          </a>
         </span>
       </nav>
 

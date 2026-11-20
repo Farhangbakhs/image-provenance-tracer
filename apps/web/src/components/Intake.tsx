@@ -6,7 +6,6 @@ import { useState } from "react";
 
 import { DropZone } from "@/components/DropZone";
 import { Panel } from "@/components/Panel";
-import { SNAPSHOT } from "@/lib/api/client";
 import { ApiError, createCase, uploadAsset, useCases } from "@/lib/api/hooks";
 import { formatUtc } from "@/lib/time";
 
@@ -62,7 +61,7 @@ export function Intake() {
 export function RecentCases() {
   const { data, isPending, error } = useCases();
   return (
-    <Panel title={SNAPSHOT ? "Demo investigations" : "Recent cases"}>
+    <Panel title="Recent cases">
       {isPending ? <p className="px-3 py-2 text-muted">Loading…</p> : null}
       {error ? <p className="px-3 py-2 text-[12px]">{error.message}</p> : null}
       {data && data.length === 0 ? <p className="px-3 py-2 text-muted">No cases yet.</p> : null}

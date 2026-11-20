@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 
-import { SNAPSHOT } from "@/lib/api/client";
 import { EARLIEST_DISCLAIMER } from "@/lib/copy";
 
 import { Providers } from "./providers";
@@ -26,11 +25,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <span className="label hidden sm:inline">Image provenance</span>
           </Link>
           <div className="flex items-center gap-3">
-            {SNAPSHOT ? (
-              <span className="label border border-intent px-1.5 py-0.5 text-intent" title="A read-only copy of the demo investigations">
-                Snapshot · read-only
-              </span>
-            ) : null}
             <span className="mono text-[12px] text-muted">All times UTC</span>
           </div>
         </header>

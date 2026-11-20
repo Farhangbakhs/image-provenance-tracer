@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { Fields } from "@/components/Panel";
-import { API_URL, SNAPSHOT, type ClaimOut, type SightingOut } from "@/lib/api/client";
+import { API_URL, type ClaimOut, type SightingOut } from "@/lib/api/client";
 import { MATCH_LABEL, explainDate, explainGrade, explainMatch } from "@/lib/explain";
 import { useOverrule } from "@/lib/api/hooks";
 import { formatInterval, formatUtc } from "@/lib/time";
@@ -192,7 +192,7 @@ export function EvidenceDrawer({
             { label: "Analyst", value: sighting.analyst_status === "overruled" ? `overruled${sighting.analyst_note ? `: ${sighting.analyst_note}` : ""}` : "accepted" },
           ]}
         />
-        <div className={SNAPSHOT ? "hidden" : "mt-1 flex gap-2"}>
+        <div className="mt-1 flex gap-2">
           <button type="button" className="border border-line px-2 py-0.5 text-[12px] hover:border-text" onClick={() => decide("sighting", sighting.id, sighting.analyst_status === "overruled" ? "accepted" : "overruled")}>
             {sighting.analyst_status === "overruled" ? "Accept match" : "Overrule match"}
           </button>
@@ -244,7 +244,7 @@ export function EvidenceDrawer({
               extracted by {claim.llm_provider} {claim.llm_model} · {claim.prompt_version}
               {claim.analyst_status === "overruled" ? ` · overruled${claim.analyst_note ? `: ${claim.analyst_note}` : ""}` : ""}
             </p>
-            <div className={SNAPSHOT ? "hidden" : ""}>
+            <div>
               <button type="button" className="border border-line px-2 py-0.5 hover:border-text" onClick={() => decide("claim", claim.id, claim.analyst_status === "overruled" ? "accepted" : "overruled")}>
                 {claim.analyst_status === "overruled" ? "Accept claim" : "Overrule claim"}
               </button>

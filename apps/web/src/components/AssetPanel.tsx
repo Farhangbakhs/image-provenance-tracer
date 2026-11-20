@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Fields, Panel } from "@/components/Panel";
 import { StageStrip } from "@/components/StageStrip";
-import { API_URL, SNAPSHOT, type AssetOut } from "@/lib/api/client";
+import { API_URL, type AssetOut } from "@/lib/api/client";
 import { useAsset, useRunProgress, useRunSightings, useStartRun } from "@/lib/api/hooks";
 import { searchProblem } from "@/lib/search-problem";
 import { describeCredentials } from "@/lib/credentials";
@@ -149,16 +149,14 @@ function Investigation({ asset }: { asset: AssetOut }) {
               Open investigation →
             </Link>
           ) : null}
-          {SNAPSHOT ? null : (
-            <button
-              type="button"
-              onClick={() => start.mutate(undefined, { onSuccess: (run) => setRunId(run.id) })}
-              disabled={start.isPending || running}
-              className={latest ? secondary : primary}
-            >
-              {running ? "Running…" : latest ? "Trace again" : "Start trace"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => start.mutate(undefined, { onSuccess: (run) => setRunId(run.id) })}
+            disabled={start.isPending || running}
+            className={latest ? secondary : primary}
+          >
+            {running ? "Running…" : latest ? "Trace again" : "Start trace"}
+          </button>
         </div>
         {start.error ? <p className="text-[13px]">{start.error.message}</p> : null}
       </div>
