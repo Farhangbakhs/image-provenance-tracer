@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { SightingOut } from "./api/client";
-import { axisTicks, fitDomain, layoutRow, placedTime, type Mark } from "./timeline";
+import { axisTicks, fitDomain, GAP, layoutRow, placedTime, type Mark } from "./timeline";
 
 const at = (lower: string | null, upper: string | null) => ({ date_lower: lower, date_upper: upper }) as SightingOut;
 
@@ -37,7 +37,7 @@ describe("axisTicks", () => {
   });
 });
 
-function noOverlap(marks: Mark[], gap = 4) {
+function noOverlap(marks: Mark[], gap = GAP) {
   for (let i = 1; i < marks.length; i++) {
     expect(marks[i].x - marks[i - 1].x).toBeGreaterThanOrEqual(marks[i].r + marks[i - 1].r + gap - 1e-9);
   }

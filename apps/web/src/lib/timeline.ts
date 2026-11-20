@@ -5,8 +5,8 @@ import type { SightingOut } from "./api/client";
 export const DOT_R = 4;
 export const FIRST_R = 6;
 export const PILL_R = 11;
-/** Clear space kept between two marks on a row. */
-export const GAP = 4;
+/** Clear space kept between two marks on a row: two dots are at least 16 px apart. */
+export const GAP = 8;
 
 const DAY = 86_400_000;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

@@ -10,19 +10,21 @@ import { CandidatesPanel } from "@/components/workspace/CandidatesPanel";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { InvestigationGraph } from "@/components/workspace/InvestigationGraph";
 import { RunDetails } from "@/components/workspace/RunDetails";
-import { StoryPanel } from "@/components/workspace/StoryPanel";
+import { GroupPanel, StoryPanel } from "@/components/workspace/StoryPanel";
 import { StoryTimeline } from "@/components/workspace/StoryTimeline";
 import { API_URL } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
 import { searchProblem } from "@/lib/search-problem";
 import { buildStories } from "@/lib/stories";
 import { buildSummary } from "@/lib/summary";
+import { placedTime } from "@/lib/timeline";
+import { useTimelineView } from "@/lib/useTimelineView";
 import { buildWorkspace, NO_CLAIM_LANE, step } from "@/lib/workspace";
 
 const VIEWS = ["graph", "list"] as const;
 type View = (typeof VIEWS)[number];
 type Group = "story" | "variant";
-type Side = "copy" | "story" | "details" | null;
+type Side = "copy" | "story" | "details" | "group" | null;
 
 /**
  * One investigation: the answer first, then the copies as stories on a timeline (or by how they
@@ -41,6 +43,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
   const [picked, setPicked] = useState<string | null | undefined>(undefined);
   const [sideChoice, setSide] = useState<Side | undefined>(undefined);
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [groupIds, setGroupIds] = useState<string[]>([]);
 
   const model = useMemo(
     () => (sightings.data ? buildWorkspace(sightings.data, analysis.data) : null),
@@ -48,6 +51,20 @@ export function RunWorkspace({ runId }: { runId: string }) {
   );
   const order = useMemo(() => (model ? model.sightings.map((s) => s.id) : []), [model]);
   const earliestId = model?.earliestId ?? null;
+
+  // The timeline's window. It opens on the densest period holding the earliest copy and the
+  // original story's first copy, and "Reset view" returns to it.
+  const times = useMemo(
+    () => (model ? model.sightings.map(placedTime).filter((t): t is number => t !== null) : []),
+    [model],
+  );
+  const anchors = useMemo(() => {
+    if (!model) return [];
+    const earliest = model.sightings.find((s) => s.id === model.earliestId);
+    const root = buildStories(model, analysis.data, true).rows.find((r) => r.root)?.first;
+    return [earliest, root].map((s) => (s ? placedTime(s) : null)).filter((t): t is number => t !== null);
+  }, [model, analysis.data]);
+  const timeline = useTimelineView(times, anchors);
 
   const selected = picked === undefined ? earliestId : picked;
   const side = sideChoice === undefined ? "copy" : sideChoice;
@@ -87,13 +104,22 @@ export function RunWorkspace({ runId }: { runId: string }) {
     setStoryId(id);
     setSide("story");
   };
+  const selectGroup = (ids: string[]) => {
+    setGroupIds(ids);
+    setSide("group");
+  };
   const current = model.sightings.find((s) => s.id === selected) ?? null;
   const claim = analysis.data?.claims.find((c) => c.sighting_id === selected);
   const notes = { ...sightings.data.notes, ...(analysis.data?.notes ?? {}) };
   const problem = searchProblem(sightings.data.notes, sightings.data.candidates);
   const summary = buildSummary(model, analysis.data, sightings.data.candidates);
   const storyRow = storyId ? buildStories(model, analysis.data, true).rows.find((r) => r.id === storyId) ?? null : null;
-  const sideOpen = side === "details" || (side === "story" && storyRow !== null) || (side === "copy" && current !== null);
+  const groupCopies = groupIds.map((id) => model.sightings.find((s) => s.id === id)).filter((s) => s !== undefined);
+  const sideOpen =
+    side === "details" ||
+    (side === "group" && groupCopies.length > 0) ||
+    (side === "story" && storyRow !== null) ||
+    (side === "copy" && current !== null);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
@@ -151,9 +177,18 @@ export function RunWorkspace({ runId }: { runId: string }) {
             <Term name="earliest">earliest found</Term> is the earliest proven date, and earlier copies may exist.
           </p>
           <p>
-            Click any copy for its evidence. Keys: <span className="mono text-text">j</span>/
-            <span className="mono text-text">k</span> move, <span className="mono text-text">e</span> opens evidence,{" "}
-            <span className="mono text-text">g</span> switches between graph and list.
+            Zoom the timeline with <span className="mono text-text">Ctrl</span> + scroll or a pinch, drag empty space to pan, or
+            drag the overview strip above it. Click a numbered bundle to zoom into its copies, and use{" "}
+            <span className="text-text">Reset view</span> to come back. Plain scrolling still scrolls the page.
+          </p>
+          <p>
+            Click any copy for its evidence. Keys: <span className="mono text-text">+</span> / <span className="mono text-text">−</span>{" "}
+            zoom, <span className="mono text-text">←</span> / <span className="mono text-text">→</span> pan,{" "}
+            <span className="mono text-text">0</span> resets, <span className="mono text-text">Tab</span> and the arrows move
+            between dots, <span className="mono text-text">Enter</span> pins one, <span className="mono text-text">Esc</span>{" "}
+            clears; <span className="mono text-text">j</span>/<span className="mono text-text">k</span> step through copies,{" "}
+            <span className="mono text-text">e</span> opens evidence, <span className="mono text-text">g</span> switches between
+            graph and list.
           </p>
         </div>
       </details>
@@ -178,6 +213,16 @@ export function RunWorkspace({ runId }: { runId: string }) {
               </div>
               {view === "graph" ? (
                 <div role="radiogroup" aria-label="Group copies by" className="flex items-center gap-2 px-3 text-[12px]">
+                  {group === "story" ? (
+                    <button
+                      type="button"
+                      onClick={timeline.reset}
+                      disabled={timeline.isDefault}
+                      className="mr-2 border border-line px-2 py-1 text-muted hover:border-text hover:text-text disabled:opacity-40 disabled:hover:border-line disabled:hover:text-muted"
+                    >
+                      Reset view
+                    </button>
+                  ) : null}
                   <span className="label">Group by</span>
                   {(
                     [
@@ -205,8 +250,10 @@ export function RunWorkspace({ runId }: { runId: string }) {
                 analysis={analysis.data}
                 selected={selected}
                 selectedStory={storyId}
+                timeline={timeline}
                 onSelect={select}
                 onSelectStory={selectStory}
+                onSelectGroup={selectGroup}
               />
             ) : null}
             {view === "graph" && group === "variant" && analysis.data ? (
@@ -233,6 +280,9 @@ export function RunWorkspace({ runId }: { runId: string }) {
         </div>
         {side === "details" ? (
           <RunDetails runId={runId} counts={sightings.data.candidates} onClose={() => setSide(null)} />
+        ) : null}
+        {side === "group" && groupCopies.length > 0 ? (
+          <GroupPanel copies={groupCopies} selected={selected} onSelect={select} onClose={() => setSide(null)} />
         ) : null}
         {side === "story" && storyRow ? (
           <StoryPanel row={storyRow} selected={selected} onSelect={select} onClose={() => setSide(null)} />
