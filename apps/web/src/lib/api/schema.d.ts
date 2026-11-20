@@ -263,7 +263,7 @@ export interface paths {
         };
         /**
          * Run Candidates
-         * @description The provider hits that did not become sightings, each with how it was judged.
+         * @description The provider hits that did not become sightings: judged and rejected, or never checked.
          */
         get: operations["run_candidates_runs__run_id__candidates_get"];
         put?: never;
@@ -1031,6 +1031,8 @@ export interface components {
         };
         /** RunCandidatesOut */
         RunCandidatesOut: {
+            /** Check Limit */
+            check_limit: number;
             counts: components["schemas"]["CandidateCounts"];
             /** Rejected */
             rejected: components["schemas"]["CandidateOut"][];
@@ -1039,6 +1041,8 @@ export interface components {
              * Format: uuid
              */
             run_id: string;
+            /** Unchecked */
+            unchecked: components["schemas"]["CandidateOut"][];
         };
         /** RunOut */
         RunOut: {

@@ -100,7 +100,7 @@ export function BriefDocument({ pack }: { pack: EvidencePack }) {
           <p className="border-l-2 border-accent pl-2 font-medium">{pack.disclaimer || EARLIEST_DISCLAIMER}</p>
           <p className="text-muted">
             {sightings.length} verified sighting{sightings.length === 1 ? "" : "s"} from {counts.verified + counts.unrelated + counts.fetch_failed + counts.blocked + counts.pending}{" "}
-            candidates ({counts.unrelated} unrelated, {counts.fetch_failed} could not be fetched{counts.blocked ? `, ${counts.blocked} blocked by a Google redirect` : ""}) · {analysis.variants.length} variant
+            candidates ({counts.unrelated} unrelated, {counts.fetch_failed} could not be fetched{counts.blocked ? `, ${counts.blocked} blocked by a Google redirect` : ""}{counts.pending ? `, ${counts.pending} not checked` : ""}) · {analysis.variants.length} variant
             {analysis.variants.length === 1 ? "" : "s"} · {analysis.narratives.length} narrative{analysis.narratives.length === 1 ? "" : "s"}
             {branches.length ? `, ${branches.length} diverging` : ""}.
           </p>

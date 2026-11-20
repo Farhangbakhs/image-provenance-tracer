@@ -1763,6 +1763,10 @@
       },
       "RunCandidatesOut": {
         "properties": {
+          "check_limit": {
+            "title": "Check Limit",
+            "type": "integer"
+          },
           "counts": {
             "$ref": "#/components/schemas/CandidateCounts"
           },
@@ -1777,12 +1781,21 @@
             "format": "uuid",
             "title": "Run Id",
             "type": "string"
+          },
+          "unchecked": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateOut"
+            },
+            "title": "Unchecked",
+            "type": "array"
           }
         },
         "required": [
           "run_id",
           "counts",
-          "rejected"
+          "rejected",
+          "unchecked",
+          "check_limit"
         ],
         "title": "RunCandidatesOut",
         "type": "object"
@@ -3056,7 +3069,7 @@
     },
     "/runs/{run_id}/candidates": {
       "get": {
-        "description": "The provider hits that did not become sightings, each with how it was judged.",
+        "description": "The provider hits that did not become sightings: judged and rejected, or never checked.",
         "operationId": "run_candidates_runs__run_id__candidates_get",
         "parameters": [
           {

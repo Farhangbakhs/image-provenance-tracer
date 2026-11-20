@@ -355,8 +355,8 @@ async def overrule_sighting(
 
 
 @router.get("/runs/{run_id}/candidates")
-async def run_candidates(run_id: uuid.UUID, session: Session) -> RunCandidatesOut:
-    """The provider hits that did not become sightings, each with how it was judged."""
+async def run_candidates(run_id: uuid.UUID, session: Session, state: State) -> RunCandidatesOut:
+    """The provider hits that did not become sightings: judged and rejected, or never checked."""
     run = await session.get(Run, run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
@@ -377,21 +377,9 @@ async def run_candidates(run_id: uuid.UUID, session: Session) -> RunCandidatesOu
     return RunCandidatesOut(
         run_id=run_id,
         counts=CandidateCounts(**{status.value: n for status, n in statuses.items()}),
-        rejected=[
-            CandidateOut(
-                id=c.id,
-                rank=c.provider_rank,
-                provider=c.provider,
-                source=cast(str | None, c.raw.get("source")),
-                title=cast(str | None, c.raw.get("title")),
-                provider_url=c.page_url or c.image_url,
-                status=c.status.value,
-                reason=c.reject_reason,
-                fetch_info=c.fetch_info,
-                page_local=f"/candidates/{c.id}/page" if c.page_artefact_id else None,
-            )
-            for c in rows
-        ],
+        rejected=[_candidate_out(c) for c in rows if c.status is not CandidateStatus.PENDING],
+        unchecked=[_candidate_out(c) for c in rows if c.status is CandidateStatus.PENDING],
+        check_limit=state.settings.verify_max_candidates,
     )
 
 
@@ -411,4 +399,19 @@ async def candidate_page(candidate_id: uuid.UUID, session: Session, state: State
             "Content-Security-Policy": "default-src 'none'; sandbox",
             "Content-Disposition": f'inline; filename="candidate-{candidate_id}.html.txt"',
         },
+    )
+
+
+def _candidate_out(c: Candidate) -> CandidateOut:
+    return CandidateOut(
+        id=c.id,
+        rank=c.provider_rank,
+        provider=c.provider,
+        source=cast(str | None, c.raw.get("source")),
+        title=cast(str | None, c.raw.get("title")),
+        provider_url=c.page_url or c.image_url,
+        status=c.status.value,
+        reason=c.reject_reason,
+        fetch_info=c.fetch_info,
+        page_local=f"/candidates/{c.id}/page" if c.page_artefact_id else None,
     )

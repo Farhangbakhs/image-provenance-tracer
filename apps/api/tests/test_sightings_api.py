@@ -298,12 +298,27 @@ async def test_rejected_candidates_come_with_how_they_were_judged(
                     provider_rank=1,
                     status=CandidateStatus.VERIFIED,
                 ),
+                Candidate(
+                    run_id=run_id,
+                    provider_call_id=call.id,
+                    provider="lens",
+                    page_url="https://late.example/",
+                    provider_rank=51,
+                    status=CandidateStatus.PENDING,
+                    reject_reason="not checked: beyond the top 50 hits",
+                    raw={"source": "Late News", "title": "Ranked 51st"},
+                ),
             ]
         )
 
     body = (await client.get(f"/runs/{run_id}/candidates")).json()
     assert body["counts"]["verified"] == 1 and body["counts"]["fetch_failed"] == 1
-    assert len(body["rejected"]) == 1  # the verified one is a sighting, not a rejection
+    assert len(body["rejected"]) == 1  # a sighting is not a rejection, nor is an unchecked hit
+    assert body["counts"]["pending"] == 1
+    assert body["check_limit"] == 50
+    [unchecked] = body["unchecked"]
+    assert unchecked["rank"] == 51 and unchecked["source"] == "Late News"
+    assert unchecked["reason"] == "not checked: beyond the top 50 hits"
     rejected = body["rejected"][0]
     assert rejected["rank"] == 2 and rejected["source"] == "Wall News"
     assert rejected["status"] == "fetch_failed" and rejected["reason"] == "page HTTP 403"

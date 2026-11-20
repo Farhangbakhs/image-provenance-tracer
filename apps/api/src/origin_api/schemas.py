@@ -261,7 +261,12 @@ class CandidateOut(BaseModel):
 class RunCandidatesOut(BaseModel):
     run_id: uuid.UUID
     counts: CandidateCounts
+    #: Checked and not matched: unrelated, blocked or unreachable.
     rejected: list[CandidateOut]
+    #: Never checked: they ranked below the limit on how many hits a trace verifies.
+    unchecked: list[CandidateOut]
+    #: How many of the best-ranked hits a trace verifies (ORIGIN_VERIFY_MAX_CANDIDATES).
+    check_limit: int
 
 
 class RunSightingsOut(BaseModel):
