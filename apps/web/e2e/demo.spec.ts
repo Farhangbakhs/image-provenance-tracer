@@ -60,7 +60,7 @@ test("the miscaptioned case shows its branch, evidence and graph", async ({ page
 test("the Telegram case is earliest on Telegram and shows the forward", async ({ page }) => {
   await openWorkspace(page, TELEGRAM);
   const summary = page.getByRole("region", { name: "Summary" });
-  await expect(summary).toContainText("2024-05-11");
+  await expect(summary).toContainText("11 May 2024");
   await expect(summary).toContainText("t.me");
 
   // The earliest sighting is the channel post the watchlist post was forwarded from.

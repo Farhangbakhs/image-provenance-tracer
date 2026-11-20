@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CandidateOut } from "./api/client";
-import { readCandidate } from "./candidates";
+import { readCandidate, reasonGroup } from "./candidates";
 
 const base: CandidateOut = {
   id: "c1",
@@ -15,6 +15,7 @@ const base: CandidateOut = {
   fetch_info: null,
   page_local: null,
 };
+
 
 describe("readCandidate", () => {
   it("says a page with no images loaded and was empty of pictures", () => {
@@ -63,5 +64,15 @@ describe("readCandidate", () => {
       fetch_info: { page: { status: 200, images_found: 2 }, images: [{ url: "a" }, { url: "b" }] },
     });
     expect(r.headline).toBe("Compared 2 images on the page; none matched your picture.");
+  });
+});
+
+describe("reasonGroup", () => {
+  it("strips the numbers so reasons can be counted", () => {
+    expect(reasonGroup("SSCD 0.105 < 0.5")).toBe("not the same picture");
+    expect(reasonGroup("no image on the page (HTTP 200, text/html, 6,158 bytes)")).toBe("no image on the page");
+    expect(reasonGroup("blocked by Google redirect (www.google.com/goto, HTTP 200)")).toBe("blocked by a Google redirect page");
+    expect(reasonGroup("page HTTP 403")).toBe("page HTTP 403");
+    expect(reasonGroup(null)).toBe("not matched");
   });
 });

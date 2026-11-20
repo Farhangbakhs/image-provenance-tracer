@@ -65,3 +65,14 @@ export function readCandidate(candidate: CandidateOut): CandidateReading {
   }
   return { headline, facts };
 }
+
+/** A short, countable reason: the verdict without its numbers. */
+export function reasonGroup(reason: string | null | undefined): string {
+  const r = reason ?? "";
+  if (r.startsWith("SSCD")) return "not the same picture";
+  if (r.startsWith("no image on the page")) return "no image on the page";
+  if (r.startsWith("blocked by Google redirect")) return "blocked by a Google redirect page";
+  if (r.startsWith("page fetch failed")) return "page could not be fetched";
+  if (r.startsWith("not a usable image")) return "image not in a usable format";
+  return r || "not matched";
+}

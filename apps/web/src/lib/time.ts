@@ -27,3 +27,12 @@ export function formatInterval(lower: string | null | undefined, upper: string |
   if (upper) return `no later than ${formatUtc(upper)}`;
   return `no earlier than ${formatUtc(lower as string)}`;
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** The one date format used outside the evidence panel: "15 Nov 2019", in UTC. */
+export function formatDay(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) throw new RangeError(`Invalid date: ${String(value)}`);
+  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}

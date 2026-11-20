@@ -5,14 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Panel } from "@/components/Panel";
 import { Term } from "@/components/ui/Term";
+import { AnswerSummary } from "@/components/workspace/AnswerSummary";
 import { CandidatesPanel } from "@/components/workspace/CandidatesPanel";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { InvestigationGraph } from "@/components/workspace/InvestigationGraph";
+import { RunDetails } from "@/components/workspace/RunDetails";
 import { API_URL } from "@/lib/api/client";
 import { useAsset, useRun, useRunAnalysis, useRunSightings } from "@/lib/api/hooks";
-import { explainDate } from "@/lib/explain";
 import { searchProblem } from "@/lib/search-problem";
-import { formatUtc } from "@/lib/time";
+import { buildSummary } from "@/lib/summary";
 import { buildWorkspace, step } from "@/lib/workspace";
 
 const VIEWS = ["graph", "list"] as const;
@@ -28,32 +29,39 @@ export function RunWorkspace({ runId }: { runId: string }) {
   const analysis = useRunAnalysis(runId);
   const asset = useAsset(run.data?.asset_id ?? "");
   const [view, setView] = useState<View>("graph");
-  const [selected, setSelected] = useState<string | null>(null);
-  const [drawer, setDrawer] = useState(false);
+  // Until the reader picks something, the earliest copy is selected and its evidence is open:
+  // the page answers the question with zero clicks.
+  const [picked, setPicked] = useState<string | null | undefined>(undefined);
+  const [drawerOpen, setDrawerOpen] = useState<boolean | undefined>(undefined);
+  const [details, setDetails] = useState(false);
 
   const model = useMemo(
     () => (sightings.data ? buildWorkspace(sightings.data, analysis.data) : null),
     [sightings.data, analysis.data],
   );
   const order = useMemo(() => (model ? model.sightings.map((s) => s.id) : []), [model]);
+  const earliestId = model?.earliestId ?? null;
+
+  const selected = picked === undefined ? earliestId : picked;
+  const drawer = drawerOpen ?? true;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (event.key === "j" || event.key === "k") {
-        setSelected((current) => step(order, current, event.key === "j" ? 1 : -1));
+        setPicked((current) => step(order, current === undefined ? earliestId : current, event.key === "j" ? 1 : -1));
       } else if (event.key === "e") {
-        setDrawer(true);
+        setDrawerOpen(true);
       } else if (event.key === "g") {
         setView((v) => VIEWS[(VIEWS.indexOf(v) + 1) % VIEWS.length]);
       } else if (event.key === "Escape") {
-        setDrawer(false);
+        setDrawerOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [order]);
+  }, [order, earliestId]);
 
   if (run.isPending || sightings.isPending) return <p className="px-4 py-6 text-muted">Loading…</p>;
   if (run.error || sightings.error || !model || !run.data) {
@@ -61,23 +69,15 @@ export function RunWorkspace({ runId }: { runId: string }) {
   }
 
   const select = (id: string) => {
-    setSelected(id);
-    setDrawer(true);
+    setPicked(id);
+    setDetails(false);
+    setDrawerOpen(true);
   };
   const current = model.sightings.find((s) => s.id === selected) ?? null;
   const claim = analysis.data?.claims.find((c) => c.sighting_id === selected);
   const notes = { ...sightings.data.notes, ...(analysis.data?.notes ?? {}) };
   const problem = searchProblem(sightings.data.notes, sightings.data.candidates);
-  const earliest = model.sightings.find((s) => s.id === model.earliestId) ?? null;
-  const variants = analysis.data?.variants.length ?? 0;
-  const branches = analysis.data?.narratives.filter((n) => n.parent_narrative_id !== null).length ?? 0;
-  const forwards = analysis.data?.propagation.length ?? 0;
-  const facts = [
-    `${model.sightings.length} verified cop${model.sightings.length === 1 ? "y" : "ies"}`,
-    `${variants} variant${variants === 1 ? "" : "s"}`,
-    branches ? `the story changes ${branches === 1 ? "once" : `${branches} times`}` : "one story",
-    ...(forwards ? [`${forwards} Telegram forward${forwards === 1 ? "" : "s"}`] : []),
-  ];
+  const summary = buildSummary(model, analysis.data, sightings.data.candidates);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4">
@@ -103,27 +103,12 @@ export function RunWorkspace({ runId }: { runId: string }) {
         </span>
       </nav>
 
-      <section className="flex flex-wrap items-center gap-5 border border-line bg-surface-1 p-4" aria-label="Summary">
-        {asset.data ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={`${API_URL}${asset.data.display_url}`} alt="Your image" className="h-24 w-32 border border-line object-cover" />
-        ) : null}
-        <div className="min-w-0 flex-1">
-          <p className="label">Earliest found</p>
-          {earliest ? (
-            <>
-              <p className="mt-1 text-[20px] font-semibold">
-                <span className="mono text-accent">{earliest.date_upper ? formatUtc(earliest.date_upper, "day") : "undated"}</span>
-                <span className="ml-3">{earliest.domain}</span>
-              </p>
-              <p className="mt-1 text-muted">{explainDate(earliest)}</p>
-            </>
-          ) : (
-            <p className="mt-1 text-[16px] text-muted">No verified copy of this picture was found.</p>
-          )}
-          <p className="mt-2 text-[13px] text-muted">{facts.join(" · ")}</p>
-        </div>
-      </section>
+      <AnswerSummary
+        summary={summary}
+        imageUrl={asset.data ? `${API_URL}${asset.data.display_url}` : null}
+        onSelect={select}
+        onDetails={() => setDetails((d) => !d)}
+      />
 
       {problem ? (
         <p role="alert" className="border border-line border-l-2 border-l-accent bg-surface-1 px-3 py-2 font-semibold">
@@ -156,7 +141,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
         </div>
       </details>
 
-      <div className={`grid gap-4 ${drawer && current ? "lg:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
+      <div className={`grid gap-4 ${details || (drawer && current) ? "lg:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
         <div className="flex min-w-0 flex-col gap-4">
           <section className="border border-line bg-surface-1" aria-label="Copies">
             <div role="tablist" aria-label="Views" className="flex border-b border-line bg-surface-2">
@@ -193,14 +178,17 @@ export function RunWorkspace({ runId }: { runId: string }) {
           ) : null}
           <CandidatesPanel runId={runId} />
         </div>
-        {drawer && current && asset.data ? (
+        {details ? (
+          <RunDetails runId={runId} counts={sightings.data.candidates} onClose={() => setDetails(false)} />
+        ) : null}
+        {!details && drawer && current && asset.data ? (
           <EvidenceDrawer
             runId={runId}
             assetDisplayUrl={asset.data.display_url}
             sighting={current}
             claim={claim}
             earliest={current.id === model.earliestId}
-            onClose={() => setDrawer(false)}
+            onClose={() => setDrawerOpen(false)}
           />
         ) : null}
       </div>
