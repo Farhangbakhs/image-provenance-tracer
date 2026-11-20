@@ -81,6 +81,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/candidates/{candidate_id}/page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Candidate Page
+         * @description The page as ORIGIN fetched it. Served as plain text, never as HTML: it is untrusted.
+         */
+        get: operations["candidate_page_candidates__candidate_id__page_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cases": {
         parameters: {
             query?: never;
@@ -226,6 +246,26 @@ export interface paths {
          * @description Variants and their edit edges, propagation edges, claims, narratives and grades.
          */
         get: operations["run_analysis_runs__run_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Candidates
+         * @description The provider hits that did not become sightings, each with how it was judged.
+         */
+        get: operations["run_candidates_runs__run_id__candidates_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -448,6 +488,37 @@ export interface components {
              * @default 0
              */
             verified: number;
+        };
+        /**
+         * CandidateOut
+         * @description A provider hit that did not become a sighting, with how it was judged.
+         */
+        CandidateOut: {
+            /** Fetch Info */
+            fetch_info: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Page Local */
+            page_local: string | null;
+            /** Provider */
+            provider: string;
+            /** Provider Url */
+            provider_url: string | null;
+            /** Rank */
+            rank: number | null;
+            /** Reason */
+            reason: string | null;
+            /** Source */
+            source: string | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string | null;
         };
         /** CaptureTime */
         CaptureTime: {
@@ -953,6 +1024,17 @@ export interface components {
             id: string;
             status: components["schemas"]["RunStatus"];
         };
+        /** RunCandidatesOut */
+        RunCandidatesOut: {
+            counts: components["schemas"]["CandidateCounts"];
+            /** Rejected */
+            rejected: components["schemas"]["CandidateOut"][];
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
         /** RunOut */
         RunOut: {
             /**
@@ -1308,6 +1390,35 @@ export interface operations {
             };
         };
     };
+    candidate_page_candidates__candidate_id__page_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_cases_cases_get: {
         parameters: {
             query?: {
@@ -1596,6 +1707,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_candidates_runs__run_id__candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunCandidatesOut"];
                 };
             };
             /** @description Validation Error */

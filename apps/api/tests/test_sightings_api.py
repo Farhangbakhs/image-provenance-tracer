@@ -240,3 +240,97 @@ async def test_evidence_pack_indexes_every_artefact(
     )
     assert download.json()["run"]["id"] == str(run_id)
     assert (await client.get(f"/runs/{uuid.uuid4()}/evidence-pack")).status_code == 404
+
+
+async def test_rejected_candidates_come_with_how_they_were_judged(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, seed_run: SeedRun, tmp_path: Path
+) -> None:
+    run_id = await seed_run()
+    blobs = FilesystemBlobStore(tmp_path / "blobs")
+    html = b"<html><title>Just a moment...</title><script>alert(1)</script></html>"
+    blob = await blobs.put(html, "text/html")
+    async with make_sessionmaker(db_engine).begin() as session:
+        call = ProviderCall(
+            run_id=run_id, provider="lens", request_hash="f" * 64, status=ProviderCallStatus.OK
+        )
+        session.add(call)
+        await session.flush()
+        page = Artefact(
+            kind=ArtefactKind.PAGE_HTML,
+            sha256=blob.sha256,
+            storage_key=blob.key,
+            content_type="text/html",
+            byte_size=blob.byte_size,
+            source_url="https://wall.example/story",
+            http_status=403,
+        )
+        session.add(page)
+        await session.flush()
+        session.add_all(
+            [
+                Candidate(
+                    run_id=run_id,
+                    provider_call_id=call.id,
+                    provider="lens",
+                    page_url="https://www.google.com/goto?url=abc",
+                    provider_rank=2,
+                    status=CandidateStatus.FETCH_FAILED,
+                    reject_reason="page HTTP 403",
+                    raw={"source": "Wall News", "title": "A story"},
+                    fetch_info={
+                        "page": {"status": 403, "final_url": "https://wall.example/story"},
+                        "images": [],
+                        "verdict": "page HTTP 403",
+                    },
+                    page_artefact_id=page.id,
+                ),
+                Candidate(
+                    run_id=run_id,
+                    provider_call_id=call.id,
+                    provider="lens",
+                    page_url="https://ok.example/",
+                    provider_rank=1,
+                    status=CandidateStatus.VERIFIED,
+                ),
+            ]
+        )
+
+    body = (await client.get(f"/runs/{run_id}/candidates")).json()
+    assert body["counts"]["verified"] == 1 and body["counts"]["fetch_failed"] == 1
+    assert len(body["rejected"]) == 1  # the verified one is a sighting, not a rejection
+    rejected = body["rejected"][0]
+    assert rejected["rank"] == 2 and rejected["source"] == "Wall News"
+    assert rejected["status"] == "fetch_failed" and rejected["reason"] == "page HTTP 403"
+    assert rejected["fetch_info"]["page"]["final_url"] == "https://wall.example/story"
+
+    stored = await client.get(rejected["page_local"])
+    assert stored.status_code == 200
+    assert stored.content == html
+    # Hostile HTML is served as inert text, never as a page the browser would run.
+    assert stored.headers["content-type"].startswith("text/plain")
+    assert stored.headers["x-content-type-options"] == "nosniff"
+    assert "sandbox" in stored.headers["content-security-policy"]
+
+
+async def test_candidate_without_a_stored_page_is_404(
+    client: httpx.AsyncClient, db_engine: AsyncEngine, seed_run: SeedRun
+) -> None:
+    run_id = await seed_run()
+    async with make_sessionmaker(db_engine).begin() as session:
+        call = ProviderCall(
+            run_id=run_id, provider="lens", request_hash="d" * 64, status=ProviderCallStatus.OK
+        )
+        session.add(call)
+        await session.flush()
+        candidate = Candidate(
+            run_id=run_id,
+            provider_call_id=call.id,
+            provider="lens",
+            page_url="https://x.example/",
+            status=CandidateStatus.UNRELATED,
+        )
+        session.add(candidate)
+        await session.flush()
+        candidate_id = candidate.id
+    assert (await client.get(f"/candidates/{candidate_id}/page")).status_code == 404
+    assert (await client.get(f"/runs/{uuid.uuid4()}/candidates")).status_code == 404

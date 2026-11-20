@@ -226,6 +226,116 @@
         "title": "CandidateCounts",
         "type": "object"
       },
+      "CandidateOut": {
+        "description": "A provider hit that did not become a sighting, with how it was judged.",
+        "properties": {
+          "fetch_info": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetch Info"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "page_local": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Local"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "provider_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Url"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "id",
+          "rank",
+          "provider",
+          "source",
+          "title",
+          "provider_url",
+          "status",
+          "reason",
+          "fetch_info",
+          "page_local"
+        ],
+        "title": "CandidateOut",
+        "type": "object"
+      },
       "CaptureTime": {
         "properties": {
           "stated": {
@@ -1646,6 +1756,32 @@
         "title": "RunBrief",
         "type": "object"
       },
+      "RunCandidatesOut": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/CandidateCounts"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateOut"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "counts",
+          "rejected"
+        ],
+        "title": "RunCandidatesOut",
+        "type": "object"
+      },
       "RunOut": {
         "properties": {
           "asset_id": {
@@ -2464,6 +2600,43 @@
         ]
       }
     },
+    "/candidates/{candidate_id}/page": {
+      "get": {
+        "description": "The page as ORIGIN fetched it. Served as plain text, never as HTML: it is untrusted.",
+        "operationId": "candidate_page_candidates__candidate_id__page_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Candidate Page",
+        "tags": [
+          "sightings"
+        ]
+      }
+    },
     "/cases": {
       "get": {
         "operationId": "list_cases_cases_get",
@@ -2860,6 +3033,50 @@
           }
         },
         "summary": "Run Analysis",
+        "tags": [
+          "sightings"
+        ]
+      }
+    },
+    "/runs/{run_id}/candidates": {
+      "get": {
+        "description": "The provider hits that did not become sightings, each with how it was judged.",
+        "operationId": "run_candidates_runs__run_id__candidates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunCandidatesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Candidates",
         "tags": [
           "sightings"
         ]

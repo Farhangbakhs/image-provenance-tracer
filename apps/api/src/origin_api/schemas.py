@@ -237,6 +237,30 @@ class CandidateCounts(BaseModel):
     fetch_failed: int = 0
 
 
+class CandidateOut(BaseModel):
+    """A provider hit that did not become a sighting, with how it was judged."""
+
+    id: uuid.UUID
+    rank: int | None
+    provider: str
+    source: str | None
+    title: str | None
+    #: The link the provider gave (for Lens, a google.com redirect).
+    provider_url: str | None
+    status: str
+    reason: str | None
+    #: Page status, final URL, content type, size, image count and every image tried.
+    fetch_info: dict[str, Any] | None
+    #: The stored copy of the page ORIGIN fetched, served as plain text, when one exists.
+    page_local: str | None
+
+
+class RunCandidatesOut(BaseModel):
+    run_id: uuid.UUID
+    counts: CandidateCounts
+    rejected: list[CandidateOut]
+
+
 class RunSightingsOut(BaseModel):
     run_id: uuid.UUID
     status: RunStatus

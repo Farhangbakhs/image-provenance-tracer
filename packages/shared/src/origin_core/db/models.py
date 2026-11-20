@@ -227,6 +227,14 @@ class Candidate(Base):
         server_default=CandidateStatus.PENDING.value,
     )
     reject_reason: Mapped[str | None] = mapped_column(Text)
+    #: How verification fetched and judged this hit: the page's status, final URL, content type,
+    #: size and image count, and every image tried. Written for rejected hits too, so a
+    #: "no image on the page" verdict can be explained afterwards.
+    fetch_info: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    #: The page as fetched, kept (content-addressed) even when the hit was rejected.
+    page_artefact_id: Mapped[uuid.UUID | None] = _fk(
+        "artefacts.id", nullable=True, ondelete="RESTRICT"
+    )
     created_at: Mapped[datetime] = created_at()
 
     __table_args__ = (

@@ -275,3 +275,19 @@ export function useEvidencePack(runId: string) {
     },
   });
 }
+
+/** Provider hits that did not become copies, each with how it was judged. */
+export function useRunCandidates(runId: string | undefined) {
+  return useQuery({
+    queryKey: ["candidates", runId],
+    enabled: Boolean(runId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET("/runs/{run_id}/candidates", {
+        params: { path: { run_id: runId as string } },
+        signal,
+      });
+      if (!data) fail(response.status, error, "Could not load the checked hits");
+      return data;
+    },
+  });
+}

@@ -25,3 +25,5 @@ export type RunAnalysisOut = components["schemas"]["RunAnalysisOut"];
 export type ClaimOut = components["schemas"]["ClaimOut"];
 export type NarrativeOut = components["schemas"]["NarrativeOut"];
 export type EvidencePack = components["schemas"]["EvidencePack"];
+export type CandidateOut = components["schemas"]["CandidateOut"];
+export type RunCandidatesOut = components["schemas"]["RunCandidatesOut"];

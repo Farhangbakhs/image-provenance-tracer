@@ -13,6 +13,7 @@ from sqlalchemy import select
 
 from origin_api.schemas import (
     CandidateCounts,
+    CandidateOut,
     ClaimOut,
     EvidenceOut,
     GradeOut,
@@ -20,6 +21,7 @@ from origin_api.schemas import (
     OverruleIn,
     PropagationEdgeOut,
     RunAnalysisOut,
+    RunCandidatesOut,
     RunSightingsOut,
     SightingOut,
     VariantEdgeOut,
@@ -40,7 +42,7 @@ from origin_core.db.models import (
     Variant,
     VariantEdge,
 )
-from origin_core.enums import Actor, AnalystStatus
+from origin_core.enums import Actor, AnalystStatus, CandidateStatus
 from origin_core.ingest.validate import MIME_TYPES, sniff_format
 
 router = APIRouter(tags=["sightings"])
@@ -349,3 +351,63 @@ async def overrule_sighting(
     run = await session.get_one(Run, sighting.run_id)
     await _overrule(session, sighting, "sighting", body, run.case_id)
     return {"id": str(sighting.id), "analyst_status": body.status, "analyst_note": body.note}
+
+
+@router.get("/runs/{run_id}/candidates")
+async def run_candidates(run_id: uuid.UUID, session: Session) -> RunCandidatesOut:
+    """The provider hits that did not become sightings, each with how it was judged."""
+    run = await session.get(Run, run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    rows = list(
+        (
+            await session.execute(
+                select(Candidate)
+                .where(Candidate.run_id == run_id, Candidate.status != CandidateStatus.VERIFIED)
+                .order_by(Candidate.provider_rank.nulls_last(), Candidate.created_at)
+            )
+        ).scalars()
+    )
+    statuses = Counter(
+        (
+            await session.execute(select(Candidate.status).where(Candidate.run_id == run_id))
+        ).scalars()
+    )
+    return RunCandidatesOut(
+        run_id=run_id,
+        counts=CandidateCounts(**{status.value: n for status, n in statuses.items()}),
+        rejected=[
+            CandidateOut(
+                id=c.id,
+                rank=c.provider_rank,
+                provider=c.provider,
+                source=cast(str | None, c.raw.get("source")),
+                title=cast(str | None, c.raw.get("title")),
+                provider_url=c.page_url or c.image_url,
+                status=c.status.value,
+                reason=c.reject_reason,
+                fetch_info=c.fetch_info,
+                page_local=f"/candidates/{c.id}/page" if c.page_artefact_id else None,
+            )
+            for c in rows
+        ],
+    )
+
+
+@router.get("/candidates/{candidate_id}/page", response_class=Response)
+async def candidate_page(candidate_id: uuid.UUID, session: Session, state: State) -> Response:
+    """The page as ORIGIN fetched it. Served as plain text, never as HTML: it is untrusted."""
+    candidate = await session.get(Candidate, candidate_id)
+    if candidate is None or candidate.page_artefact_id is None:
+        raise HTTPException(status_code=404, detail="no stored page for this candidate")
+    artefact = await session.get_one(Artefact, candidate.page_artefact_id)
+    data = await state.blobs.get(artefact.storage_key)
+    return Response(
+        content=data,
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+            "Content-Disposition": f'inline; filename="candidate-{candidate_id}.html.txt"',
+        },
+    )

@@ -24,6 +24,7 @@ from typing import Any
 
 import structlog
 from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from origin_core.artefacts import store_artefact
 from origin_core.dating.rule import DEFAULT_READING, Signal, date_sighting
@@ -151,9 +152,41 @@ class _Image:
     side: Side
 
 
+@dataclass(frozen=True)
+class _PageLoad:
+    """One page fetch: the response whatever its status, and for a 200 the parsed page."""
+
+    result: FetchResult | None = None
+    page: Page | None = None
+    error: str | None = None
+
+    def info(self) -> dict[str, Any]:
+        """What an analyst needs to understand a verdict about this page."""
+        r = self.result
+        return {
+            "status": r.status if r else None,
+            "final_url": r.final_url if r else None,
+            "content_type": r.content_type if r else None,
+            "bytes": len(r.body) if r else None,
+            "redirects": len(r.redirects) if r else 0,
+            "images_found": len(self.page.images) if self.page else 0,
+            "title": self.page.title if self.page else None,
+            "error": self.error,
+        }
+
+    def no_image_reason(self) -> str:
+        r = self.result
+        if r is None:
+            return "no image on the page"
+        return (
+            f"no image on the page (HTTP {r.status}, {r.content_type or 'no content type'}, "
+            f"{len(r.body):,} bytes)"
+        )
+
+
 @dataclass
 class _Cache:
-    pages: dict[str, tuple[FetchResult, Page] | str] = field(default_factory=dict[str, Any])
+    pages: dict[str, _PageLoad] = field(default_factory=dict[str, _PageLoad])
     images: dict[str, _Image | str] = field(default_factory=dict[str, Any])
     locks: dict[str, asyncio.Lock] = field(default_factory=dict[str, asyncio.Lock])
 
@@ -173,17 +206,19 @@ class VerifyStage:
     max_candidates: int = 50
     name: str = "verify"
 
-    async def _page(self, cache: _Cache, url: str) -> tuple[FetchResult, Page] | str:
+    async def _page(self, cache: _Cache, url: str) -> _PageLoad:
         async with cache.lock(f"page:{url}"):
             if url not in cache.pages:
                 try:
                     result = await self.fetcher.get(url, PAGE_POLICY)
-                    if result.status != 200:
-                        cache.pages[url] = f"page HTTP {result.status}"
-                    else:
-                        cache.pages[url] = (result, parse_page(result.final_url, result.body))
                 except (FetchBlocked, FetchFailed) as exc:
-                    cache.pages[url] = f"page fetch failed: {exc}"
+                    cache.pages[url] = _PageLoad(error=f"page fetch failed: {exc}")
+                else:
+                    if result.status != 200:
+                        cache.pages[url] = _PageLoad(result, error=f"page HTTP {result.status}")
+                    else:
+                        parsed = parse_page(result.final_url, result.body)
+                        cache.pages[url] = _PageLoad(result, parsed)
             return cache.pages[url]
 
     async def _image(self, cache: _Cache, url: str) -> _Image | str:
@@ -291,32 +326,34 @@ class VerifyStage:
     async def _verify(
         self, ctx: StageContext, query: Side, cache: _Cache, candidate: Candidate
     ) -> tuple[CandidateStatus, str | None]:
-        page: tuple[FetchResult, Page] | None = None
-        page_error: str | None = None
-        if candidate.page_url:
-            loaded = await self._page(cache, candidate.page_url)
-            if isinstance(loaded, str):
-                page_error = loaded
-            else:
-                page = loaded
+        load = await self._page(cache, candidate.page_url) if candidate.page_url else _PageLoad()
+        page = load.page
+        tried: list[dict[str, Any]] = []
 
         if candidate.image_url:
             urls = [candidate.image_url]
         elif page is not None:
-            urls = page[1].images
+            urls = page.images
         else:
             return await self._reject(
-                ctx, candidate, CandidateStatus.FETCH_FAILED, page_error or "no URL"
+                ctx,
+                candidate,
+                load,
+                tried,
+                CandidateStatus.FETCH_FAILED,
+                load.error or "no URL",
             )
 
         best: tuple[_Image, MatchResult] | None = None
-        last_reason = "no image on the page"
+        last_reason = load.no_image_reason()
         for url in urls:
             loaded_image = await self._image(cache, url)
             if isinstance(loaded_image, str):
                 last_reason = loaded_image
+                tried.append({"url": url, "result": loaded_image})
                 continue
             result = classify(query, loaded_image.side, self.thresholds)
+            tried.append(_tried(url, loaded_image, result))
             if not result.related:
                 last_reason = result.reason
                 # Keep the verdict, not the decoded image: a trace can see thousands of images.
@@ -337,7 +374,7 @@ class VerifyStage:
                 if last_reason.startswith(("image fetch", "image HTTP", "page"))
                 else CandidateStatus.UNRELATED
             )
-            return await self._reject(ctx, candidate, status, last_reason)
+            return await self._reject(ctx, candidate, load, tried, status, last_reason)
 
         image, match = best
         async with ctx.sessions.begin() as session:
@@ -353,19 +390,8 @@ class VerifyStage:
                 fetched_at=image.fetch.fetched_at,
             )
             page_artefact_id: uuid.UUID | None = None
-            if page is not None:
-                page_artefact = await store_artefact(
-                    session,
-                    self.blobs,
-                    data=page[0].body,
-                    kind=ArtefactKind.PAGE_HTML,
-                    content_type=page[0].content_type or "text/html",
-                    source_url=page[0].final_url,
-                    http_status=page[0].status,
-                    http_headers=page[0].headers,
-                    fetched_at=page[0].fetched_at,
-                )
-                page_artefact_id = page_artefact.id
+            if load.result is not None and page is not None:
+                page_artefact_id = await _store_page(session, self.blobs, load.result)
             session.add(
                 Sighting(
                     run_id=ctx.run_id,
@@ -374,7 +400,7 @@ class VerifyStage:
                     page_artefact_id=page_artefact_id,
                     page_url=candidate.page_url,
                     image_url=image.url,
-                    title=(page[1].title if page else None) or candidate.raw.get("title"),
+                    title=(page.title if page else None) or candidate.raw.get("title"),
                     match_class=match.match_class,
                     phash_distance=match.phash_distance,
                     pdq_distance=match.pdq_distance,
@@ -388,21 +414,76 @@ class VerifyStage:
             await session.execute(
                 update(Candidate)
                 .where(Candidate.id == candidate.id)
-                .values(status=CandidateStatus.VERIFIED, reject_reason=match.reason)
+                .values(
+                    status=CandidateStatus.VERIFIED,
+                    reject_reason=match.reason,
+                    fetch_info=_fetch_info(load, tried, match.reason),
+                    page_artefact_id=page_artefact_id,
+                )
             )
         return CandidateStatus.VERIFIED, match.reason
 
-    @staticmethod
     async def _reject(
-        ctx: StageContext, candidate: Candidate, status: CandidateStatus, reason: str
+        self,
+        ctx: StageContext,
+        candidate: Candidate,
+        load: _PageLoad,
+        tried: list[dict[str, Any]],
+        status: CandidateStatus,
+        reason: str,
     ) -> tuple[CandidateStatus, str | None]:
+        """Record the verdict with everything needed to explain it, and keep the page."""
         async with ctx.sessions.begin() as session:
+            page_artefact_id = (
+                await _store_page(session, self.blobs, load.result)
+                if load.result is not None and load.result.body
+                else None
+            )
             await session.execute(
                 update(Candidate)
                 .where(Candidate.id == candidate.id)
-                .values(status=status, reject_reason=reason)
+                .values(
+                    status=status,
+                    reject_reason=reason,
+                    fetch_info=_fetch_info(load, tried, reason),
+                    page_artefact_id=page_artefact_id,
+                )
             )
         return status, reason
+
+
+def _fetch_info(load: _PageLoad, tried: list[dict[str, Any]], verdict: str) -> dict[str, Any]:
+    return {"page": load.info(), "images": tried, "verdict": verdict}
+
+
+def _tried(url: str, image: _Image, result: MatchResult) -> dict[str, Any]:
+    """One compared image: its size, every score and the classifier's reason."""
+    return {
+        "url": url,
+        "width": image.side.image.width,
+        "height": image.side.image.height,
+        "phash": result.phash_distance,
+        "pdq": result.pdq_distance,
+        "sscd": round(result.sscd_cosine, 3),
+        "inliers": result.geometry.inliers if result.geometry else None,
+        "class": result.match_class.value if result.match_class else None,
+        "reason": result.reason,
+    }
+
+
+async def _store_page(session: AsyncSession, blobs: BlobStore, fetched: FetchResult) -> uuid.UUID:
+    artefact = await store_artefact(
+        session,
+        blobs,
+        data=fetched.body,
+        kind=ArtefactKind.PAGE_HTML,
+        content_type=fetched.content_type or "text/html",
+        source_url=fetched.final_url,
+        http_status=fetched.status,
+        http_headers=fetched.headers,
+        fetched_at=fetched.fetched_at,
+    )
+    return artefact.id
 
 
 # --- date ------------------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Panel } from "@/components/Panel";
 import { Term } from "@/components/ui/Term";
+import { CandidatesPanel } from "@/components/workspace/CandidatesPanel";
 import { EvidenceDrawer, EvidenceTable } from "@/components/workspace/Evidence";
 import { InvestigationGraph } from "@/components/workspace/InvestigationGraph";
 import { API_URL } from "@/lib/api/client";
@@ -190,6 +191,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
               </ul>
             </Panel>
           ) : null}
+          <CandidatesPanel runId={runId} />
         </div>
         {drawer && current && asset.data ? (
           <EvidenceDrawer
