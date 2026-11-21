@@ -28,6 +28,31 @@ export function Panel({
   );
 }
 
+/** A panel that starts closed: the heading is the toggle, and a count or note can sit beside it. */
+export function FoldPanel({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  /** Shown on the heading line while the panel is closed, so it says what is inside. */
+  note?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group border border-line bg-surface-1">
+      <summary className="flex cursor-pointer list-none items-center gap-3 bg-surface-2 px-3 py-2 hover:bg-surface-1 [&::-webkit-details-marker]:hidden">
+        <span aria-hidden className="text-[10px] text-muted transition-transform group-open:rotate-90 motion-reduce:transition-none">
+          ▶
+        </span>
+        <h2 className="label shrink-0 whitespace-nowrap text-text">{title}</h2>
+        {note ? <span className="truncate text-[12px] text-muted group-open:hidden">{note}</span> : null}
+      </summary>
+      <div className="border-t border-line">{children}</div>
+    </details>
+  );
+}
+
 /** Label/value rows. Values in `mono` are hashes, ids, times or coordinates. */
 export function Fields({ rows }: { rows: Array<{ label: string; value: ReactNode; mono?: boolean }> }) {
   return (

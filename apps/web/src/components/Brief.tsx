@@ -7,6 +7,7 @@ import { API_URL, type EvidencePack, type SightingOut } from "@/lib/api/client";
 import { useEvidencePack } from "@/lib/api/hooks";
 import { EARLIEST_DISCLAIMER, SIGNAL_LABEL } from "@/lib/copy";
 import { formatInterval, formatUtc } from "@/lib/time";
+import { bareDomain } from "@/lib/domain";
 
 /** Sightings are cited as S1, S2… in the order the evidence dates them. */
 export function sightingRefs(pack: EvidencePack): Record<string, string> {
@@ -90,7 +91,7 @@ export function BriefDocument({ pack }: { pack: EvidencePack }) {
           {earliest ? (
             <p>
               <span className="font-semibold text-accent">Earliest found:</span> {refs[earliest.id]} on{" "}
-              <span className="mono">{earliest.domain}</span>, {formatInterval(earliest.date_lower, earliest.date_upper)} (
+              <span className="mono">{bareDomain(earliest.domain)}</span>, {formatInterval(earliest.date_lower, earliest.date_upper)} (
               {earliest.date_confidence} confidence
               {earliest.deciding ? `, from the ${SIGNAL_LABEL[earliest.deciding.kind] ?? earliest.deciding.kind}` : ""}).
             </p>
@@ -120,7 +121,7 @@ export function BriefDocument({ pack }: { pack: EvidencePack }) {
                   <p className="text-muted">
                     {n.parent_narrative_id ? "Diverges at " : "First seen at "}
                     {refs[n.divergence_sighting_id]}
-                    {byId[n.divergence_sighting_id] ? ` (${byId[n.divergence_sighting_id].domain})` : ""}
+                    {byId[n.divergence_sighting_id] ? ` (${bareDomain(byId[n.divergence_sighting_id].domain)})` : ""}
                     {n.divergence_reason ? `: ${n.divergence_reason}` : ""}
                   </p>
                   <ul className="mt-1 flex flex-col gap-1">

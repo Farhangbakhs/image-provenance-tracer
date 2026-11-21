@@ -148,3 +148,59 @@ test.describe("reduced motion", () => {
     expect(await range(page).innerText()).toBe(soon);
   });
 });
+
+test.describe("the answer, the counts and the side panels", () => {
+  test("the sentence splits the first copy from the earliest readable story, with no www.", async ({ page }) => {
+    await open(page);
+    const summary = page.getByRole("region", { name: "Summary" });
+    await expect(summary).toContainText("First found 15 Nov 2019 on bbc.co.uk (caption unreadable).");
+    await expect(summary).toContainText("Earliest readable story: \u201cIsraeli attack in Jan Yunis, Gaza\u201d on");
+    await expect(summary).toContainText("Since reused in 4 other stories, all contradicting it.");
+    expect(await summary.innerText()).not.toContain("www.");
+  });
+
+  test("the counts line shows the stored counts, blocked included", async ({ page }) => {
+    await open(page);
+    await expect(page.getByRole("region", { name: "Summary" })).toContainText("29 verified · 21 not matched · 0 blocked · 349 not checked");
+  });
+
+  test("the earliest copy is selected on load, and a row label opens its story", async ({ page }) => {
+    await open(page);
+    const drawer = page.getByRole("complementary", { name: "Evidence" });
+    await expect(drawer).toContainText("bbc.co.uk/news/world-middle-east-50430783");
+    await page.getByRole("button", { name: /^Israeli attack in Jan Yunis, Gaza/ }).click();
+    const panel = page.getByRole("complementary", { name: "Story" });
+    await expect(panel).toBeVisible();
+    // The domain is a link to the publisher's page in a new tab; the grade explains itself.
+    const link = panel.getByRole("link").first();
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(await link.getAttribute("href")).not.toContain("google.com");
+    expect(await link.innerText()).not.toContain("www.");
+    // A click on the row, off the link, selects that copy.
+    const row = panel.getByRole("button", { name: /^Select the copy on / }).nth(1);
+    await expect(row).toBeVisible();
+    await row.click({ position: { x: 200, y: 6 } }); // the gap between the domain link and the date
+    // The evidence for that copy replaces the story panel.
+    await expect(page.getByRole("complementary", { name: "Evidence" })).toBeVisible();
+    await expect(panel).toBeHidden();
+  });
+
+  test("the lists below the graph start closed and group hits by reason", async ({ page }) => {
+    await open(page);
+    const checked = page.locator("details", { has: page.getByRole("heading", { name: /Checked, not matched \(21\)/ }) }).first();
+    const notes = page.locator("details", { has: page.getByRole("heading", { name: "Notes on this run" }) });
+    await expect(checked).not.toHaveAttribute("open", "");
+    await expect(notes).not.toHaveAttribute("open", "");
+    await checked.locator("summary").first().click();
+    await expect(checked).toContainText("site refused the request (HTTP 403)");
+    await expect(checked).toContainText("not the same picture");
+  });
+
+  test("at 1366 x 768 the whole graph is on screen without scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await open(page);
+    const box = (await page.getByTestId("timeline").boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(768);
+  });
+});

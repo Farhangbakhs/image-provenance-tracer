@@ -11,6 +11,7 @@ import { useAsset, useRunProgress, useRunSightings, useStartRun } from "@/lib/ap
 import { searchProblem } from "@/lib/search-problem";
 import { describeCredentials } from "@/lib/credentials";
 import { formatUtc } from "@/lib/time";
+import { bareDomain } from "@/lib/domain";
 
 const STAGE_ORDER = ["ingest", "discover", "verify", "date", "branch", "report"];
 
@@ -102,7 +103,7 @@ function LatestResult({ runId }: { runId: string }) {
       {earliest ? (
         <p className="mt-1 text-[18px] font-semibold">
           <span className="mono text-accent">{earliest.date_upper ? formatUtc(earliest.date_upper, "day") : "undated"}</span>
-          <span className="ml-2">{earliest.domain}</span>
+          <span className="ml-2">{bareDomain(earliest.domain)}</span>
         </p>
       ) : (
         <p className="mt-1 text-muted">No verified copy was found.</p>

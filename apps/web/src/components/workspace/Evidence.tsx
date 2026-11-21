@@ -9,6 +9,7 @@ import { useOverrule } from "@/lib/api/hooks";
 import { formatInterval, formatUtc } from "@/lib/time";
 import { SIGNAL_LABEL } from "@/lib/copy";
 import { CONFIDENCE_COLOUR, type WorkspaceModel } from "@/lib/workspace";
+import { bareDomain } from "@/lib/domain";
 
 
 type SortKey = "date" | "domain" | "match" | "credibility";
@@ -24,7 +25,7 @@ export function EvidenceTable({
 }) {
   const [sort, setSort] = useState<SortKey>("date");
   const rows = [...model.sightings].sort((a, b) => {
-    if (sort === "domain") return a.domain.localeCompare(b.domain);
+    if (sort === "domain") return bareDomain(a.domain).localeCompare(bareDomain(b.domain));
     if (sort === "match") return a.match_class.localeCompare(b.match_class);
     if (sort === "credibility") return (a.credibility ?? 9) - (b.credibility ?? 9);
     return (a.date_upper ?? "9").localeCompare(b.date_upper ?? "9");
@@ -64,7 +65,7 @@ export function EvidenceTable({
                 <span style={{ color: CONFIDENCE_COLOUR[s.date_confidence] }}>({s.date_confidence})</span>
               </td>
               <td className="px-2 py-1.5">
-                {s.domain}
+                {bareDomain(s.domain)}
                 {s.analyst_status === "overruled" ? <span className="ml-1 text-muted">(overruled)</span> : null}
               </td>
               <td className="px-2 py-1.5" title={explainMatch(s)}>

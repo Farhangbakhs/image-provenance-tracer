@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { Panel } from "@/components/Panel";
+import { FoldPanel } from "@/components/Panel";
 import { Term } from "@/components/ui/Term";
 import { AnswerSummary } from "@/components/workspace/AnswerSummary";
 import { CandidatesPanel } from "@/components/workspace/CandidatesPanel";
@@ -25,6 +25,18 @@ const VIEWS = ["graph", "list"] as const;
 type View = (typeof VIEWS)[number];
 type Group = "story" | "variant";
 type Side = "copy" | "story" | "details" | "group" | null;
+
+/** One mark of the timeline, drawn as the timeline draws it, with what it means. */
+function Key({ children, label }: { children: React.ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <svg width={20} height={20} viewBox="-10 -10 20 20" aria-hidden>
+        {children}
+      </svg>
+      <span>{label}</span>
+    </span>
+  );
+}
 
 /**
  * One investigation: the answer first, then the copies as stories on a timeline (or by how they
@@ -164,11 +176,11 @@ export function RunWorkspace({ runId }: { runId: string }) {
           <p>
             Every copy here was fetched by ORIGIN and proved to be your picture: an{" "}
             <Term name="exact">identical file</Term>, the <Term name="near_duplicate">same picture</Term> or an{" "}
-            <Term name="derivative">edited copy</Term>. Each one is drawn at the earliest date its evidence allows; a hollow
-            dot means the date is uncertain.
+            <Term name="derivative">edited copy</Term>. Each one is drawn at the earliest date its evidence allows.
           </p>
           <p>
-            Each row is a <Term name="narrative">story</Term> a page tells about the picture, the original first. Switch to{" "}
+            Each row is a <Term name="narrative">story</Term> a page tells about the picture, the original first; click its name
+            for the story and its copies. Switch to{" "}
             <span className="text-text">How it looks</span> to see the <Term name="variant">variants</Term> and which edit was
             made from which.
           </p>
@@ -180,6 +192,27 @@ export function RunWorkspace({ runId }: { runId: string }) {
             Zoom the timeline with <span className="mono text-text">Ctrl</span> + scroll or a pinch, drag empty space to pan, or
             drag the overview strip above it. Click a numbered bundle to zoom into its copies, and use{" "}
             <span className="text-text">Reset view</span> to come back. Plain scrolling still scrolls the page.
+          </p>
+          <p className="flex flex-wrap items-center gap-x-5 gap-y-1 md:col-span-2" aria-label="Key to the timeline marks">
+            <Key label="copy, date within a year">
+              <circle r={4} fill="var(--muted)" />
+            </Key>
+            <Key label="copy, date uncertain">
+              <circle r={4} fill="none" stroke="var(--muted)" strokeWidth={1.5} />
+            </Key>
+            <Key label="first copy of a story">
+              <circle r={7} fill="none" stroke="var(--muted)" />
+              <circle r={4} fill="var(--muted)" />
+            </Key>
+            <Key label="copies too close to tell apart">
+              <circle r={9} fill="var(--surface-2)" stroke="var(--muted)" />
+              <text y={4} textAnchor="middle" fontSize={11} fill="var(--text)">
+                3
+              </text>
+            </Key>
+            <Key label="original story, or what you selected">
+              <circle r={4} fill="var(--accent)" />
+            </Key>
           </p>
           <p>
             Click any copy for its evidence. Keys: <span className="mono text-text">+</span> / <span className="mono text-text">−</span>{" "}
@@ -265,7 +298,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
             {view === "list" ? <EvidenceTable model={model} selected={selected} onSelect={select} /> : null}
           </section>
           {Object.keys(notes).length ? (
-            <Panel title="Notes on this run" hint="What ORIGIN could not do, or chose not to.">
+            <FoldPanel title="Notes on this run" note={`${Object.keys(notes).length} ${Object.keys(notes).length === 1 ? "note" : "notes"}: what ORIGIN could not do, or chose not to`}>
               <ul className="divide-y divide-line text-[13px]">
                 {Object.entries(notes).map(([k, v]) => (
                   <li key={k} className="grid grid-cols-[9rem_1fr] gap-3 px-3 py-1.5">
@@ -274,7 +307,7 @@ export function RunWorkspace({ runId }: { runId: string }) {
                   </li>
                 ))}
               </ul>
-            </Panel>
+            </FoldPanel>
           ) : null}
           <CandidatesPanel runId={runId} />
         </div>

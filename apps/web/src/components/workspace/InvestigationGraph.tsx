@@ -16,6 +16,7 @@ import {
   type GraphNode,
   type GroupBy,
 } from "@/lib/lineage-graph";
+import { bareDomain } from "@/lib/domain";
 import { formatInterval } from "@/lib/time";
 import type { WorkspaceModel } from "@/lib/workspace";
 
@@ -373,7 +374,7 @@ export function InvestigationGraph({
               ctx.fillStyle = colour;
               ctx.fillRect(node.x - NODE / 2 - 4, node.y - NODE / 2 - 4, NODE + 8, NODE + 8);
             }}
-            nodeLabel={(n) => `${n.sighting.domain} · ${formatInterval(n.sighting.date_lower, n.sighting.date_upper)}`}
+            nodeLabel={(n) => `${bareDomain(n.sighting.domain)} ·${formatInterval(n.sighting.date_lower, n.sighting.date_upper)}`}
             linkColor={linkColour}
             linkWidth={1.4}
             linkLineDash={(l) => (l.kind === "forward" ? [5, 4] : null)}
@@ -414,8 +415,8 @@ export function InvestigationGraph({
         {full && current ? (
           <aside className="absolute right-3 top-3 w-80 border border-line bg-surface-1 p-3 text-[13px]" aria-label="Selected copy">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${API_URL}${current.image_url_local}`} alt={`Copy on ${current.domain}`} className="mb-2 max-h-48 w-full border border-line object-contain" />
-            <p className="font-semibold">{current.domain}</p>
+            <img src={`${API_URL}${current.image_url_local}`} alt={`Copy on ${bareDomain(current.domain)}`} className="mb-2 max-h-48 w-full border border-line object-contain" />
+            <p className="font-semibold">{bareDomain(current.domain)}</p>
             <p className="mt-1 text-muted">{explainMatch(current)}</p>
             <p className="mt-1 text-muted">{explainDate(current)}</p>
             <button type="button" onClick={() => void document.exitFullscreen()} className={`mt-2 ${button}`}>
@@ -465,7 +466,7 @@ export function InvestigationGraph({
           const b = model.sightings.find((s) => s.id === l.target);
           return (
             <li key={`${l.source}-${l.target}-${l.kind}`}>
-              {a?.domain} to {b?.domain}: {l.label}.
+              {a ? bareDomain(a.domain) : null} to {b ? bareDomain(b.domain) : null}: {l.label}.
             </li>
           );
         })}

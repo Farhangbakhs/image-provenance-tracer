@@ -365,12 +365,14 @@ export function StoryTimeline({
                   focused ? "border-l-2 border-l-accent bg-surface-2" : "border-l-2 border-l-transparent"
                 }`}
               >
-                {/* With copies outside the view the note needs room: the name gives up its second line. */}
+                {/* With copies outside the view the note gets its own line: the name gives up its second. */}
                 <span className={`text-[13px] leading-tight ${outside > 0 ? "line-clamp-1" : "line-clamp-2"}`}>{row.label}</span>
-                <span className={`text-[12px] leading-tight tabular-nums text-muted ${outside > 0 ? "line-clamp-2" : "truncate"}`}>
+                <span className="truncate text-[12px] leading-tight tabular-nums text-muted">
                   {row.status} · {copyCount(row.copies.length)}
-                  {outside > 0 ? ` · ${outside} outside view` : ""}
                 </span>
+                {outside > 0 ? (
+                  <span className="truncate text-[12px] leading-tight tabular-nums text-muted">{outside} outside view</span>
+                ) : null}
               </button>
             );
           }
@@ -395,15 +397,21 @@ export function StoryTimeline({
               onClick={() => setUncaptionedOpen(!open)}
               aria-expanded={open}
               style={{ height: band.h }}
-              className={`${cell} box-border flex w-full flex-col justify-center gap-0.5 border-l-2 border-l-transparent px-4 text-left hover:bg-surface-2`}
+              className={`${cell} box-border flex w-full flex-col justify-center gap-0.5 border-l-2 px-4 text-left hover:bg-surface-2 ${
+                selected !== null && stories.uncaptioned.some((s) => s.id === selected)
+                  ? "border-l-accent bg-surface-2"
+                  : "border-l-transparent"
+              }`}
             >
               <span className="line-clamp-2 text-[13px] leading-tight">
                 {stories.rows.length === 0 ? "No readable captions" : "No readable caption"}
               </span>
-              <span className="truncate text-[12px] tabular-nums text-muted">
-                {copyCount(stories.uncaptioned.length)}
-                {outside > 0 ? ` · ${outside} outside view` : ""} · {open ? "Hide" : "Show"}
+              <span className="truncate text-[12px] leading-tight tabular-nums text-muted">
+                {copyCount(stories.uncaptioned.length)} · {open ? "Hide" : "Show"}
               </span>
+              {outside > 0 ? (
+                <span className="truncate text-[12px] leading-tight tabular-nums text-muted">{outside} outside view</span>
+              ) : null}
             </button>
           );
         })}

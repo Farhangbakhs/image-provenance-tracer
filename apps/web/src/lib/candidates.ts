@@ -73,6 +73,11 @@ export function reasonGroup(reason: string | null | undefined): string {
   if (r.startsWith("no image on the page")) return "no image on the page";
   if (r.startsWith("blocked by Google redirect")) return "blocked by a Google redirect page";
   if (r.startsWith("page fetch failed")) return "page could not be fetched";
+  const http = /^(page|image) HTTP (\d+)/.exec(r);
+  if (http) {
+    if (http[1] === "image") return `image returned HTTP ${http[2]}`;
+    return [401, 403, 429].includes(Number(http[2])) ? `site refused the request (HTTP ${http[2]})` : `page returned HTTP ${http[2]}`;
+  }
   if (r.startsWith("not a usable image")) return "image not in a usable format";
   return r || "not matched";
 }

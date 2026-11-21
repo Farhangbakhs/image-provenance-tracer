@@ -19,23 +19,44 @@ function CopiesList({
     <ul className="divide-y divide-line text-[12px]">
       {copies.map((s) => {
         const day = s.date_upper ?? s.date_lower;
+        const name = bareDomain(s.domain);
+        // The row is one button behind its content; the domain is a link above it, so the two
+        // never nest.
         return (
-          <li key={s.id}>
+          <li
+            key={s.id}
+            className={`relative grid grid-cols-[1fr_auto_auto] items-baseline gap-3 px-3 py-1.5 hover:bg-surface-2 ${
+              selected === s.id ? "border-l-2 border-l-accent bg-surface-2" : "border-l-2 border-l-transparent"
+            }`}
+          >
             <button
               type="button"
               onClick={() => onSelect(s.id)}
               aria-pressed={selected === s.id}
-              className={`grid w-full grid-cols-[1fr_auto_auto] items-baseline gap-3 px-3 py-1.5 text-left hover:bg-surface-2 ${
-                selected === s.id ? "border-l-2 border-l-accent bg-surface-2" : "border-l-2 border-l-transparent"
-              }`}
+              aria-label={`Select the copy on ${name}`}
+              className="absolute inset-0"
+            />
+            {s.page_url ? (
+              <a
+                href={s.page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={s.page_url}
+                className="relative max-w-full justify-self-start truncate underline decoration-line underline-offset-2 hover:decoration-text"
+              >
+                {name}
+              </a>
+            ) : (
+              <span className="truncate">{name}</span>
+            )}
+            <span className="pointer-events-none tabular-nums text-muted">{day ? formatDay(day) : "undated"}</span>
+            <span
+              className="mono relative tabular-nums text-muted"
+              title={s.grade_rationale ?? "No grading rationale was stored for this copy."}
             >
-              <span className="truncate">{bareDomain(s.domain)}</span>
-              <span className="tabular-nums text-muted">{day ? formatDay(day) : "undated"}</span>
-              <span className="mono tabular-nums text-muted" title="Source reliability (A to F) and credibility (1 to 6)">
-                {s.reliability ?? "F"}
-                {s.credibility ?? "–"}
-              </span>
-            </button>
+              {s.reliability ?? "F"}
+              {s.credibility ?? "–"}
+            </span>
           </li>
         );
       })}

@@ -72,7 +72,9 @@ describe("reasonGroup", () => {
     expect(reasonGroup("SSCD 0.105 < 0.5")).toBe("not the same picture");
     expect(reasonGroup("no image on the page (HTTP 200, text/html, 6,158 bytes)")).toBe("no image on the page");
     expect(reasonGroup("blocked by Google redirect (www.google.com/goto, HTTP 200)")).toBe("blocked by a Google redirect page");
-    expect(reasonGroup("page HTTP 403")).toBe("page HTTP 403");
+    expect(reasonGroup("page HTTP 403")).toBe("site refused the request (HTTP 403)");
+    expect(reasonGroup("page HTTP 500")).toBe("page returned HTTP 500");
+    expect(reasonGroup("image HTTP 404")).toBe("image returned HTTP 404");
     expect(reasonGroup(null)).toBe("not matched");
   });
 });
