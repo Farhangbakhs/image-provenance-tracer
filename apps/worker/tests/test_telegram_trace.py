@@ -1,4 +1,4 @@
-"""Telegram sweep end to end: the targeted sweep finds a Telegram post earlier than any web sighting.
+"""Telegram sweep end to end: it finds a Telegram post earlier than any web sighting.
 
 SYNTHETIC: the web page, the channel's t.me/s preview, the post page and the photo CDN are
 served from an in-memory transport, in the markup checked against live pages (see

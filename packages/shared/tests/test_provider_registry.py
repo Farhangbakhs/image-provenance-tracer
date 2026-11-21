@@ -55,7 +55,9 @@ def test_telegram_is_off_by_default_and_reported_when_asked_for(
     monkeypatch.setenv("ORIGIN_PROVIDERS", '["telegram"]')
     setup = build_providers(_settings())
     assert setup.adapters == []
-    assert setup.unavailable == {"telegram": "ORIGIN_ENABLE_TELEGRAM is off (see docs/DESIGN.md section 7)"}
+    assert setup.unavailable == {
+        "telegram": "ORIGIN_ENABLE_TELEGRAM is off (see docs/DESIGN.md section 7)"
+    }
 
 
 def test_the_flag_adds_the_telegram_index(monkeypatch: pytest.MonkeyPatch) -> None:
