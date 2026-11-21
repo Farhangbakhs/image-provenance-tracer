@@ -81,7 +81,7 @@ make eval      # the matching eval; writes evals/report.md
 make ci        # the CI jobs in clean Linux containers, against committed HEAD
 ```
 
-The tests replay real recorded responses from `fixtures/recordings/` (Google Lens and Wayback, for one public-domain query image). They need no network and no keys. Database, Redis and S3 tests run against the compose services and are skipped when those are unreachable; CI requires them. See [fixtures/README.md](fixtures/README.md).
+The tests replay real recorded responses from `fixtures/recordings/` (Google Lens and Wayback, for one public-domain query image). They need no network and no keys. Database, Redis and S3 tests run against the compose services and are skipped when those are unreachable; CI requires them. Eighteen tests also need the SSCD model weights and are skipped until you download them once with `uv run python -m origin_worker.embedding download`. With the stack up and the weights downloaded, all 268 Python tests run. See [fixtures/README.md](fixtures/README.md).
 
 `make eval` checks matching against 18 sample photographs, each edited 14 ways a repost is edited (resizes, recompression, mirrors, crops, caption bars, watermarks, screenshots), and against every pair of different photographs. The report is [evals/report.md](evals/report.md). Recall on edited copies is 93.7% (236 of 252) with thresholds `v2`, up from 75.4% (190 of 252) with `v1`, and false positives are 0.7% (2 of 306 unrelated pairs). Both false positives are one stereo pair, the same scene photographed from two slightly different positions.
 
