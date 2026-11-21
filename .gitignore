@@ -54,5 +54,11 @@ var/
 .DS_Store
 Thumbs.db
 
-# Claude Code personal settings (the shared .claude/settings.json is committed)
-.claude/settings.local.json
+# Assistant and agent tooling
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.agents/
+skills-lock.json
+apps/web/AGENTS.md
