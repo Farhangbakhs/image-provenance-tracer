@@ -13,7 +13,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Environment(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
-    DEMO = "demo"
     PRODUCTION = "production"
 
 
@@ -72,9 +71,6 @@ class Settings(BaseSettings):
 
     provider_mode: ProviderMode = Field(default=ProviderMode.LIVE, alias="ORIGIN_PROVIDER_MODE")
     fixtures_dir: Path = Field(default=Path("fixtures/recordings"), alias="ORIGIN_FIXTURES_DIR")
-    synthetic_fixtures_dir: Path = Field(
-        default=Path("fixtures/synthetic"), alias="ORIGIN_SYNTHETIC_FIXTURES_DIR"
-    )
     #: Reverse-image providers a trace uses, in order: vision, lens, yandex.
     providers: list[str] = Field(
         default_factory=lambda: ["vision", "lens"], alias="ORIGIN_PROVIDERS"
@@ -126,8 +122,6 @@ class Settings(BaseSettings):
                 "ORIGIN_ENABLE_TELEGRAM must be false when ORIGIN_ENV=production: Telegram's "
                 "API and content terms restrict this use (PLAN.md 1.9)."
             )
-        if self.env is Environment.DEMO and self.provider_mode is not ProviderMode.REPLAY:
-            raise ValueError("ORIGIN_ENV=demo requires ORIGIN_PROVIDER_MODE=replay.")
         return self
 
 

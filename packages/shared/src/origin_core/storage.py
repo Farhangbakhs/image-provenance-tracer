@@ -57,7 +57,7 @@ def _verify(key: str, data: bytes) -> bytes:
 
 
 class FilesystemBlobStore:
-    """Blobs as files under a root directory. Used by tests and the offline demo."""
+    """Blobs as files under a root directory. Used by tests."""
 
     def __init__(self, root: Path) -> None:
         self._root = root

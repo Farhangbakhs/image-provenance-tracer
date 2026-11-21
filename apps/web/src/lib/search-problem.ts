@@ -11,8 +11,8 @@ export function searchProblem(
   const messages = Object.values(notes);
   if (messages.some((m) => m.includes("replay mode: no recording"))) {
     return (
-      "Nothing was searched: this stack runs in demo (replay) mode, which only has recorded results for the demo " +
-      "images. To trace your own picture, put SERPAPI_API_KEY in .env and start the stack with `make dev`."
+      "Nothing was searched: this stack runs in replay mode, which only has recorded provider answers. " +
+      "To trace your own picture, set ORIGIN_PROVIDER_MODE=live, put SERPAPI_API_KEY in .env and start the stack with `make dev`."
     );
   }
   const failed = Object.entries(notes).filter(

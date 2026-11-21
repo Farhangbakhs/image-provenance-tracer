@@ -7,7 +7,7 @@ A key file may hold the key alone or with a label; the 64-character hex key is t
 
 Each query spends one search of the SerpApi free plan (the upload is not billed). The response is
 written to fixtures/recordings/lens/<request_hash>.json with the key redacted, exactly as the
-ProviderRunner would in record mode, so tests and demo mode can replay it offline.
+ProviderRunner would in record mode, so tests can replay it offline.
 """
 
 from __future__ import annotations

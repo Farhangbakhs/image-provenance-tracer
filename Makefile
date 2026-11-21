@@ -11,12 +11,11 @@ endif
 # Keys and provider settings for live traces come from .env when it exists (see .env.example).
 COMPOSE := $(DOCKER) compose -f infra/compose.yaml $(if $(wildcard .env),--env-file .env)
 
-.PHONY: help install dev demo e2e eval down logs migrate client lint fmt test test-py test-web ci
+.PHONY: help install dev e2e eval down logs migrate client lint fmt test test-py test-web ci
 
 help:
 	$(info dev       Build and start the stack: db, redis, s3, api, web)
-	$(info demo      Start in demo mode (replayed providers, no keys) and seed the demo cases)
-	$(info e2e       Playwright end-to-end tests against the running demo (make demo first))
+	$(info e2e       Playwright end-to-end tests against the running stack (make dev first))
 	$(info eval      Run the eval harness and write evals/report.md)
 	$(info down      Stop the stack (data volumes are kept))
 	$(info logs      Follow stack logs)
@@ -31,16 +30,6 @@ help:
 
 dev:
 	$(COMPOSE) up -d --build --wait
-
-# Replay mode: every provider and model answer comes from fixtures/, so no keys are needed.
-demo: export ORIGIN_ENV := demo
-demo: export ORIGIN_PROVIDER_MODE := replay
-# The demo's Telegram case is synthetic and offline, so the demo shows it.
-demo: export ORIGIN_ENABLE_TELEGRAM := true
-demo:
-	$(COMPOSE) up -d --build --wait
-	$(COMPOSE) exec -T worker python -m origin_worker.demo seed
-	@echo Demo ready: open http://localhost:3000
 
 down:
 	$(COMPOSE) down

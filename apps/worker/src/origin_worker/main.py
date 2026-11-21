@@ -22,7 +22,7 @@ from origin_core.providers.fixtures import FixtureStore
 from origin_core.providers.quota import DEFAULT_POLICIES
 from origin_core.providers.registry import build_providers
 from origin_core.providers.runner import ProviderRunner
-from origin_core.settings import Environment, get_settings
+from origin_core.settings import get_settings
 from origin_core.storage import make_blob_store
 from origin_worker.embedding import SSCDEmbedder, ensure_weights
 from origin_worker.matching.thresholds import load_thresholds
@@ -50,7 +50,7 @@ async def startup(ctx: dict[str, Any]) -> None:
         http=http,
         policies=DEFAULT_POLICIES,
         mode=settings.provider_mode,
-        fixtures=FixtureStore((settings.fixtures_dir, settings.synthetic_fixtures_dir)),
+        fixtures=FixtureStore((settings.fixtures_dir,)),
         redact_secrets=providers.secrets,
     )
     llm = build_llm(settings)
@@ -59,7 +59,7 @@ async def startup(ctx: dict[str, Any]) -> None:
         blobs=blobs,
         http=http,
         mode=settings.provider_mode,
-        fixtures=FixtureStore((settings.fixtures_dir, settings.synthetic_fixtures_dir)),
+        fixtures=FixtureStore((settings.fixtures_dir,)),
         redact_secrets=llm.secrets,
     )
     trace = TraceServices(
@@ -82,8 +82,7 @@ async def startup(ctx: dict[str, Any]) -> None:
             ),
             source=PreviewSource(fetcher, Pacer(settings.telegram_interval_s)),
         )
-        # Demo mode never contacts Telegram; its Telegram case is seeded offline.
-        if settings.enable_telegram and settings.env is not Environment.DEMO
+        if settings.enable_telegram
         else None,
     )
     ctx["engine"] = engine

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from origin_core.settings import Environment, ProviderMode, Settings
+from origin_core.settings import Settings
 
 
 def _settings() -> Settings:
@@ -13,18 +13,3 @@ def test_production_refuses_unofficial_providers(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS", "true")
     with pytest.raises(ValidationError, match="must be false"):
         _settings()
-
-
-def test_demo_requires_replay(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ORIGIN_ENV", "demo")
-    monkeypatch.setenv("ORIGIN_PROVIDER_MODE", "live")
-    with pytest.raises(ValidationError, match="replay"):
-        _settings()
-
-
-def test_demo_with_replay_is_valid(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ORIGIN_ENV", "demo")
-    monkeypatch.setenv("ORIGIN_PROVIDER_MODE", "replay")
-    settings = _settings()
-    assert settings.env is Environment.DEMO
-    assert settings.provider_mode is ProviderMode.REPLAY

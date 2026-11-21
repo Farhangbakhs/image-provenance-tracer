@@ -8,7 +8,7 @@ import { BriefDocument } from "./Brief";
 function sighting(id: string, domain: string, upper: string): SightingOut {
   return {
     id,
-    provider: "demo-index",
+    provider: "lens",
     page_url: `https://${domain}/p`,
     image_url: `https://${domain}/i.jpg`,
     domain,
@@ -61,7 +61,7 @@ const pack: EvidencePack = {
     case_id: "case",
     asset_id: "asset",
     status: "succeeded",
-    providers: ["demo-index"],
+    providers: ["lens"],
     stages: {},
     stage_order: [],
     error: null,

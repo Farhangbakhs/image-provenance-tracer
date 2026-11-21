@@ -1,9 +1,8 @@
 """Recorded provider responses: written in record mode, served in replay mode.
 
 One file per query at `<root>/<provider>/<request_hash>.json`. Recordings of real responses
-live in `fixtures/recordings/` and carry `"synthetic": false`; hand-authored responses live
-in `fixtures/synthetic/` and must carry `"synthetic": true`, so a reader can always tell
-whether a result came from a real provider.
+live in `fixtures/recordings/` and carry `"synthetic": false`: nothing hand-authored is kept, so
+a reader can always tell that a result came from a real provider.
 
 Run `python -m origin_core.providers.fixtures verify` to check every file's schema, hash and
 location.
@@ -143,34 +142,31 @@ def load(path: Path) -> Recording:
     return recording
 
 
-def verify(recordings_dir: Path, synthetic_dir: Path) -> list[str]:
-    """Return a list of problems across both fixture trees (empty means all good)."""
+def verify(recordings_dir: Path) -> list[str]:
+    """Return a list of problems across the recordings (empty means all good)."""
     problems: list[str] = []
-    for root, must_be_synthetic in ((recordings_dir, False), (synthetic_dir, True)):
-        for path in sorted(root.glob("*/*.json")):
-            try:
-                recording = load(path)
-            except FixtureError as exc:
-                problems.append(str(exc))
-                continue
-            if recording.synthetic is not must_be_synthetic:
-                label = "synthetic" if must_be_synthetic else "recordings"
-                problems.append(f"{path}: 'synthetic' must be {must_be_synthetic} in {label}/")
+    for path in sorted(recordings_dir.glob("*/*.json")):
+        try:
+            recording = load(path)
+        except FixtureError as exc:
+            problems.append(str(exc))
+            continue
+        if recording.synthetic:
+            problems.append(f"{path}: only real responses are kept, 'synthetic' must be false")
     return problems
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="origin_core.providers.fixtures")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    check = sub.add_parser("verify", help="validate every recorded and synthetic fixture")
+    check = sub.add_parser("verify", help="validate every recorded fixture")
     check.add_argument("--recordings", type=Path, default=Path("fixtures/recordings"))
-    check.add_argument("--synthetic", type=Path, default=Path("fixtures/synthetic"))
     args = parser.parse_args(argv)
 
-    problems = verify(args.recordings, args.synthetic)
+    problems = verify(args.recordings)
     for problem in problems:
         print(problem, file=sys.stderr)
-    count = sum(1 for root in (args.recordings, args.synthetic) for _ in root.glob("*/*.json"))
+    count = sum(1 for _ in args.recordings.glob("*/*.json"))
     print(f"{count} fixture file(s) checked, {len(problems)} problem(s)")
     return 1 if problems else 0
 

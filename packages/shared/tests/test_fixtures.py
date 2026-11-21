@@ -139,9 +139,9 @@ def _rh() -> str:
     return request_hash("lens", ASSET.sha256, {"type": "exact"})
 
 
-def test_verify_accepts_valid_trees(tmp_path: Path) -> None:
+def test_verify_accepts_valid_recordings(tmp_path: Path) -> None:
     _write(FixtureStore((tmp_path / "recordings",)))
-    assert verify(tmp_path / "recordings", tmp_path / "synthetic") == []
+    assert verify(tmp_path / "recordings") == []
 
 
 def test_verify_detects_tampered_body(tmp_path: Path) -> None:
@@ -149,22 +149,14 @@ def test_verify_detects_tampered_body(tmp_path: Path) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     data["body"] = '[{"page": "https://forged.example"}]'
     path.write_text(json.dumps(data), encoding="utf-8")
-    [problem] = verify(tmp_path / "recordings", tmp_path / "synthetic")
+    [problem] = verify(tmp_path / "recordings")
     assert "body_sha256" in problem
 
 
-def test_verify_requires_synthetic_label_in_synthetic_tree(tmp_path: Path) -> None:
-    path = _write(FixtureStore((tmp_path / "synthetic",)))  # written as synthetic=false
-    [problem] = verify(tmp_path / "recordings", tmp_path / "synthetic")
-    assert "'synthetic' must be True" in problem
-    assert path.exists()
-
-
-def test_store_reads_recordings_before_synthetic(tmp_path: Path) -> None:
-    real = FixtureStore((tmp_path / "recordings",))
-    fake = FixtureStore((tmp_path / "synthetic",))
-    _write(fake, b'["synthetic"]')
-    _write(real, b'["real"]')
-    both = FixtureStore((tmp_path / "recordings", tmp_path / "synthetic"))
-    found = both.find("lens", _rh())
-    assert found is not None and found.body == '["real"]'
+def test_verify_refuses_a_recording_marked_synthetic(tmp_path: Path) -> None:
+    path = _write(FixtureStore((tmp_path / "recordings",)))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["synthetic"] = True
+    path.write_text(json.dumps(data), encoding="utf-8")
+    [problem] = verify(tmp_path / "recordings")
+    assert "'synthetic' must be false" in problem

@@ -5,9 +5,9 @@ import { searchProblem } from "./search-problem";
 const none = { pending: 0, verified: 0, unrelated: 0, fetch_failed: 0, blocked: 0 };
 
 describe("searchProblem", () => {
-  it("explains replay mode when the demo has no recording for an upload", () => {
+  it("explains replay mode when there is no recording for an upload", () => {
     const why = searchProblem({ lens: "error: replay mode: no recording for provider 'lens' and image 3b8c" }, none);
-    expect(why).toMatch(/demo \(replay\) mode/);
+    expect(why).toMatch(/replay mode/);
   });
 
   it("says nothing was searched when every provider failed or was not queried", () => {

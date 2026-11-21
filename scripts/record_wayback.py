@@ -3,7 +3,7 @@
     uv run python scripts/record_wayback.py URL [URL ...]
 
 Each response is written to fixtures/recordings/wayback/<request_hash>.json, exactly as the
-ProviderRunner would in record mode, so tests and demo mode can replay it offline.
+ProviderRunner would in record mode, so tests can replay it offline.
 """
 
 from __future__ import annotations
