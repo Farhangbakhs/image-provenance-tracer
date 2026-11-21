@@ -1,4 +1,4 @@
-"""The Telegram watchlist index as a provider (Phase 5, behind ORIGIN_ENABLE_TELEGRAM).
+"""The Telegram watchlist index as a provider (behind ORIGIN_ENABLE_TELEGRAM).
 
 There is no reverse image search on Telegram, so this adapter asks ORIGIN's own index of
 watchlist photos (`telegram_posts`) for the query image's nearest neighbours by SSCD

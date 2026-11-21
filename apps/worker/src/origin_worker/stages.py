@@ -64,7 +64,7 @@ class IngestStage:
 
 @dataclass(frozen=True)
 class TelegramServices:
-    """The targeted sweep's collector and source (Phase 5, behind ORIGIN_ENABLE_TELEGRAM)."""
+    """The targeted sweep's collector and source (behind ORIGIN_ENABLE_TELEGRAM)."""
 
     collector: Collector
     source: PhotoSource

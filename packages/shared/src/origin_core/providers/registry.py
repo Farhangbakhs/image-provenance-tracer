@@ -47,7 +47,7 @@ def build_providers(
             unavailable[name] = "unknown provider"
         elif name == "telegram":
             if not settings.enable_telegram:
-                unavailable[name] = "ORIGIN_ENABLE_TELEGRAM is off (see PLAN.md 1.9)"
+                unavailable[name] = "ORIGIN_ENABLE_TELEGRAM is off (see docs/DESIGN.md section 7)"
             elif sessions is None:
                 unavailable[name] = "the Telegram index needs the database"
             else:

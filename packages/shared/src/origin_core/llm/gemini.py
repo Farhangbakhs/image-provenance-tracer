@@ -4,7 +4,7 @@ Verified on 2026-11-11 with a real key: generateContent accepts generationConfig
 {responseMimeType: "application/json", responseJsonSchema: {...}} and returns the JSON text in
 candidates[0].content.parts[].text. gemini-2.5-flash is no longer offered to new users; on the
 free tier gemini-3.5-flash-lite answered in ~6 s, gemini-3.8-flash in 86-131 s. Free-tier
-prompts and outputs may be used by Google to improve its products (PLAN.md 1.1).
+prompts and outputs may be used by Google to improve its products (docs/DESIGN.md section 6).
 
 Docs: https://aistudio.google.com/docs/pricing, https://aistudio.google.com/docs/structured-output
 """

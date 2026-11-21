@@ -4,7 +4,7 @@ Revision ID: 7c3a9e41d2f8
 Revises: 5d1e2c7a9b30
 Create Date: 2026-11-11 10:00:00
 
-Phase 5 (behind ORIGIN_ENABLE_TELEGRAM). Reverse-image engines do not index Telegram, so
+Behind ORIGIN_ENABLE_TELEGRAM. Reverse-image engines do not index Telegram, so
 ORIGIN keeps its own index of photos from the public channels an analyst puts on the
 watchlist: fingerprints, an SSCD embedding and the message metadata for each photo.
 """

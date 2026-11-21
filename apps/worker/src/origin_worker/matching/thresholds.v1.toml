@@ -1,5 +1,5 @@
 # Match thresholds, version 1. Starting values from the literature and probing; to be
-# recalibrated on the eval set (Phase 6). Never edit in place: copy to a new version, so every
+# recalibrated on the eval set (see evals/report.md). Never edit in place: copy to a new version, so every
 # stored sighting can be traced to the thresholds that classified it.
 version = "match.v1"
 

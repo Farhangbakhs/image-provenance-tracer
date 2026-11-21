@@ -22,7 +22,7 @@ from origin_core.ingest.validate import decode_rgb
 from .images import jpeg, scene
 
 # Generous bounds for "same picture" used only to check robustness here; the calibrated
-# thresholds that classify real matches live in the versioned matching config (Phase 2).
+# thresholds that classify real matches live in the versioned matching config.
 SAME_PHASH = 10
 SAME_PDQ = 40
 DIFFERENT_PDQ = 80

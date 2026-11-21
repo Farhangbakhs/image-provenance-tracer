@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Optional Telethon collector for Phase 5 (python -m origin_worker.telegram collect --via api).
+# Optional Telethon collector for the Telegram integration (python -m origin_worker.telegram collect --via api).
 telegram = ["telethon>=1.45,<2"]
 
 [tool.uv.sources]

@@ -89,7 +89,7 @@ class Settings(BaseSettings):
         default=False, alias="ORIGIN_ENABLE_UNOFFICIAL_PROVIDERS"
     )
 
-    #: Phase 5, off by default: read Telegram's terms (PLAN.md 1.9) before switching it on.
+    #: Off by default: read Telegram's terms (docs/DESIGN.md section 7) before switching it on.
     enable_telegram: bool = Field(default=False, alias="ORIGIN_ENABLE_TELEGRAM")
     #: Seconds between requests to Telegram, preview or API. Telegram throttles hard scrapers.
     telegram_interval_s: float = Field(default=3.0, alias="ORIGIN_TELEGRAM_INTERVAL_S", ge=1.0)
@@ -120,7 +120,7 @@ class Settings(BaseSettings):
         if self.env is Environment.PRODUCTION and self.enable_telegram:
             raise ValueError(
                 "ORIGIN_ENABLE_TELEGRAM must be false when ORIGIN_ENV=production: Telegram's "
-                "API and content terms restrict this use (PLAN.md 1.9)."
+                "API and content terms restrict this use (docs/DESIGN.md section 7)."
             )
         return self
 

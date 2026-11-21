@@ -122,7 +122,7 @@ def main(argv: list[str] | None = None) -> None:
     settings = get_settings()
     configure_logging(settings.log_level, json=settings.log_json)
     if not settings.enable_telegram:
-        raise SystemExit("Telegram is off: set ORIGIN_ENABLE_TELEGRAM=true (read PLAN.md 1.9)")
+        raise SystemExit("Telegram is off: set ORIGIN_ENABLE_TELEGRAM=true (read docs/DESIGN.md section 7)")
     if args.cmd == "watch":
         asyncio.run(_watch(settings, args.channel, args.note))
     elif args.cmd == "list":

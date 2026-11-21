@@ -9,7 +9,7 @@ Yandex: engine=yandex_images takes only a public image URL, so it needs a public
 and is off by default.
 
 Free plan: 250 searches a month. The upload is not billed: a live upload and search on
-2026-11-11 moved the account's monthly usage by one (PLAN.md 1.3), so a Lens query is one unit.
+2026-11-11 moved the account's monthly usage by one (docs/DESIGN.md section 6), so a Lens query is one unit.
 
 Docs: https://serpapi.com/google-lens-api, https://serpapi.com/google-lens-exact-matches-api,
 https://serpapi.com/image-api, https://serpapi.com/yandex-images-api

@@ -1,6 +1,6 @@
 """The targeted Telegram sweep: look on the watchlist around the earliest web date.
 
-Runs after the web trace is dated (Phase 5, behind ORIGIN_ENABLE_TELEGRAM). It takes the
+Runs after the web trace is dated (behind ORIGIN_ENABLE_TELEGRAM). It takes the
 earliest date found on the web and a few keywords from the verified pages' titles, searches
 every watchlist channel for them through the public preview, and indexes the photos posted
 from `before_days` before that date to `after_days` after it. Then it asks the index about

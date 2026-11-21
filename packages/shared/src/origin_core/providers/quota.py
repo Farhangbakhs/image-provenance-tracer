@@ -6,7 +6,7 @@ a debit succeeds only if every period has room.
 
 Limits are deliberately set a little under the vendors' published allowances where an
 overrun would be billed (Cloud Vision), and periods are aligned to UTC calendar boundaries,
-which may differ from a vendor's billing anniversary. See PLAN.md section 1.1.
+which may differ from a vendor's billing anniversary. See docs/DESIGN.md section 5.
 """
 
 from __future__ import annotations

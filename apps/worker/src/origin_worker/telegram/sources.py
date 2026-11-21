@@ -7,7 +7,7 @@ request every `interval_s` seconds, and they stop early rather than push through
 PreviewSource needs no account. It reads t.me/s/<channel> through ORIGIN's hardened fetcher,
 newest page first, following `?before=` to older pages, or `?q=` to search.
 
-TelethonSource needs the owner's own API id and hash and a logged-in session file. Telethon is
+TelethonSource needs the user's own API id and hash and a logged-in session file. Telethon is
 an optional dependency (`uv sync --extra telegram`) and is imported only when this source is
 used. Telethon sleeps through flood waits up to its threshold; longer ones end the collection.
 """
@@ -208,9 +208,9 @@ class PreviewSource:
 
 
 class TelethonSource:
-    """Photo messages through the Telegram API with the owner's own app and session.
+    """Photo messages through the Telegram API with the user's own app and session.
 
-    Not exercised against Telegram in ORIGIN's tests (that needs the owner's login); the
+    Not exercised against Telegram in ORIGIN's tests (that needs a logged-in account); the
     tests drive it with a stand-in client that has Telethon's documented interface.
     """
 
